@@ -178,31 +178,31 @@ Duplicate Batch,22IT044,IT,dup@cauvery.edu.in,2026`;
   const invalidRowCount = parsedRows.filter((r) => !r.isValid).length;
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-8 font-sans">
+    <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-8 font-sans text-slate-900">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/[0.06] pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/90 pb-6">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+            <span className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold">
               Placement Cell • Roster Manager
             </span>
-            <span className="text-[11px] text-slate-400 font-mono">
+            <span className="text-[11px] text-slate-500 font-mono">
               Cauvery Institute of Technology, Thanjavur (CIT-TN)
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mt-1">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mt-1">
             Bulk Student Onboarding & CSV Validator
           </h1>
-          <p className="text-xs text-slate-400 font-mono mt-0.5">
+          <p className="text-xs text-slate-500 font-sans mt-0.5">
             Import engineering candidate batches via CSV with client-side schema validation and duplicate checks.
           </p>
         </div>
 
         <button
           onClick={handleLoadSampleCsv}
-          className="px-3.5 py-2 text-xs font-semibold text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 rounded-xl transition-colors flex items-center gap-2 shadow-sm"
+          className="px-4 py-2 text-xs font-semibold text-indigo-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-all flex items-center gap-2 shadow-sm hover:border-slate-300 active:scale-[0.98]"
         >
-          <FileSpreadsheet className="w-4 h-4 text-indigo-400" />
+          <FileSpreadsheet className="w-4 h-4 text-indigo-600" />
           <span>Load Test CSV with Validation Errors</span>
         </button>
       </div>
@@ -217,10 +217,10 @@ Duplicate Batch,22IT044,IT,dup@cauvery.edu.in,2026`;
             onDragOver={(e) => { e.preventDefault(); }}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[240px] ${
+            className={`border-2 border-dashed rounded-3xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[240px] shadow-sm ${
               dragActive
-                ? "border-indigo-500 bg-indigo-500/10 scale-[1.01]"
-                : "border-white/[0.1] hover:border-white/[0.2] bg-[#111114]"
+                ? "border-indigo-500 bg-indigo-50 scale-[1.01]"
+                : "border-slate-300 hover:border-slate-400 bg-slate-50/60 hover:bg-slate-50"
             }`}
           >
             <input
@@ -230,29 +230,29 @@ Duplicate Batch,22IT044,IT,dup@cauvery.edu.in,2026`;
               className="hidden"
               onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
             />
-            <div className="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center mb-3 border border-indigo-500/20 shadow-inner">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3 border border-indigo-200 shadow-sm">
               <UploadCloud className="w-6 h-6" />
             </div>
-            <div className="font-semibold text-white text-sm">
+            <div className="font-bold text-slate-900 text-sm">
               Click to browse or drop CSV
             </div>
-            <p className="text-[11px] text-slate-400 font-mono mt-1">
-              Required: <code className="text-indigo-400">full_name, roll_no, department, email, batch_year</code>
+            <p className="text-[11px] text-slate-500 font-mono mt-1">
+              Required: <code className="text-indigo-600 font-bold">full_name, roll_no, department, email, batch_year</code>
             </p>
           </div>
 
           {importStatus && (
             <div
-              className={`p-3.5 rounded-xl text-xs font-mono flex items-center gap-2 ${
+              className={`p-3.5 rounded-2xl text-xs font-mono flex items-center gap-2.5 shadow-sm ${
                 importStatus.startsWith("Success")
-                  ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20"
-                  : "bg-rose-500/10 text-rose-300 border border-rose-500/20"
+                  ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                  : "bg-rose-50 text-rose-800 border border-rose-200"
               }`}
             >
               {importStatus.startsWith("Success") ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
               ) : (
-                <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+                <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0" />
               )}
               <span>{importStatus}</span>
             </div>
@@ -260,31 +260,31 @@ Duplicate Batch,22IT044,IT,dup@cauvery.edu.in,2026`;
         </div>
 
         {/* Validation Inspector Table */}
-        <div className="lg:col-span-2 card-obsidian rounded-2xl p-5 space-y-4">
-          <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+        <div className="lg:col-span-2 card-luxury rounded-2xl p-6 space-y-4 shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
-              <h3 className="text-sm font-bold text-white">
+              <h3 className="text-sm font-bold text-slate-900">
                 Live CSV Inspector & Validation Previews
               </h3>
-              <p className="text-[11px] text-slate-400 font-mono">
+              <p className="text-xs text-slate-500 font-sans mt-0.5">
                 Verify invalid entries before writing to institutional profiles.
               </p>
             </div>
 
             {parsedRows.length > 0 && (
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                   {validRowCount} Valid
                 </span>
                 {invalidRowCount > 0 && (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                  <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
                     {invalidRowCount} Errors
                   </span>
                 )}
                 <button
                   onClick={handleUploadValid}
                   disabled={validRowCount === 0}
-                  className="ml-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-xs font-bold rounded-lg shadow-sm transition-all"
+                  className="ml-2 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-500/20 transition-all active:scale-[0.98]"
                 >
                   Commit {validRowCount} Valid Rows
                 </button>
@@ -293,14 +293,14 @@ Duplicate Batch,22IT044,IT,dup@cauvery.edu.in,2026`;
           </div>
 
           {parsedRows.length === 0 ? (
-            <div className="py-12 text-center text-slate-500 text-xs font-mono">
-              <FileSpreadsheet className="w-8 h-8 mx-auto mb-2 opacity-30 text-indigo-400" />
+            <div className="py-12 text-center text-slate-400 text-xs font-mono">
+              <FileSpreadsheet className="w-8 h-8 mx-auto mb-2 opacity-30 text-indigo-600" />
               No CSV staged. Drag a file or click <strong>Load Test CSV with Validation Errors</strong> above.
             </div>
           ) : (
             <div className="overflow-x-auto max-h-[280px]">
               <table className="w-full text-xs text-left">
-                <thead className="text-[10px] font-mono uppercase text-slate-500 border-b border-white/[0.06] sticky top-0 bg-[#111114]">
+                <thead className="text-[10px] font-mono uppercase text-slate-500 border-b border-slate-200 sticky top-0 bg-white">
                   <tr>
                     <th className="p-2.5">Status</th>
                     <th className="p-2.5">Roll No</th>
@@ -310,32 +310,32 @@ Duplicate Batch,22IT044,IT,dup@cauvery.edu.in,2026`;
                     <th className="p-2.5">Validation Output</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/[0.04]">
+                <tbody className="divide-y divide-slate-100">
                   {parsedRows.map((row, idx) => (
                     <tr
                       key={idx}
                       className={
                         row.isValid
-                          ? "hover:bg-white/[0.02]"
-                          : "bg-rose-500/[0.04] text-rose-200 border-l-2 border-rose-500"
+                          ? "hover:bg-slate-50/80"
+                          : "bg-rose-50/70 text-rose-900 border-l-4 border-rose-500"
                       }
                     >
                       <td className="p-2.5">
                         {row.isValid ? (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                         ) : (
-                          <XCircle className="w-4 h-4 text-rose-400" />
+                          <XCircle className="w-4 h-4 text-rose-600" />
                         )}
                       </td>
-                      <td className="p-2.5 font-mono font-semibold">{row.roll_no}</td>
-                      <td className="p-2.5">{row.full_name}</td>
-                      <td className="p-2.5 font-mono">{row.department}</td>
-                      <td className="p-2.5 font-mono">{row.email}</td>
+                      <td className="p-2.5 font-mono font-bold text-slate-900">{row.roll_no}</td>
+                      <td className="p-2.5 font-semibold text-slate-800">{row.full_name}</td>
+                      <td className="p-2.5 font-mono text-slate-600">{row.department}</td>
+                      <td className="p-2.5 font-mono text-slate-600">{row.email}</td>
                       <td className="p-2.5 font-mono">
                         {row.isValid ? (
-                          <span className="text-emerald-400">Ready for database</span>
+                          <span className="text-emerald-700 font-semibold">Ready for database</span>
                         ) : (
-                          <span className="text-rose-400 font-semibold">
+                          <span className="text-rose-700 font-bold">
                             {row.errors.join(", ")}
                           </span>
                         )}
@@ -350,34 +350,34 @@ Duplicate Batch,22IT044,IT,dup@cauvery.edu.in,2026`;
       </div>
 
       {/* Currently Enrolled Students Roster */}
-      <div className="card-obsidian rounded-2xl p-6 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.06] pb-4">
+      <div className="card-luxury rounded-2xl p-6 space-y-4 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
           <div>
-            <h2 className="text-sm font-bold text-white flex items-center gap-2">
-              <Users className="w-4 h-4 text-indigo-400" />
+            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Users className="w-4 h-4 text-indigo-600" />
               Active Enrolled Candidates ({students.length})
             </h2>
-            <p className="text-[11px] text-slate-400 font-mono">
+            <p className="text-xs text-slate-500 font-sans mt-0.5">
               Cauvery Institute of Technology, Thanjavur • 2026 Placement Batch
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2.5">
             <div className="relative">
-              <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5 pointer-events-none" />
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
               <input
                 type="text"
                 placeholder="Search candidate or roll..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 pr-3 py-1.5 text-xs bg-[#141418] border border-white/[0.08] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 w-48 sm:w-56"
+                className="pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 w-48 sm:w-56 shadow-sm"
               />
             </div>
 
             <select
               value={selectedDept}
               onChange={(e) => setSelectedDept(e.target.value)}
-              className="py-1.5 px-3 text-xs bg-[#141418] border border-white/[0.08] rounded-lg text-slate-300 focus:outline-none focus:border-indigo-500 font-mono"
+              className="py-1.5 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono shadow-sm"
             >
               <option value="ALL">All Departments</option>
               <option value="CSE">CSE</option>
@@ -391,7 +391,7 @@ Duplicate Batch,22IT044,IT,dup@cauvery.edu.in,2026`;
 
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
-            <thead className="text-[11px] font-mono uppercase text-slate-500 border-b border-white/[0.06]">
+            <thead className="text-[11px] font-mono uppercase text-slate-500 bg-slate-50/80 border-b border-slate-200">
               <tr>
                 <th className="py-3 px-3">Roll No</th>
                 <th className="py-3 px-3">Candidate Name</th>
@@ -402,43 +402,43 @@ Duplicate Batch,22IT044,IT,dup@cauvery.edu.in,2026`;
                 <th className="py-3 px-3">Tier</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.04]">
+            <tbody className="divide-y divide-slate-100">
               {filteredStudents.map((s) => (
-                <tr key={s.id} className="hover:bg-white/[0.02] transition-colors">
-                  <td className="py-3.5 px-3 font-mono font-semibold text-white">{s.roll_no}</td>
-                  <td className="py-3.5 px-3 font-medium text-white">{s.full_name}</td>
+                <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
+                  <td className="py-3.5 px-3 font-mono font-bold text-slate-900">{s.roll_no}</td>
+                  <td className="py-3.5 px-3 font-semibold text-slate-900">{s.full_name}</td>
                   <td className="py-3.5 px-3">
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.04] text-slate-400 border border-white/[0.06]">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
                       {s.department}
                     </span>
                   </td>
-                  <td className="py-3.5 px-3 font-mono text-slate-400">{s.batch_year}</td>
-                  <td className="py-3.5 px-3 font-mono text-slate-400">{s.email || "-"}</td>
+                  <td className="py-3.5 px-3 font-mono text-slate-600">{s.batch_year}</td>
+                  <td className="py-3.5 px-3 font-mono text-slate-600">{s.email || "-"}</td>
                   <td className="py-3.5 px-3">
                     <div className="flex items-center gap-2 font-mono">
-                      <div className="w-14 bg-white/[0.06] rounded-full h-1.5 overflow-hidden">
+                      <div className="w-16 bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
                         <div
                           className={`h-full rounded-full ${
                             s.readiness_score >= 75
-                              ? "bg-emerald-400"
+                              ? "bg-emerald-500"
                               : s.readiness_score >= 60
-                              ? "bg-amber-400"
-                              : "bg-rose-400"
+                              ? "bg-amber-500"
+                              : "bg-rose-500"
                           }`}
                           style={{ width: `${s.readiness_score}%` }}
                         />
                       </div>
-                      <span className="text-white tabular-nums font-semibold">{s.readiness_score}%</span>
+                      <span className="text-slate-900 tabular-nums font-bold">{s.readiness_score}%</span>
                     </div>
                   </td>
                   <td className="py-3.5 px-3">
                     <span
-                      className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded border ${
+                      className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border shadow-sm ${
                         s.readiness_score >= 75
-                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                           : s.readiness_score >= 60
-                          ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                          : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                          ? "bg-amber-50 text-amber-700 border-amber-200"
+                          : "bg-rose-50 text-rose-700 border-rose-200"
                       }`}
                     >
                       {s.readiness_score >= 75

@@ -24,7 +24,7 @@ export function DemoBanner() {
     if (role === "student") {
       router.push("/student/dashboard");
     } else {
-      router.push("/tpo/dashboard");
+      router.push("/admin/dashboard");
     }
   };
 
@@ -39,23 +39,23 @@ export function DemoBanner() {
   }
 
   return (
-    <div className="bg-slate-900 border-b border-slate-800 text-slate-200 text-xs px-4 py-2 flex flex-wrap items-center justify-between gap-3 shadow-sm">
-      <div className="flex items-center gap-2">
+    <div className="bg-white/95 backdrop-blur-md border-b border-slate-200/90 text-slate-800 text-xs px-5 py-2 flex flex-wrap items-center justify-between gap-3 shadow-xs font-sans z-30">
+      <div className="flex items-center gap-2.5">
         <span className="flex h-2 w-2 relative">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
           <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
         </span>
-        <span className="font-semibold text-white tracking-wide uppercase text-[11px] bg-indigo-900/60 text-indigo-300 px-2 py-0.5 rounded border border-indigo-700/50 flex items-center gap-1">
-          <Sparkles className="w-3 h-3 text-indigo-400" /> Pitch Demo Mode
+        <span className="font-bold text-[11px] tracking-wide uppercase bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full border border-indigo-200 flex items-center gap-1 shadow-xs">
+          <Sparkles className="w-3 h-3 text-indigo-600" /> Pitch Demo Mode
         </span>
-        <span className="hidden sm:inline text-slate-400">|</span>
-        <span className="hidden md:inline text-slate-300 font-medium">
+        <span className="hidden sm:inline text-slate-300">|</span>
+        <span className="hidden md:inline text-slate-600 font-semibold">
           Cauvery Institute of Technology, Thanjavur
         </span>
         {currentUser && (
-          <span className="text-slate-400 hidden lg:inline">
-            • Logged in as:{" "}
-            <strong className="text-white font-medium">
+          <span className="text-slate-500 hidden lg:inline">
+            • Active Profile:{" "}
+            <strong className="text-slate-900 font-bold">
               {currentUser.full_name} ({currentUser.role.toUpperCase()})
             </strong>
           </span>
@@ -65,10 +65,10 @@ export function DemoBanner() {
       <div className="flex items-center gap-2 ml-auto">
         <button
           onClick={() => handleSwitch("student")}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded transition-colors font-medium ${
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-xl transition-all text-xs font-semibold ${
             currentUser?.role === "student"
-              ? "bg-indigo-600 text-white shadow-sm ring-1 ring-indigo-400"
-              : "bg-slate-800 hover:bg-slate-700 text-slate-300"
+              ? "bg-indigo-600 text-white shadow-sm shadow-indigo-500/20 font-bold"
+              : "bg-slate-100 hover:bg-slate-200 text-slate-700"
           }`}
         >
           <GraduationCap className="w-3.5 h-3.5" />
@@ -77,20 +77,20 @@ export function DemoBanner() {
 
         <button
           onClick={() => handleSwitch("tpo")}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded transition-colors font-medium ${
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-xl transition-all text-xs font-semibold ${
             currentUser?.role === "tpo"
-              ? "bg-indigo-600 text-white shadow-sm ring-1 ring-indigo-400"
-              : "bg-slate-800 hover:bg-slate-700 text-slate-300"
+              ? "bg-indigo-600 text-white shadow-sm shadow-indigo-500/20 font-bold"
+              : "bg-slate-100 hover:bg-slate-200 text-slate-700"
           }`}
         >
           <Building2 className="w-3.5 h-3.5" />
-          <span>TPO Admin View</span>
+          <span>Admin / TPO View</span>
         </button>
 
         <button
           onClick={handleReset}
           title="Reset Demo State"
-          className="text-slate-400 hover:text-white p-1 hover:bg-slate-800 rounded transition-colors"
+          className="text-slate-400 hover:text-slate-700 p-1.5 hover:bg-slate-100 rounded-lg transition-colors ml-1"
         >
           <RotateCcw className="w-3.5 h-3.5" />
         </button>

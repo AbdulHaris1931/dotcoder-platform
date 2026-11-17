@@ -98,10 +98,10 @@ export default function ProctoredExamRoomPage() {
   useEffect(() => {
     if (isSubmitted || timeLeftSeconds <= 0) return;
 
-    const timer = setInterval(() => {
+    const interval = setInterval(() => {
       setTimeLeftSeconds((prev) => {
         if (prev <= 1) {
-          clearInterval(timer);
+          clearInterval(interval);
           handleFinalSubmit(true);
           return 0;
         }
@@ -109,36 +109,28 @@ export default function ProctoredExamRoomPage() {
       });
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => clearInterval(interval);
   }, [isSubmitted, timeLeftSeconds]);
 
-  // 3. Anti-Cheating Listeners: Blur, VisibilityChange, Fullscreen
+  // 3. Anti-Cheating: Fullscreen & Tab Focus Monitor
   useEffect(() => {
     if (isSubmitted) return;
 
-    const handleViolation = (type: "tab_switch" | "fullscreen_exit" | "blur", details: string) => {
-      const timestamp = new Date().toLocaleTimeString();
-      setTabSwitches((prev) => prev + 1);
-      setViolationLogs((prev) => [...prev, { timestamp, type, details }]);
-      setCurrentViolationMsg(details);
-      setShowViolationModal(true);
-    };
-
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        handleViolation("tab_switch", "Tab switch detected! Leaving the assessment tab is strictly recorded.");
+        logViolation("Tab switch or browser minimization detected.", "tab_switch");
       }
     };
 
     const handleWindowBlur = () => {
-      handleViolation("blur", "Window focus lost! Focus shifted to another browser window or desktop app.");
+      logViolation("Window focus lost (possible second monitor or split screen).", "blur");
     };
 
     const handleFullscreenChange = () => {
-      const inFull = Boolean(document.fullscreenElement);
-      setIsFullscreen(inFull);
-      if (!inFull) {
-        handleViolation("fullscreen_exit", "Fullscreen mode exited. Assessments must remain in fullscreen.");
+      const isCurrentlyFullscreen = !!document.fullscreenElement;
+      setIsFullscreen(isCurrentlyFullscreen);
+      if (!isCurrentlyFullscreen && !isSubmitted) {
+        logViolation("Exited locked-down fullscreen exam mode.", "fullscreen_exit");
       }
     };
 
@@ -151,11 +143,28 @@ export default function ProctoredExamRoomPage() {
       window.removeEventListener("blur", handleWindowBlur);
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
-  }, [isSubmitted]);
+  }, [isSubmitted, tabSwitches]);
+
+  const logViolation = (message: string, type: "tab_switch" | "fullscreen_exit" | "blur" = "tab_switch") => {
+    const newCount = tabSwitches + 1;
+    setTabSwitches(newCount);
+    setCurrentViolationMsg(message);
+    setShowViolationModal(true);
+
+    const log: ProctorViolationLog = {
+      timestamp: new Date().toLocaleTimeString(),
+      type,
+      details: message,
+    };
+    setViolationLogs((prev) => [log, ...prev]);
+  };
 
   const triggerFullscreen = () => {
-    if (document.documentElement.requestFullscreen) {
-      document.documentElement.requestFullscreen().catch(() => {});
+    if (examContainerRef.current) {
+      examContainerRef.current
+        .requestFullscreen?.()
+        .then(() => setIsFullscreen(true))
+        .catch(() => {});
     }
   };
 
@@ -163,7 +172,7 @@ export default function ProctoredExamRoomPage() {
     e.preventDefault();
   };
 
-  const currentProblem: Problem | undefined = assessment?.problems?.[currentIndex];
+  const currentProblem = assessment?.problems?.[currentIndex];
 
   const handleSelectOption = (option: string) => {
     if (!currentProblem) return;
@@ -196,7 +205,6 @@ export default function ProctoredExamRoomPage() {
       [currentProblem.id]: {
         ...prev[currentProblem.id],
         isMarkedReview: !prev[currentProblem.id]?.isMarkedReview,
-        visited: true,
       },
     }));
   };
@@ -290,7 +298,7 @@ export default function ProctoredExamRoomPage() {
 
   if (!assessment || !currentProblem) {
     return (
-      <div className="h-screen flex items-center justify-center bg-[#09090B] text-slate-500 font-mono text-xs">
+      <div className="h-screen flex items-center justify-center bg-[#F8FAFC] text-slate-500 font-mono text-xs">
         Initializing proctored assessment suite...
       </div>
     );
@@ -299,39 +307,39 @@ export default function ProctoredExamRoomPage() {
   // Submitted Completion Screen
   if (isSubmitted) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center p-6 bg-[#09090B] text-slate-100 font-sans">
-        <div className="card-obsidian max-w-md w-full rounded-2xl p-8 text-center space-y-6 shadow-2xl border-white/[0.1]">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center mx-auto shadow-[0_0_24px_-4px_rgba(16,185,129,0.3)]">
+      <div className="h-screen w-screen flex items-center justify-center p-6 bg-[#F8FAFC] text-slate-900 font-sans">
+        <div className="card-luxury max-w-md w-full rounded-3xl p-8 text-center space-y-6 shadow-2xl border border-slate-200/90 bg-white">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto shadow-sm">
             <CheckCircle2 className="w-8 h-8" />
           </div>
 
           <div>
-            <h2 className="text-xl font-bold text-white">Assessment Submitted</h2>
-            <p className="text-xs text-slate-400 mt-1">
+            <h2 className="text-2xl font-extrabold text-slate-900">Assessment Submitted</h2>
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
               Your test responses and anti-cheat telemetry have been securely transferred to the college placement cell.
             </p>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#0C0C0E] border border-white/[0.06] space-y-2 text-xs font-mono">
-            <div className="flex justify-between text-slate-400">
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs font-mono">
+            <div className="flex justify-between text-slate-600">
               <span>Candidate:</span>
-              <strong className="text-white">{currentUser?.full_name} ({currentUser?.roll_no})</strong>
+              <strong className="text-slate-900">{currentUser?.full_name} ({currentUser?.roll_no})</strong>
             </div>
-            <div className="flex justify-between text-slate-400">
+            <div className="flex justify-between text-slate-600">
               <span>Audit Violations:</span>
-              <span className={`font-bold ${tabSwitches > 0 ? "text-rose-400" : "text-emerald-400"}`}>
+              <span className={`font-bold ${tabSwitches > 0 ? "text-rose-600" : "text-emerald-600"}`}>
                 {tabSwitches} Logged
               </span>
             </div>
-            <div className="flex justify-between text-slate-400">
+            <div className="flex justify-between text-slate-600">
               <span>Institution:</span>
-              <span className="text-white">Cauvery Institute of Technology</span>
+              <span className="text-slate-900">Cauvery Institute of Technology</span>
             </div>
           </div>
 
           <button
             onClick={() => router.push("/student/dashboard")}
-            className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all shadow-[0_0_20px_-3px_rgba(99,102,241,0.4)]"
+            className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-500/20 active:scale-[0.98]"
           >
             Return to Student Workspace
           </button>
@@ -347,9 +355,9 @@ export default function ProctoredExamRoomPage() {
       onCut={handleSecurityBlock}
       onPaste={handleSecurityBlock}
       onContextMenu={handleSecurityBlock}
-      className="h-screen w-screen select-none bg-[#09090B] text-slate-100 overflow-hidden font-sans flex flex-col"
+      className="h-screen w-screen select-none bg-[#F8FAFC] text-slate-900 overflow-hidden font-sans flex flex-col"
     >
-      {/* Authoritative Red Alert Modal for Proctoring Violations */}
+      {/* Red Alert Modal for Proctoring Violations */}
       <AnimatePresence>
         {showViolationModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -357,33 +365,33 @@ export default function ProctoredExamRoomPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-md bg-[#160B0D] border-2 border-rose-500/80 rounded-2xl p-6 text-white space-y-4 shadow-[0_0_48px_-12px_rgba(244,63,94,0.6)]"
+              className="relative w-full max-w-md bg-white border-2 border-rose-500 rounded-3xl p-6 text-slate-900 space-y-4 shadow-2xl"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center flex-shrink-0 border border-rose-500/30">
+                <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center flex-shrink-0 border border-rose-200">
                   <ShieldAlert className="w-6 h-6 animate-pulse" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-extrabold uppercase tracking-wide text-rose-300">
+                  <h3 className="text-sm font-extrabold uppercase tracking-wide text-rose-700">
                     Proctoring Violation Flagged!
                   </h3>
-                  <div className="text-[11px] text-rose-400 font-mono">
+                  <div className="text-[11px] text-rose-600 font-mono">
                     Violation {tabSwitches} logged to Placement Cell
                   </div>
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-800/60 text-xs text-rose-200 leading-relaxed font-mono">
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 leading-relaxed font-mono">
                 {currentViolationMsg}
               </div>
 
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-500 leading-relaxed">
                 All tab switching, fullscreen escapes, and clipboard attempts are permanently timestamped and attached to your placement audit score.
               </p>
 
@@ -392,7 +400,7 @@ export default function ProctoredExamRoomPage() {
                   setShowViolationModal(false);
                   triggerFullscreen();
                 }}
-                className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all"
+                className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl shadow-md shadow-rose-600/20 transition-all active:scale-[0.98]"
               >
                 Return to Fullscreen Exam
               </button>
@@ -402,16 +410,16 @@ export default function ProctoredExamRoomPage() {
       </AnimatePresence>
 
       {/* Top Lockdown Header */}
-      <header className="h-12 border-b border-white/[0.08] bg-[#0C0C0E] px-4 sm:px-6 flex items-center justify-between gap-4 z-20 flex-shrink-0">
+      <header className="h-14 border-b border-slate-200/90 bg-white/95 backdrop-blur-md px-6 flex items-center justify-between gap-4 z-20 flex-shrink-0 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-lg bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold">
+          <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center font-bold shadow-sm">
             <ShieldCheck className="w-4 h-4" />
           </div>
           <div>
-            <h1 className="text-xs font-bold text-white truncate max-w-xs sm:max-w-md">
+            <h1 className="text-xs font-bold text-slate-900 truncate max-w-xs sm:max-w-md">
               {assessment.title}
             </h1>
-            <div className="text-[10px] text-slate-400 font-mono">
+            <div className="text-[10px] text-slate-500 font-mono">
               Roll: {currentUser?.roll_no} • {currentUser?.department}
             </div>
           </div>
@@ -419,26 +427,26 @@ export default function ProctoredExamRoomPage() {
 
         {/* Status Indicator, Tabular Countdown Timer & Submit CTA */}
         <div className="flex items-center gap-3">
-          <span className="hidden sm:inline-flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Proctoring Active • Fullscreen
+          <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full font-semibold shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            Proctoring Active • Locked
           </span>
 
           {tabSwitches > 0 && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded">
-              <AlertTriangle className="w-3 h-3 text-rose-400" />
+            <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-lg">
+              <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
               {tabSwitches} Flags
             </span>
           )}
 
           {/* Tabular Countdown Timer */}
           <div
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-mono font-bold text-xs border tabular-nums transition-colors ${
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl font-mono font-bold text-xs border tabular-nums shadow-sm transition-colors ${
               timeLeftSeconds < 60
-                ? "bg-rose-500/20 text-rose-300 border-rose-500/50 animate-pulse shadow-[0_0_12px_rgba(244,63,94,0.4)]"
+                ? "bg-rose-50 text-rose-700 border-rose-300 animate-pulse shadow-rose-500/20"
                 : timeLeftSeconds < 300
-                ? "bg-amber-500/20 text-amber-300 border-amber-500/50 animate-pulse"
-                : "bg-[#18181C] text-white border-white/[0.08]"
+                ? "bg-amber-50 text-amber-700 border-amber-300 animate-pulse"
+                : "bg-slate-50 text-slate-800 border-slate-200"
             }`}
           >
             <Clock className="w-3.5 h-3.5" />
@@ -447,7 +455,7 @@ export default function ProctoredExamRoomPage() {
 
           <button
             onClick={() => handleFinalSubmit(false)}
-            className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-[0_0_16px_-2px_rgba(16,185,129,0.4)] transition-all flex items-center gap-1.5"
+            className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center gap-1.5 active:scale-[0.98]"
           >
             <Send className="w-3 h-3" />
             <span>Finish & Submit</span>
@@ -457,20 +465,20 @@ export default function ProctoredExamRoomPage() {
 
       {/* Main Body */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left 260px Question Matrix Palette */}
-        <aside className="w-[260px] border-r border-white/[0.08] bg-[#0C0C0E] p-4 flex flex-col justify-between overflow-y-auto flex-shrink-0">
+        {/* Left 270px Question Matrix Palette */}
+        <aside className="w-[270px] border-r border-slate-200/90 bg-white p-5 flex flex-col justify-between overflow-y-auto flex-shrink-0 shadow-sm">
           <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+              <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-slate-500">
                 Question Matrix
               </span>
-              <span className="text-[11px] font-mono text-slate-500">
+              <span className="text-xs font-mono font-bold text-slate-700">
                 {currentIndex + 1}/{assessment.problems?.length}
               </span>
             </div>
 
             {/* Status Legend */}
-            <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-400 font-mono">
+            <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-600 font-mono">
               <span className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded bg-emerald-500" /> Answered
               </span>
@@ -478,10 +486,10 @@ export default function ProctoredExamRoomPage() {
                 <span className="w-2.5 h-2.5 rounded bg-amber-500" /> Review
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded bg-indigo-500 ring-2 ring-white" /> Current
+                <span className="w-2.5 h-2.5 rounded bg-indigo-600 ring-2 ring-indigo-200" /> Current
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded bg-[#18181C] border border-white/[0.08]" /> Unvisited
+                <span className="w-2.5 h-2.5 rounded bg-slate-100 border border-slate-200" /> Unvisited
               </span>
             </div>
 
@@ -489,20 +497,20 @@ export default function ProctoredExamRoomPage() {
             <div className="grid grid-cols-5 gap-2 pt-2">
               {assessment.problems?.map((p, idx) => {
                 const status = getQuestionStatus(p, idx);
-                let btnStyle = "bg-[#141418] text-slate-400 hover:bg-[#1c1c22] border border-white/[0.06]";
+                let btnStyle = "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200";
                 if (status === "current") {
-                  btnStyle = "bg-indigo-600 text-white font-bold ring-2 ring-indigo-400 border-indigo-400";
+                  btnStyle = "bg-indigo-600 text-white font-bold ring-2 ring-indigo-200 border-indigo-600 shadow-sm";
                 } else if (status === "marked_review") {
-                  btnStyle = "bg-amber-600 text-white font-bold border-amber-500";
+                  btnStyle = "bg-amber-500 text-white font-bold border-amber-500 shadow-sm";
                 } else if (status === "answered") {
-                  btnStyle = "bg-emerald-600 text-white font-bold border-emerald-500";
+                  btnStyle = "bg-emerald-600 text-white font-bold border-emerald-600 shadow-sm";
                 }
 
                 return (
                   <button
                     key={p.id}
                     onClick={() => navigateTo(idx)}
-                    className={`h-9 rounded-lg text-xs transition-all flex items-center justify-center font-mono ${btnStyle}`}
+                    className={`h-9 rounded-xl text-xs transition-all flex items-center justify-center font-mono font-semibold ${btnStyle}`}
                   >
                     {idx + 1}
                   </button>
@@ -512,46 +520,46 @@ export default function ProctoredExamRoomPage() {
           </div>
 
           {/* Security Notice Box */}
-          <div className="p-3 rounded-xl bg-[#09090B] border border-white/[0.06] space-y-1.5 mt-4 text-[10px] text-slate-400 font-mono">
-            <div className="flex items-center gap-1.5 text-white font-semibold">
-              <Lock className="w-3 h-3 text-indigo-400" />
-              <span>Anti-Cheat Guard</span>
+          <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-100 space-y-1 mt-4 text-[11px] text-indigo-900 font-sans">
+            <div className="flex items-center gap-1.5 font-bold">
+              <Lock className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Anti-Cheat Active</span>
             </div>
-            <p className="leading-tight">
+            <p className="text-indigo-700/80 leading-relaxed text-[10px]">
               Right-click, copy-paste, and tab switches are intercepted and logged in real-time.
             </p>
           </div>
         </aside>
 
         {/* Right Active Question Workspace */}
-        <main className="flex-1 flex flex-col bg-[#09090B] overflow-hidden">
+        <main className="flex-1 flex flex-col bg-[#F8FAFC] overflow-hidden">
           {/* Subheader: Question Category & Mark for Review */}
-          <div className="h-10 border-b border-white/[0.08] bg-[#0E0E12] px-6 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-white text-xs">
+          <div className="h-11 border-b border-slate-200 bg-white px-6 flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2.5">
+              <span className="font-bold text-slate-900 text-xs">
                 Question {currentIndex + 1} of {assessment.problems?.length}
               </span>
-              <span className="text-[9px] font-mono uppercase font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+              <span className="text-[10px] font-mono uppercase font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
                 {currentProblem.type === "mcq" ? "Aptitude MCQ" : "Coding Challenge"}
               </span>
             </div>
 
             <button
               onClick={toggleMarkReview}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold transition-colors ${
                 answers[currentProblem.id]?.isMarkedReview
-                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                  : "bg-white/[0.04] text-slate-400 hover:text-white border border-white/[0.06]"
+                  ? "bg-amber-50 text-amber-700 border border-amber-300"
+                  : "bg-slate-50 text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-100"
               }`}
             >
               <Bookmark className="w-3.5 h-3.5" />
-              <span>{answers[currentProblem.id]?.isMarkedReview ? "Marked" : "Mark Review"}</span>
+              <span>{answers[currentProblem.id]?.isMarkedReview ? "Marked for Review" : "Mark Review"}</span>
             </button>
           </div>
 
           {/* Question Body */}
-          <div className="flex-1 p-6 overflow-y-auto space-y-6">
-            <div className="prose prose-invert max-w-none text-xs sm:text-sm text-slate-200">
+          <div className="flex-1 p-8 overflow-y-auto space-y-6">
+            <div className="card-luxury rounded-2xl p-6 bg-white border border-slate-200/90 shadow-sm leading-relaxed text-slate-800 text-sm">
               <div className="whitespace-pre-line font-medium leading-relaxed font-sans">
                 {currentProblem.description_md}
               </div>
@@ -559,36 +567,36 @@ export default function ProctoredExamRoomPage() {
 
             {/* MCQ Options */}
             {currentProblem.type === "mcq" && currentProblem.mcq_options_json && (
-              <div className="space-y-3 pt-4">
-                <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
+              <div className="space-y-3 pt-2">
+                <div className="text-[11px] font-mono uppercase tracking-wider font-bold text-slate-500">
                   Select Correct Option:
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {currentProblem.mcq_options_json.map((option, optIdx) => {
                     const isSelected = answers[currentProblem.id]?.selectedOption === option;
                     return (
                       <button
                         key={optIdx}
                         onClick={() => handleSelectOption(option)}
-                        className={`w-full text-left p-3.5 rounded-xl border text-xs sm:text-sm transition-all flex items-center justify-between ${
+                        className={`w-full text-left p-4 rounded-2xl border text-sm transition-all flex items-center justify-between shadow-sm ${
                           isSelected
-                            ? "bg-indigo-950/40 border-indigo-500 text-white shadow-md ring-1 ring-indigo-400"
-                            : "bg-[#111114] border-white/[0.06] text-slate-300 hover:border-white/[0.14] hover:bg-[#16161B]"
+                            ? "bg-indigo-50/80 border-indigo-500 text-indigo-950 font-semibold ring-1 ring-indigo-500"
+                            : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
                         }`}
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3.5">
                           <span
-                            className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold text-xs font-mono ${
+                            className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs font-mono transition-all ${
                               isSelected
-                                ? "bg-indigo-600 text-white"
-                                : "bg-white/[0.04] text-slate-400"
+                                ? "bg-indigo-600 text-white shadow-sm"
+                                : "bg-slate-100 text-slate-600 border border-slate-200"
                             }`}
                           >
                             {String.fromCharCode(65 + optIdx)}
                           </span>
                           <span>{option}</span>
                         </div>
-                        {isSelected && <CheckCircle2 className="w-4 h-4 text-indigo-400" />}
+                        {isSelected && <CheckCircle2 className="w-5 h-5 text-indigo-600" />}
                       </button>
                     );
                   })}
@@ -598,24 +606,24 @@ export default function ProctoredExamRoomPage() {
 
             {/* Embedded Coding IDE in Exam */}
             {currentProblem.type === "coding" && (
-              <div className="space-y-3 pt-4 border-t border-white/[0.06]">
+              <div className="space-y-3 pt-4 border-t border-slate-200">
                 <div className="flex items-center justify-between">
-                  <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                    <Code2 className="w-3.5 h-3.5 text-indigo-400" />
+                  <div className="text-[11px] font-mono uppercase tracking-wider font-bold text-slate-600 flex items-center gap-1.5">
+                    <Code2 className="w-3.5 h-3.5 text-indigo-600" />
                     <span>Embedded Solution Editor (Python 3)</span>
                   </div>
 
                   <button
                     onClick={handleTestExamCode}
                     disabled={isTestingCode}
-                    className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#18181C] hover:bg-[#202028] text-white text-xs font-semibold border border-white/[0.08] transition-colors disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold border border-slate-200 shadow-sm transition-colors disabled:opacity-50"
                   >
-                    <Play className="w-3.5 h-3.5 text-emerald-400" />
+                    <Play className="w-3.5 h-3.5 text-emerald-600" />
                     <span>{isTestingCode ? "Evaluating..." : "Run Sample Case"}</span>
                   </button>
                 </div>
 
-                <div className="h-64 border border-white/[0.08] rounded-xl overflow-hidden bg-[#0D0D10]">
+                <div className="h-64 border border-slate-800 rounded-2xl overflow-hidden bg-slate-900 shadow-md">
                   <Editor
                     height="100%"
                     language="python"
@@ -632,10 +640,10 @@ export default function ProctoredExamRoomPage() {
 
                 {testOutput && (
                   <div
-                    className={`p-3 rounded-lg text-xs font-mono border ${
+                    className={`p-3.5 rounded-xl text-xs font-mono border shadow-sm ${
                       testOutput.startsWith("PASS")
-                        ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
-                        : "bg-rose-500/10 text-rose-300 border-rose-500/20"
+                        ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                        : "bg-rose-50 text-rose-800 border-rose-200"
                     }`}
                   >
                     {testOutput}
@@ -646,24 +654,24 @@ export default function ProctoredExamRoomPage() {
           </div>
 
           {/* Bottom Step Navigation Bar */}
-          <footer className="h-12 border-t border-white/[0.08] bg-[#0C0C0E] px-6 flex items-center justify-between text-xs font-mono">
+          <footer className="h-14 border-t border-slate-200/90 bg-white px-6 flex items-center justify-between text-xs font-mono shadow-sm">
             <button
               onClick={() => navigateTo(Math.max(0, currentIndex - 1))}
               disabled={currentIndex === 0}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] text-slate-300 hover:text-white disabled:opacity-30 transition-colors"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 disabled:opacity-30 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
               <span>Previous</span>
             </button>
 
-            <span className="text-slate-500 text-[11px]">
+            <span className="text-slate-500 text-xs font-semibold">
               Question {currentIndex + 1} of {assessment.problems?.length}
             </span>
 
             {currentIndex < (assessment.problems?.length || 1) - 1 ? (
               <button
                 onClick={() => navigateTo(currentIndex + 1)}
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-sm"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-md shadow-indigo-500/20 active:scale-[0.98]"
               >
                 <span>Save & Next</span>
                 <ChevronRight className="w-4 h-4" />
@@ -671,7 +679,7 @@ export default function ProctoredExamRoomPage() {
             ) : (
               <button
                 onClick={() => handleFinalSubmit(false)}
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-all shadow-[0_0_16px_rgba(16,185,129,0.4)]"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-all shadow-md shadow-emerald-600/20 active:scale-[0.98]"
               >
                 <span>Submit Final Exam</span>
                 <CheckCircle2 className="w-4 h-4" />

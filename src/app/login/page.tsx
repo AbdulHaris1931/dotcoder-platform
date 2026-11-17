@@ -96,7 +96,6 @@ function AuthContent() {
         if (error) throw error;
 
         if (data.user) {
-          // Check role in profiles
           const { data: profile } = await supabase
             .from("profiles")
             .select("role")
@@ -117,10 +116,11 @@ function AuthContent() {
       }
     }
 
-    // Fallback in demo mode
+    // Demo Mode Sign In Fallback
     setTimeout(() => {
       setLoading(false);
-      if (email.toLowerCase().includes("admin") || email.toLowerCase().includes("tpo")) {
+      const isCandidateAdmin = email.toLowerCase().includes("admin") || email.toLowerCase().includes("tpo");
+      if (isCandidateAdmin) {
         DemoStore.switchRole("tpo");
         router.push("/admin/dashboard");
       } else {
@@ -135,13 +135,12 @@ function AuthContent() {
     e.preventDefault();
     setLoading(true);
     setErrorMsg(null);
-    setSuccessMsg(null);
 
     const effectiveCollege =
       signupRole === "admin"
-        ? institutionName || "Independent Academy"
+        ? institutionName || "Cauvery Institute of Technology, Thanjavur"
         : isCustomCollege
-        ? customCollege || "Independent / General"
+        ? customCollege || "State Technical University"
         : collegeName;
 
     const supabase = createClient();
@@ -155,28 +154,26 @@ function AuthContent() {
               full_name: fullName,
               role: signupRole,
               college_name: effectiveCollege,
-              roll_no: signupRole === "student" ? rollNo || `ROLL-${Date.now().toString().slice(-4)}` : "ADMIN-01",
-              department: signupRole === "student" ? department : "Administration",
-              batch_year: batchYear,
+              roll_no: rollNo || "22CS001",
+              department: department || "CSE",
+              batch_year: batchYear || 2026,
             },
           },
         });
 
         if (error) throw error;
 
-        if (data.user) {
-          setSuccessMsg("Account created successfully! Redirecting to workspace...");
-          setTimeout(() => {
-            if (signupRole === "admin") {
-              router.push("/admin/dashboard");
-            } else {
-              router.push("/student/dashboard");
-            }
-          }, 800);
-          return;
-        }
+        setSuccessMsg("Account successfully provisioned! Redirecting to workspace...");
+        setTimeout(() => {
+          if (signupRole === "admin") {
+            router.push("/admin/dashboard");
+          } else {
+            router.push("/student/dashboard");
+          }
+        }, 800);
+        return;
       } catch (err: any) {
-        setErrorMsg(err.message || "Failed to create account.");
+        setErrorMsg(err.message || "Registration encountered an error. Please try again.");
         setLoading(false);
         return;
       }
@@ -208,40 +205,40 @@ function AuthContent() {
   };
 
   return (
-    <div className="min-h-screen w-full grid lg:grid-cols-12 bg-[#09090B] text-slate-100 overflow-hidden font-sans">
+    <div className="min-h-screen w-full grid lg:grid-cols-12 bg-[#F8FAFC] text-slate-900 overflow-hidden font-sans">
       {/* Left Column: Form & Persona Switching (5 cols) */}
-      <div className="lg:col-span-5 flex flex-col justify-between p-6 sm:p-10 border-r border-white/[0.08] relative z-10 bg-[#0C0C0E]/95 backdrop-blur-xl overflow-y-auto max-h-screen">
+      <div className="lg:col-span-5 flex flex-col justify-between p-6 sm:p-10 border-r border-slate-200/90 relative z-10 bg-white/95 backdrop-blur-xl overflow-y-auto max-h-screen">
         {/* Top Brand Header */}
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-[0_0_24px_-2px_rgba(99,102,241,0.6)]">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-100">
               <Code2 className="w-5 h-5" />
             </div>
             <div>
-              <span className="font-extrabold text-base tracking-tight text-white flex items-center gap-1.5">
+              <span className="font-extrabold text-base tracking-tight text-slate-900 flex items-center gap-1.5">
                 DotCoder
-                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold border border-indigo-200">
                   Open SaaS
                 </span>
               </span>
-              <p className="text-[11px] text-slate-400 font-mono">
+              <p className="text-[11px] text-slate-500 font-medium">
                 Self-Serve Campus Placement & Assessment Platform
               </p>
             </div>
           </div>
 
-          {/* Mode Switcher Tabs: Sign In vs Create Account */}
-          <div className="grid grid-cols-2 p-1 bg-[#141418] border border-white/[0.08] rounded-xl text-xs font-semibold">
+          {/* Mode Switcher Tabs */}
+          <div className="grid grid-cols-2 p-1 bg-slate-100 border border-slate-200 rounded-2xl text-xs font-semibold">
             <button
               type="button"
               onClick={() => {
                 setAuthMode("signin");
                 setErrorMsg(null);
               }}
-              className={`py-2 rounded-lg transition-all ${
+              className={`py-2 rounded-xl transition-all ${
                 authMode === "signin"
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "text-slate-400 hover:text-white"
+                  ? "bg-white text-indigo-700 font-bold shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               Sign In
@@ -252,10 +249,10 @@ function AuthContent() {
                 setAuthMode("signup");
                 setErrorMsg(null);
               }}
-              className={`py-2 rounded-lg transition-all ${
+              className={`py-2 rounded-xl transition-all ${
                 authMode === "signup"
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "text-slate-400 hover:text-white"
+                  ? "bg-white text-indigo-700 font-bold shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               Create Account
@@ -266,52 +263,52 @@ function AuthContent() {
         {/* Form Container */}
         <div className="my-6 space-y-4">
           {errorMsg && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs font-mono text-rose-300 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs font-mono text-rose-700 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           {successMsg && (
-            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs font-mono text-emerald-300 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+            <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs font-mono text-emerald-800 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
               <span>{successMsg}</span>
             </div>
           )}
 
           {/* TAB 1: SIGN IN */}
           {authMode === "signin" && (
-            <form onSubmit={handleSignIn} className="space-y-3.5">
+            <form onSubmit={handleSignIn} className="space-y-4">
               <div className="space-y-1">
-                <label className="text-[11px] font-mono uppercase text-slate-400">
+                <label className="text-[11px] font-mono uppercase text-slate-500 font-bold">
                   Email Address
                 </label>
                 <div className="relative">
-                  <Mail className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-3 pointer-events-none" />
+                  <Mail className="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
                   <input
                     type="email"
                     required
                     placeholder="student@college.edu or admin@college.edu"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-8 pr-3 py-2 bg-[#111114] border border-white/[0.08] rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                    className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white transition-colors"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-mono uppercase text-slate-400">
+                <label className="text-[11px] font-mono uppercase text-slate-500 font-bold">
                   Password
                 </label>
                 <div className="relative">
-                  <Lock className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-3 pointer-events-none" />
+                  <Lock className="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
                   <input
                     type="password"
                     required
                     placeholder="••••••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-8 pr-3 py-2 bg-[#111114] border border-white/[0.08] rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                    className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white transition-colors"
                   />
                 </div>
               </div>
@@ -319,7 +316,7 @@ function AuthContent() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all shadow-[0_0_20px_-3px_rgba(99,102,241,0.5)] flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-3 px-4 btn-luxury-primary text-white rounded-2xl text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95"
               >
                 <span>{loading ? "Authenticating..." : "Sign In to Workspace"}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -327,65 +324,65 @@ function AuthContent() {
             </form>
           )}
 
-          {/* TAB 2: CREATE ACCOUNT (Self-Serve Open Signup) */}
+          {/* TAB 2: CREATE ACCOUNT */}
           {authMode === "signup" && (
-            <form onSubmit={handleSignUp} className="space-y-3.5">
-              {/* Role Toggle: Student vs Admin */}
+            <form onSubmit={handleSignUp} className="space-y-4">
+              {/* Role Toggle */}
               <div className="space-y-1">
-                <label className="text-[10px] font-mono uppercase text-slate-400">
+                <label className="text-[10px] font-mono uppercase text-slate-500 font-bold">
                   Account Type
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setSignupRole("student")}
-                    className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold border transition-all ${
+                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-semibold border transition-all ${
                       signupRole === "student"
-                        ? "bg-indigo-600/20 border-indigo-500 text-white shadow-sm"
-                        : "bg-[#111114] border-white/[0.06] text-slate-400 hover:text-white"
+                        ? "bg-indigo-50 border-indigo-300 text-indigo-700 shadow-xs font-bold"
+                        : "bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900"
                     }`}
                   >
-                    <GraduationCap className="w-3.5 h-3.5 text-indigo-400" />
+                    <GraduationCap className="w-4 h-4 text-indigo-600" />
                     <span>I am a Student</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setSignupRole("admin")}
-                    className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold border transition-all ${
+                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-semibold border transition-all ${
                       signupRole === "admin"
-                        ? "bg-indigo-600/20 border-indigo-500 text-white shadow-sm"
-                        : "bg-[#111114] border-white/[0.06] text-slate-400 hover:text-white"
+                        ? "bg-indigo-50 border-indigo-300 text-indigo-700 shadow-xs font-bold"
+                        : "bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900"
                     }`}
                   >
-                    <Building2 className="w-3.5 h-3.5 text-amber-400" />
-                    <span>I am College Admin</span>
+                    <Building2 className="w-4 h-4 text-amber-500" />
+                    <span>College Admin</span>
                   </button>
                 </div>
               </div>
 
-              {/* Common: Full Name */}
+              {/* Full Name */}
               <div className="space-y-1">
-                <label className="text-[10px] font-mono uppercase text-slate-400">
+                <label className="text-[10px] font-mono uppercase text-slate-500 font-bold">
                   Full Name
                 </label>
                 <div className="relative">
-                  <User className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-3 pointer-events-none" />
+                  <User className="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
                   <input
                     type="text"
                     required
                     placeholder="e.g. Adithya K. Sundaram"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full pl-8 pr-3 py-2 bg-[#111114] border border-white/[0.08] rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                    className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white"
                   />
                 </div>
               </div>
 
-              {/* Common: Email & Password */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {/* Email & Password */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-mono uppercase text-slate-400">
+                  <label className="text-[10px] font-mono uppercase text-slate-500 font-bold">
                     {signupRole === "admin" ? "Official Work Email" : "Email Address"}
                   </label>
                   <input
@@ -394,12 +391,12 @@ function AuthContent() {
                     placeholder="name@institution.edu"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#111114] border border-white/[0.08] rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-mono uppercase text-slate-400">
+                  <label className="text-[10px] font-mono uppercase text-slate-500 font-bold">
                     Password
                   </label>
                   <input
@@ -408,23 +405,23 @@ function AuthContent() {
                     placeholder="Min. 6 chars"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#111114] border border-white/[0.08] rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white"
                   />
                 </div>
               </div>
 
-              {/* STUDENT FIELDS: College Picker, Roll No, Dept, Year */}
+              {/* Student Fields */}
               {signupRole === "student" && (
                 <>
                   <div className="space-y-1 relative">
                     <div className="flex items-center justify-between">
-                      <label className="text-[10px] font-mono uppercase text-slate-400">
+                      <label className="text-[10px] font-mono uppercase text-slate-500 font-bold">
                         College / Institution
                       </label>
                       <button
                         type="button"
                         onClick={() => setIsCustomCollege(!isCustomCollege)}
-                        className="text-[10px] text-indigo-400 hover:text-indigo-300 font-mono"
+                        className="text-[10px] text-indigo-600 hover:text-indigo-700 font-mono font-bold"
                       >
                         {isCustomCollege ? "Pick from list" : "Other / Type Custom"}
                       </button>
@@ -436,7 +433,7 @@ function AuthContent() {
                         placeholder="Type your college name..."
                         value={customCollege}
                         onChange={(e) => setCustomCollege(e.target.value)}
-                        className="w-full px-3 py-2 bg-[#111114] border border-white/[0.08] rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                        className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white"
                       />
                     ) : (
                       <div className="relative">
@@ -450,10 +447,10 @@ function AuthContent() {
                             setCollegeSearch(e.target.value);
                             setShowCollegeDropdown(true);
                           }}
-                          className="w-full px-3 py-2 bg-[#111114] border border-white/[0.08] rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                          className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white"
                         />
                         {showCollegeDropdown && (
-                          <div className="absolute left-0 right-0 top-full mt-1 bg-[#141418] border border-white/[0.1] rounded-xl shadow-2xl max-h-48 overflow-y-auto z-50 divide-y divide-white/[0.04]">
+                          <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-48 overflow-y-auto z-50 divide-y divide-slate-100">
                             {filteredColleges.map((c) => (
                               <button
                                 key={c}
@@ -462,7 +459,7 @@ function AuthContent() {
                                   setCollegeName(c);
                                   setShowCollegeDropdown(false);
                                 }}
-                                className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-indigo-600 hover:text-white transition-colors"
+                                className="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors font-medium"
                               >
                                 {c}
                               </button>
@@ -475,7 +472,7 @@ function AuthContent() {
 
                   <div className="grid grid-cols-3 gap-2">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-mono uppercase text-slate-400">
+                      <label className="text-[10px] font-mono uppercase text-slate-500 font-bold">
                         Roll Number
                       </label>
                       <input
@@ -483,18 +480,18 @@ function AuthContent() {
                         placeholder="e.g. 22CS001"
                         value={rollNo}
                         onChange={(e) => setRollNo(e.target.value)}
-                        className="w-full px-3 py-2 bg-[#111114] border border-white/[0.08] rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white font-mono"
                       />
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[10px] font-mono uppercase text-slate-400">
+                      <label className="text-[10px] font-mono uppercase text-slate-500 font-bold">
                         Department
                       </label>
                       <select
                         value={department}
                         onChange={(e) => setDepartment(e.target.value)}
-                        className="w-full px-2 py-2 bg-[#111114] border border-white/[0.08] rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                        className="w-full px-2 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-indigo-500 font-mono"
                       >
                         <option value="CSE">CSE</option>
                         <option value="IT">IT</option>
@@ -506,13 +503,13 @@ function AuthContent() {
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[10px] font-mono uppercase text-slate-400">
+                      <label className="text-[10px] font-mono uppercase text-slate-500 font-bold">
                         Batch
                       </label>
                       <select
                         value={batchYear}
                         onChange={(e) => setBatchYear(Number(e.target.value))}
-                        className="w-full px-2 py-2 bg-[#111114] border border-white/[0.08] rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                        className="w-full px-2 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-indigo-500 font-mono"
                       >
                         <option value={2025}>2025</option>
                         <option value={2026}>2026</option>
@@ -524,21 +521,21 @@ function AuthContent() {
                 </>
               )}
 
-              {/* ADMIN FIELDS: Institution Name */}
+              {/* Admin Fields */}
               {signupRole === "admin" && (
                 <div className="space-y-1">
-                  <label className="text-[10px] font-mono uppercase text-slate-400">
+                  <label className="text-[10px] font-mono uppercase text-slate-500 font-bold">
                     Institution / University / Academy Name
                   </label>
                   <div className="relative">
-                    <School className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-3 pointer-events-none" />
+                    <School className="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
                     <input
                       type="text"
                       required
                       placeholder="e.g. Cauvery Institute of Technology"
                       value={institutionName}
                       onChange={(e) => setInstitutionName(e.target.value)}
-                      className="w-full pl-8 pr-3 py-2 bg-[#111114] border border-white/[0.08] rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                      className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white"
                     />
                   </div>
                 </div>
@@ -547,7 +544,7 @@ function AuthContent() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all shadow-[0_0_20px_-3px_rgba(99,102,241,0.5)] flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-3 px-4 btn-luxury-primary text-white rounded-2xl text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95"
               >
                 <span>{loading ? "Registering in Supabase..." : "Create Account & Start"}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -555,27 +552,27 @@ function AuthContent() {
             </form>
           )}
 
-          {/* Quick Instant Pitch Preview Strip (Zero Credentials Demo) */}
-          <div className="pt-4 border-t border-white/[0.06] space-y-2">
-            <div className="text-[10px] font-mono text-slate-500 uppercase tracking-wider flex items-center justify-between">
+          {/* Instant Demo Preview Strip */}
+          <div className="pt-4 border-t border-slate-100 space-y-2">
+            <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider flex items-center justify-between font-bold">
               <span>Instant Evaluator Demo</span>
-              <span className="text-indigo-400">Zero Signup</span>
+              <span className="text-indigo-600">Zero Signup</span>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={handleLaunchStudentDemo}
-                className="py-2 px-3 rounded-lg bg-[#141418] hover:bg-[#1c1c22] border border-white/[0.06] text-[11px] font-medium text-slate-300 hover:text-white transition-colors flex items-center justify-center gap-1.5"
+                className="py-2.5 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[11px] font-semibold text-slate-700 hover:text-slate-900 transition-colors flex items-center justify-center gap-2 shadow-xs"
               >
-                <GraduationCap className="w-3.5 h-3.5 text-indigo-400" />
+                <GraduationCap className="w-4 h-4 text-indigo-600" />
                 <span>Student Lab</span>
               </button>
               <button
                 type="button"
                 onClick={handleLaunchAdminDemo}
-                className="py-2 px-3 rounded-lg bg-[#141418] hover:bg-[#1c1c22] border border-white/[0.06] text-[11px] font-medium text-slate-300 hover:text-white transition-colors flex items-center justify-center gap-1.5"
+                className="py-2.5 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[11px] font-semibold text-slate-700 hover:text-slate-900 transition-colors flex items-center justify-center gap-2 shadow-xs"
               >
-                <Building2 className="w-3.5 h-3.5 text-amber-400" />
+                <Building2 className="w-4 h-4 text-amber-500" />
                 <span>Admin Suite</span>
               </button>
             </div>
@@ -583,53 +580,50 @@ function AuthContent() {
         </div>
 
         {/* Footer */}
-        <div className="text-[11px] font-mono text-slate-500 flex items-center justify-between pt-2">
+        <div className="text-[11px] font-mono text-slate-400 flex items-center justify-between pt-2">
           <span>Open Self-Serve SaaS</span>
-          <span>Supabase SSR Engine</span>
+          <span>Supabase PostgreSQL 17</span>
         </div>
       </div>
 
       {/* Right Column: Visual Telemetry Showcase (7 cols) */}
-      <div className="lg:col-span-7 hidden lg:flex flex-col items-center justify-center p-12 relative overflow-hidden bg-[#09090B]">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-600/15 rounded-full blur-[140px] pointer-events-none" />
-
-        <div className="w-full max-w-lg space-y-4 relative z-10">
-          <div className="card-obsidian rounded-2xl p-6 border-white/[0.1] shadow-2xl space-y-6">
-            <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
+      <div className="lg:col-span-7 hidden lg:flex flex-col items-center justify-center p-12 relative overflow-hidden bg-stripe-mesh">
+        <div className="w-full max-w-lg space-y-6 relative z-10">
+          <div className="rounded-3xl p-8 bg-white border border-slate-200/90 shadow-luxury space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div className="flex items-center gap-2.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="font-mono text-xs text-white font-semibold tracking-wide">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="font-mono text-xs text-slate-900 font-bold tracking-wide">
                   OPEN SAAS ONBOARDING LIVE
                 </span>
               </div>
-              <span className="text-[10px] font-mono text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded">
+              <span className="text-[10px] font-mono text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-full font-bold">
                 Multi-Tenant
               </span>
             </div>
 
-            <div className="space-y-3 font-mono text-xs">
-              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-1">
-                <div className="text-[10px] text-slate-500 uppercase">Self-Serve Architecture</div>
-                <div className="text-white font-sans text-xs leading-relaxed">
-                  Students from any engineering or arts college can sign up independently, practice on 10+ real placement challenges, and benchmark their readiness across state percentiles.
+            <div className="space-y-4 font-mono text-xs">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5">
+                <div className="text-[10px] text-slate-500 font-bold uppercase">Self-Serve Architecture</div>
+                <div className="text-slate-700 font-sans text-xs leading-relaxed font-medium">
+                  Students from any engineering or arts college can sign up independently, practice on real company placement challenges, and benchmark their readiness across state percentiles.
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-1">
-                <div className="text-[10px] text-slate-500 uppercase">Institution Autonomy</div>
-                <div className="text-white font-sans text-xs leading-relaxed">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5">
+                <div className="text-[10px] text-slate-500 font-bold uppercase">Institution Autonomy</div>
+                <div className="text-slate-700 font-sans text-xs leading-relaxed font-medium">
                   Placement Officers can filter analytics by their specific college, manage custom Question Banks, and publish proctored tests with 1-click NAAC CSV export.
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono pt-1">
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />
+            <div className="flex items-center justify-between text-[11px] text-slate-500 font-mono pt-2 border-t border-slate-100">
+              <span className="flex items-center gap-1.5 font-medium text-slate-700">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                 PostgreSQL Trigger Auto-Provisioning
               </span>
-              <span className="text-slate-500">Zero Race Conditions</span>
+              <span className="text-slate-400 font-medium">Zero Race Conditions</span>
             </div>
           </div>
         </div>
@@ -642,7 +636,7 @@ export default function AuthPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#09090B] flex items-center justify-center text-slate-500 font-mono text-xs">
+        <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center text-slate-500 font-mono text-xs">
           Loading authentication portal...
         </div>
       }

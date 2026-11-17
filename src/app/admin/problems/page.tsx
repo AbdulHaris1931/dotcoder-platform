@@ -17,6 +17,7 @@ import {
   Eye,
   EyeOff,
   Send,
+  X,
 } from "lucide-react";
 
 export default function QuestionBankManagerPage() {
@@ -119,26 +120,26 @@ export default function QuestionBankManagerPage() {
   };
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-8 font-sans text-slate-100">
+    <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-8 font-sans text-slate-900">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.06] pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/90 pb-6">
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push("/admin/dashboard")}
-            className="p-2 rounded-xl bg-[#141418] hover:bg-[#18181C] border border-white/[0.08] text-slate-400 hover:text-white transition-colors"
+            className="p-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-900 shadow-sm transition-all active:scale-[0.98]"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              <span className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold">
                 Question Bank Manager
               </span>
-              <span className="text-[11px] text-slate-400 font-mono">
-                Supabase Curriculum Store
+              <span className="text-[11px] text-slate-500 font-mono">
+                Curriculum Store
               </span>
             </div>
-            <h1 className="text-2xl font-extrabold text-white mt-1">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
               Campus Coding Repository & Test Case Builder
             </h1>
           </div>
@@ -146,7 +147,7 @@ export default function QuestionBankManagerPage() {
 
         <button
           onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-[0_0_20px_-3px_rgba(99,102,241,0.5)] transition-all flex items-center gap-2"
+          className="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-md shadow-indigo-500/20 transition-all flex items-center gap-2 active:scale-[0.98]"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Problem</span>
@@ -154,21 +155,21 @@ export default function QuestionBankManagerPage() {
       </div>
 
       {feedback && (
-        <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs font-mono text-emerald-300 flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+        <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs font-mono text-emerald-800 flex items-center gap-2.5 shadow-sm">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
           <span>{feedback}</span>
         </div>
       )}
 
       {/* Existing Problem List */}
-      <div className="card-obsidian rounded-2xl p-6 space-y-4">
-        <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+      <div className="card-luxury rounded-2xl p-6 space-y-4 shadow-sm">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
-            <h2 className="text-sm font-bold text-white flex items-center gap-2">
-              <Terminal className="w-4 h-4 text-indigo-400" />
+            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Terminal className="w-4 h-4 text-indigo-600" />
               Active Question Bank ({problems.length})
             </h2>
-            <p className="text-[11px] text-slate-400 font-mono">
+            <p className="text-xs text-slate-500 font-sans mt-0.5">
               Live coding problems available across all college practice labs.
             </p>
           </div>
@@ -176,7 +177,7 @@ export default function QuestionBankManagerPage() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
-            <thead className="text-[10px] font-mono uppercase text-slate-500 border-b border-white/[0.06]">
+            <thead className="text-[11px] font-mono uppercase text-slate-500 bg-slate-50/80 border-b border-slate-200">
               <tr>
                 <th className="py-3 px-3">Title</th>
                 <th className="py-3 px-3">Slug</th>
@@ -186,19 +187,19 @@ export default function QuestionBankManagerPage() {
                 <th className="py-3 px-3 text-right">Preview</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.04]">
+            <tbody className="divide-y divide-slate-100">
               {problems.map((p) => (
-                <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
-                  <td className="py-3.5 px-3 font-semibold text-white">{p.title}</td>
-                  <td className="py-3.5 px-3 font-mono text-slate-400">{p.slug}</td>
+                <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
+                  <td className="py-3.5 px-3 font-semibold text-slate-900">{p.title}</td>
+                  <td className="py-3.5 px-3 font-mono text-slate-500">{p.slug}</td>
                   <td className="py-3.5 px-3">
                     <span
-                      className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded border ${
+                      className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border shadow-sm ${
                         p.difficulty === "Easy"
-                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                           : p.difficulty === "Medium"
-                          ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                          : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                          ? "bg-amber-50 text-amber-700 border-amber-200"
+                          : "bg-rose-50 text-rose-700 border-rose-200"
                       }`}
                     >
                       {p.difficulty}
@@ -209,20 +210,20 @@ export default function QuestionBankManagerPage() {
                       {p.company_tags.map((tag) => (
                         <span
                           key={tag}
-                          className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-white/[0.04] text-slate-400 border border-white/[0.06]"
+                          className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200"
                         >
                           {tag}
                         </span>
                       ))}
                     </div>
                   </td>
-                  <td className="py-3.5 px-3 font-mono text-slate-400">
+                  <td className="py-3.5 px-3 font-mono text-slate-600">
                     {(p.test_cases || []).length} Cases
                   </td>
                   <td className="py-3.5 px-3 text-right">
                     <button
                       onClick={() => router.push(`/student/lab/${p.slug}`)}
-                      className="text-indigo-400 hover:text-indigo-300 font-mono text-[11px] font-semibold"
+                      className="text-indigo-600 hover:text-indigo-700 font-mono text-[11px] font-bold"
                     >
                       Open IDE &rarr;
                     </button>
@@ -243,33 +244,33 @@ export default function QuestionBankManagerPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowAddModal(false)}
-              className="fixed inset-0 bg-black/70 backdrop-blur-sm"
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-3xl max-h-[90vh] bg-[#111114] border border-white/[0.1] rounded-2xl shadow-2xl overflow-y-auto p-6 space-y-5 text-slate-200"
+              className="relative w-full max-w-3xl max-h-[90vh] bg-white border border-slate-200/90 rounded-3xl shadow-2xl overflow-y-auto p-7 space-y-6 text-slate-900"
             >
-              <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                 <div>
-                  <h3 className="text-base font-bold text-white">Create New Coding Problem</h3>
-                  <p className="text-[11px] text-slate-400 font-mono">
+                  <h3 className="text-base font-bold text-slate-900">Create New Coding Problem</h3>
+                  <p className="text-xs text-slate-500 font-sans mt-0.5">
                     Publish directly to the open Supabase problem repository.
                   </p>
                 </div>
                 <button
                   onClick={() => setShowAddModal(false)}
-                  className="text-slate-400 hover:text-white"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
                 >
-                  ✕
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
               <form onSubmit={handleSaveProblem} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-mono uppercase text-slate-400">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-mono uppercase font-bold text-slate-600">
                       Problem Title
                     </label>
                     <input
@@ -278,12 +279,12 @@ export default function QuestionBankManagerPage() {
                       placeholder="e.g. Reverse Linked List"
                       value={title}
                       onChange={(e) => handleTitleChange(e.target.value)}
-                      className="w-full px-3 py-2 bg-[#141418] border border-white/[0.08] rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500"
+                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-sm"
                     />
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-mono uppercase text-slate-400">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-mono uppercase font-bold text-slate-600">
                       Slug (URL Identifier)
                     </label>
                     <input
@@ -292,20 +293,20 @@ export default function QuestionBankManagerPage() {
                       placeholder="e.g. reverse-linked-list"
                       value={slug}
                       onChange={(e) => setSlug(e.target.value)}
-                      className="w-full px-3 py-2 bg-[#141418] border border-white/[0.08] rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono shadow-sm"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-mono uppercase text-slate-400">
+                <div className="grid grid-cols-2 gap-3.5">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-mono uppercase font-bold text-slate-600">
                       Difficulty Level
                     </label>
                     <select
                       value={difficulty}
                       onChange={(e) => setDifficulty(e.target.value as ProblemDifficulty)}
-                      className="w-full px-3 py-2 bg-[#141418] border border-white/[0.08] rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono shadow-sm"
                     >
                       <option value="Easy">Easy</option>
                       <option value="Medium">Medium</option>
@@ -313,8 +314,8 @@ export default function QuestionBankManagerPage() {
                     </select>
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-mono uppercase text-slate-400">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-mono uppercase font-bold text-slate-600">
                       Company Tags (Comma separated)
                     </label>
                     <input
@@ -322,13 +323,13 @@ export default function QuestionBankManagerPage() {
                       placeholder="e.g. TCS NQT, Zoho, Infosys"
                       value={companyTagsInput}
                       onChange={(e) => setCompanyTagsInput(e.target.value)}
-                      className="w-full px-3 py-2 bg-[#141418] border border-white/[0.08] rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono shadow-sm"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] font-mono uppercase text-slate-400">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-mono uppercase font-bold text-slate-600">
                     Markdown Description & Specifications
                   </label>
                   <textarea
@@ -337,26 +338,26 @@ export default function QuestionBankManagerPage() {
                     placeholder="Describe the problem, input format, constraints..."
                     value={descriptionMd}
                     onChange={(e) => setDescriptionMd(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#141418] border border-white/[0.08] rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono shadow-sm leading-relaxed"
                   />
                 </div>
 
                 {/* Starter Code Tabs */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-mono uppercase text-slate-400">
+                    <label className="text-[11px] font-mono uppercase font-bold text-slate-600">
                       Starter Code Templates
                     </label>
-                    <div className="flex items-center gap-1 font-mono text-[10px]">
+                    <div className="flex items-center gap-1 font-mono text-[11px]">
                       {(["python", "java", "cpp", "c"] as SupportedLanguage[]).map((lang) => (
                         <button
                           key={lang}
                           type="button"
                           onClick={() => setSelectedLangTab(lang)}
-                          className={`px-2 py-0.5 rounded capitalize ${
+                          className={`px-2.5 py-0.5 rounded-lg capitalize transition-all ${
                             selectedLangTab === lang
-                              ? "bg-indigo-600 text-white font-bold"
-                              : "bg-white/[0.04] text-slate-400"
+                              ? "bg-indigo-600 text-white font-bold shadow-sm"
+                              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                           }`}
                         >
                           {lang}
@@ -374,20 +375,20 @@ export default function QuestionBankManagerPage() {
                         [selectedLangTab]: e.target.value,
                       })
                     }
-                    className="w-full px-3 py-2 bg-[#0C0C0E] border border-white/[0.08] rounded-lg text-xs text-emerald-400 focus:outline-none focus:border-indigo-500 font-mono"
+                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-emerald-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-mono shadow-inner"
                   />
                 </div>
 
                 {/* Test Cases Builder */}
-                <div className="space-y-2 pt-2 border-t border-white/[0.06]">
+                <div className="space-y-2.5 pt-3 border-t border-slate-100">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono uppercase text-slate-400">
+                    <span className="text-[11px] font-mono uppercase font-bold text-slate-600">
                       Assertion Test Cases ({testCases.length})
                     </span>
                     <button
                       type="button"
                       onClick={handleAddTestCase}
-                      className="text-xs text-indigo-400 hover:text-indigo-300 font-mono flex items-center gap-1"
+                      className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1"
                     >
                       <Plus className="w-3.5 h-3.5" /> Add Case
                     </button>
@@ -397,7 +398,7 @@ export default function QuestionBankManagerPage() {
                     {testCases.map((tc, idx) => (
                       <div
                         key={idx}
-                        className="grid grid-cols-12 gap-2 p-2 bg-[#0C0C0E] border border-white/[0.06] rounded-lg items-center text-xs font-mono"
+                        className="grid grid-cols-12 gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl items-center text-xs font-mono shadow-sm"
                       >
                         <div className="col-span-5">
                           <input
@@ -409,7 +410,7 @@ export default function QuestionBankManagerPage() {
                               updated[idx].input = e.target.value;
                               setTestCases(updated);
                             }}
-                            className="w-full px-2 py-1 bg-[#141418] border border-white/[0.06] rounded text-white text-[11px]"
+                            className="w-full px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-slate-800 text-[11px] focus:outline-none focus:border-indigo-500"
                           />
                         </div>
 
@@ -423,12 +424,12 @@ export default function QuestionBankManagerPage() {
                               updated[idx].expected_output = e.target.value;
                               setTestCases(updated);
                             }}
-                            className="w-full px-2 py-1 bg-[#141418] border border-white/[0.06] rounded text-emerald-400 text-[11px]"
+                            className="w-full px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-emerald-700 font-bold text-[11px] focus:outline-none focus:border-indigo-500"
                           />
                         </div>
 
-                        <div className="col-span-2 flex items-center gap-1">
-                          <label className="flex items-center gap-1 text-[10px] text-slate-400 cursor-pointer">
+                        <div className="col-span-2 flex items-center gap-1.5">
+                          <label className="flex items-center gap-1 text-[11px] text-slate-600 cursor-pointer">
                             <input
                               type="checkbox"
                               checked={tc.is_hidden}
@@ -437,6 +438,7 @@ export default function QuestionBankManagerPage() {
                                 updated[idx].is_hidden = e.target.checked;
                                 setTestCases(updated);
                               }}
+                              className="rounded text-indigo-600 focus:ring-indigo-500"
                             />
                             <span>Hidden</span>
                           </label>
@@ -446,7 +448,7 @@ export default function QuestionBankManagerPage() {
                           <button
                             type="button"
                             onClick={() => handleRemoveTestCase(idx)}
-                            className="text-slate-500 hover:text-rose-400"
+                            className="text-slate-400 hover:text-rose-600 transition-colors"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -459,10 +461,10 @@ export default function QuestionBankManagerPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-[0_0_20px_-3px_rgba(99,102,241,0.5)] transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  <span>{saving ? "Inserting into Supabase..." : "Commit Problem to Database"}</span>
+                  <span>{saving ? "Inserting into Database..." : "Commit Problem to Database"}</span>
                 </button>
               </form>
             </motion.div>

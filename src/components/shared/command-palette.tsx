@@ -94,7 +94,7 @@ export function CommandPalette({
       subtitle: "Zoho, TCS, Cognizant, Infosys recruitment openings",
       icon: Briefcase,
       badge: "4 Active",
-      badgeColor: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
+      badgeColor: "bg-indigo-50 text-indigo-700 border-indigo-200",
       action: () => {
         router.push("/student/drives");
         onClose();
@@ -118,7 +118,7 @@ export function CommandPalette({
       subtitle: "Multi-section proctored mock exam (Quant, Logic, Coding)",
       icon: Trophy,
       badge: "Mock Pattern",
-      badgeColor: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+      badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
       action: () => {
         router.push("/student/exam/22222222-0000-0000-0000-000000000001/simulator");
         onClose();
@@ -163,7 +163,7 @@ export function CommandPalette({
       title: "Export NAAC / Placement Audit CSV",
       subtitle: "Instant download of accreditation benchmark dataset",
       badge: "NAAC 5.2.1",
-      badgeColor: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+      badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
       icon: Download,
       action: () => {
         const csv = generatePlacementCsv(students, DemoStore.getSubmissions());
@@ -190,7 +190,7 @@ export function CommandPalette({
       title: assessment.title,
       subtitle: `${assessment.duration_minutes} Mins • Anti-Cheat Proctored Suite`,
       badge: "Active",
-      badgeColor: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
+      badgeColor: "bg-indigo-50 text-indigo-700 border-indigo-200",
       icon: ShieldCheck,
       action: () => {
         router.push(`/student/exam/${assessment.id}`);
@@ -207,10 +207,10 @@ export function CommandPalette({
       badge: p.difficulty,
       badgeColor:
         p.difficulty === "Easy"
-          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
           : p.difficulty === "Medium"
-          ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-          : "bg-rose-500/10 text-rose-400 border-rose-500/20",
+          ? "bg-amber-50 text-amber-700 border-amber-200"
+          : "bg-rose-50 text-rose-700 border-rose-200",
       icon: Code2,
       action: () => {
         router.push(`/student/lab/${p.slug}`);
@@ -227,8 +227,8 @@ export function CommandPalette({
       badge: s.readiness_score >= 75 ? "Ready" : "Practice",
       badgeColor:
         s.readiness_score >= 75
-          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-          : "bg-amber-500/10 text-amber-400 border-amber-500/20",
+          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+          : "bg-amber-50 text-amber-700 border-amber-200",
       icon: Users,
       action: () => {
         router.push("/tpo/dashboard");
@@ -269,14 +269,14 @@ export function CommandPalette({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4">
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 font-sans">
           {/* Backdrop blur */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm"
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
           />
 
           {/* Modal Container */}
@@ -285,12 +285,12 @@ export function CommandPalette({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: -10 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full max-w-2xl bg-[#111114] border border-white/[0.08] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_24px_48px_-12px_rgba(0,0,0,0.8)] rounded-2xl overflow-hidden text-slate-200"
+            className="relative w-full max-w-2xl bg-white border border-slate-200/90 shadow-2xl rounded-3xl overflow-hidden text-slate-900"
             onKeyDown={handleKeyDown}
           >
             {/* Search Input Bar */}
-            <div className="relative flex items-center px-4 py-3.5 border-b border-white/[0.08] bg-[#141418]">
-              <Search className="w-4 h-4 text-slate-400 absolute left-4 pointer-events-none" />
+            <div className="relative flex items-center px-5 py-4 border-b border-slate-100 bg-slate-50/70">
+              <Search className="w-4 h-4 text-slate-400 absolute left-5 pointer-events-none" />
               <input
                 ref={inputRef}
                 type="text"
@@ -300,20 +300,20 @@ export function CommandPalette({
                   setSelectedIndex(0);
                 }}
                 placeholder="Search problems, students, assessments, or actions (⌘K)..."
-                className="w-full bg-transparent pl-8 pr-12 text-sm text-white placeholder-slate-500 focus:outline-none"
+                className="w-full bg-transparent pl-8 pr-12 text-sm text-slate-900 placeholder-slate-400 focus:outline-none font-medium"
               />
               <button
                 onClick={onClose}
-                className="p-1 rounded text-slate-400 hover:text-white transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Results List */}
-            <div className="max-h-[360px] overflow-y-auto p-2 space-y-1">
+            <div className="max-h-[380px] overflow-y-auto p-2.5 space-y-1">
               {filteredItems.length === 0 ? (
-                <div className="py-12 text-center text-xs text-slate-500">
+                <div className="py-12 text-center text-xs text-slate-400 font-medium">
                   No matching results for &ldquo;{query}&rdquo;
                 </div>
               ) : (
@@ -325,33 +325,33 @@ export function CommandPalette({
                       key={item.id}
                       onClick={item.action}
                       onMouseEnter={() => setSelectedIndex(idx)}
-                      className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl cursor-pointer text-xs transition-colors ${
+                      className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl cursor-pointer text-xs transition-all ${
                         isSelected
-                          ? "bg-[#1f1f26] text-white"
-                          : "text-slate-300 hover:bg-[#18181c]"
+                          ? "bg-indigo-50/90 text-indigo-950 font-semibold ring-1 ring-indigo-200"
+                          : "text-slate-700 hover:bg-slate-50"
                       }`}
                     >
                       <div className="flex items-center gap-3 truncate">
                         <div
-                          className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                            isSelected ? "bg-indigo-600/30 text-indigo-400" : "bg-white/[0.04] text-slate-400"
+                          className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
+                            isSelected ? "bg-indigo-600 text-white shadow-sm" : "bg-slate-100 text-slate-600"
                           }`}
                         >
                           <Icon className="w-4 h-4" />
                         </div>
                         <div className="truncate">
-                          <div className="font-medium text-white truncate flex items-center gap-2">
+                          <div className="font-semibold text-slate-900 truncate flex items-center gap-2">
                             <span>{item.title}</span>
                             {item.badge && (
                               <span
-                                className={`text-[10px] font-mono px-1.5 py-0.2 rounded border ${item.badgeColor || "bg-white/5 border-white/10"}`}
+                                className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border shadow-sm ${item.badgeColor || "bg-slate-100 text-slate-600 border-slate-200"}`}
                               >
                                 {item.badge}
                               </span>
                             )}
                           </div>
                           {item.subtitle && (
-                            <div className="text-[11px] text-slate-400 truncate">
+                            <div className="text-[11px] text-slate-500 truncate mt-0.5 font-sans font-normal">
                               {item.subtitle}
                             </div>
                           )}
@@ -359,9 +359,9 @@ export function CommandPalette({
                       </div>
 
                       {isSelected && (
-                        <div className="flex items-center gap-1 text-[11px] text-slate-400 font-mono flex-shrink-0 pl-2">
+                        <div className="flex items-center gap-1 text-[11px] text-indigo-600 font-mono font-bold flex-shrink-0 pl-2">
                           <span>Jump</span>
-                          <CornerDownLeft className="w-3 h-3 text-slate-400" />
+                          <CornerDownLeft className="w-3.5 h-3.5 text-indigo-600" />
                         </div>
                       )}
                     </div>
@@ -371,17 +371,17 @@ export function CommandPalette({
             </div>
 
             {/* Footer Shortcut Bar */}
-            <div className="px-4 py-2 bg-[#0c0c0e] border-t border-white/[0.06] flex items-center justify-between text-[11px] text-slate-500 font-mono">
+            <div className="px-5 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-mono">
               <div className="flex items-center gap-3">
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.1] text-slate-400">↑↓</kbd> to navigate
+                  <kbd className="px-1.5 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 font-bold shadow-xs">↑↓</kbd> to navigate
                 </span>
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.1] text-slate-400">↵</kbd> to select
+                  <kbd className="px-1.5 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 font-bold shadow-xs">↵</kbd> to select
                 </span>
               </div>
               <span className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.1] text-slate-400">ESC</kbd> to close
+                <kbd className="px-1.5 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 font-bold shadow-xs">ESC</kbd> to close
               </span>
             </div>
           </motion.div>
