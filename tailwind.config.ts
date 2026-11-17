@@ -10,12 +10,20 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        canvas: "#09090B",
+        canvas: "#08080A",
+        obsidian: {
+          950: "#08080A",
+          900: "#0C0C0E",
+          850: "#111115",
+          800: "#16161C",
+          700: "#22222A",
+          600: "#2E2E38",
+        },
         surface: {
           sidebar: "#0C0C0E",
-          elevated: "#111114",
-          interactive: "#18181C",
-          active: "#222228",
+          elevated: "#111115",
+          interactive: "#16161C",
+          active: "#202028",
           border: "rgba(255, 255, 255, 0.08)",
           "border-strong": "rgba(255, 255, 255, 0.16)",
         },
@@ -36,9 +44,11 @@ const config: Config = {
       boxShadow: {
         card: "inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 4px 20px -2px rgba(0, 0, 0, 0.5)",
         highlight: "inset 0 1px 0 0 rgba(255, 255, 255, 0.08)",
+        "card-elevated": "inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 12px 32px -4px rgba(0, 0, 0, 0.7)",
         glow: "0 0 24px -4px rgba(99, 102, 241, 0.35)",
         "glow-emerald": "0 0 24px -4px rgba(16, 185, 129, 0.35)",
         "glow-rose": "0 0 24px -4px rgba(244, 63, 94, 0.35)",
+        "glow-amber": "0 0 24px -4px rgba(245, 158, 11, 0.35)",
       },
       fontFamily: {
         sans: ["var(--font-sans)", "Inter", "Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
@@ -48,6 +58,33 @@ const config: Config = {
         "pulse-subtle": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        marquee: "marquee var(--duration, 30s) linear infinite",
+        "marquee-vertical": "marquee-vertical var(--duration, 30s) linear infinite",
+        "border-beam": "border-beam calc(var(--duration, 15)*1s) infinite linear",
+        shimmer: "shimmer 2s linear infinite",
+      },
+      keyframes: {
+        marquee: {
+          from: { transform: "translateX(0)" },
+          to: { transform: "translateX(calc(-100% - var(--gap, 1rem)))" },
+        },
+        "marquee-vertical": {
+          from: { transform: "translateY(0)" },
+          to: { transform: "translateY(calc(-100% - var(--gap, 1rem)))" },
+        },
+        "border-beam": {
+          "100%": {
+            "offset-distance": "100%",
+          },
+        },
+        shimmer: {
+          from: {
+            backgroundPosition: "0 0",
+          },
+          to: {
+            backgroundPosition: "-200% 0",
+          },
+        },
       },
     },
   },

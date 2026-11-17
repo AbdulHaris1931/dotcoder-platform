@@ -37,7 +37,7 @@ export function MCQRunner({
   const reviewCount = markedForReview.length;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full font-sans">
       {/* Left 3 Columns: Active Question Card */}
       <div className="lg:col-span-3 flex flex-col justify-between space-y-6">
         <div className="space-y-6">
@@ -47,7 +47,7 @@ export function MCQRunner({
               <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                 Question {currentIndex + 1} of {questions.length}
               </span>
-              <span className="text-xs font-mono text-slate-400">
+              <span className="text-xs font-mono text-zinc-400">
                 {currentQ.category} • {currentQ.sub_topic}
               </span>
             </div>
@@ -71,7 +71,7 @@ export function MCQRunner({
           </div>
 
           {/* Question Text */}
-          <div className="text-sm md:text-base font-medium text-white leading-relaxed whitespace-pre-line p-4 rounded-xl bg-[#111114] border border-white/[0.06]">
+          <div className="text-sm md:text-base font-medium text-zinc-100 leading-relaxed whitespace-pre-line p-5 rounded-xl bg-obsidian-900 border border-white/[0.08] shadow-card">
             {currentQ.question_text}
           </div>
 
@@ -84,26 +84,26 @@ export function MCQRunner({
               return (
                 <motion.div
                   key={idx}
-                  whileHover={{ scale: 1.005 }}
+                  whileHover={{ scale: 1.004 }}
                   whileTap={{ scale: 0.995 }}
                   onClick={() => onSelectAnswer(currentQ.id, idx)}
                   className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
                     isSelected
-                      ? "bg-indigo-600/15 border-indigo-500 text-white shadow-[0_0_20px_-5px_rgba(99,102,241,0.4)]"
-                      : "bg-[#111114] border-white/[0.06] text-slate-300 hover:text-white hover:border-white/[0.12] hover:bg-[#141418]"
+                      ? "bg-indigo-600/15 border-indigo-500 text-white shadow-glow"
+                      : "bg-obsidian-900 border-white/[0.08] text-zinc-300 hover:text-white hover:border-white/[0.16] hover:bg-obsidian-850"
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3.5">
                     <span
                       className={`w-7 h-7 rounded-lg font-mono font-bold text-xs flex items-center justify-center ${
                         isSelected
                           ? "bg-indigo-600 text-white"
-                          : "bg-white/[0.04] text-slate-400 border border-white/[0.06]"
+                          : "bg-white/[0.04] text-zinc-400 border border-white/[0.08]"
                       }`}
                     >
                       {optionLetter}
                     </span>
-                    <span className="text-xs md:text-sm">{opt}</span>
+                    <span className="text-xs md:text-sm font-medium">{opt}</span>
                   </div>
 
                   {isSelected && (
@@ -124,7 +124,7 @@ export function MCQRunner({
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono transition-colors ${
                 isMarked
                   ? "bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold"
-                  : "bg-white/[0.04] text-slate-400 hover:text-white hover:bg-white/[0.08]"
+                  : "bg-white/[0.04] text-zinc-400 hover:text-white hover:bg-white/[0.08]"
               }`}
             >
               <Bookmark className="w-3.5 h-3.5" />
@@ -135,7 +135,7 @@ export function MCQRunner({
               <button
                 type="button"
                 onClick={() => onClearAnswer(currentQ.id)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-mono text-slate-400 hover:text-rose-400 hover:bg-white/[0.04] transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-mono text-zinc-400 hover:text-rose-400 hover:bg-white/[0.04] transition-colors"
               >
                 <RotateCcw className="w-3 h-3" />
                 <span>Clear Selection</span>
@@ -148,7 +148,7 @@ export function MCQRunner({
               type="button"
               disabled={currentIndex === 0}
               onClick={() => onNavigate(currentIndex - 1)}
-              className="flex items-center gap-1 px-3.5 py-2 rounded-xl text-xs font-mono text-slate-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              className="flex items-center gap-1 px-3.5 py-2 rounded-xl text-xs font-mono text-zinc-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
               <ChevronLeft className="w-4 h-4" />
               <span>Previous</span>
@@ -158,7 +158,7 @@ export function MCQRunner({
               type="button"
               disabled={currentIndex === questions.length - 1}
               onClick={() => onNavigate(currentIndex + 1)}
-              className="flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-mono font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-md"
+              className="flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-mono font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-glow hover:shadow-indigo-500/50"
             >
               <span>Next</span>
               <ChevronRight className="w-4 h-4" />
@@ -168,19 +168,19 @@ export function MCQRunner({
       </div>
 
       {/* Right Column: Question Navigation Palette */}
-      <div className="p-4 rounded-2xl bg-[#111114] border border-white/[0.08] flex flex-col justify-between space-y-4">
+      <div className="p-5 rounded-2xl bg-obsidian-900 border border-white/[0.08] flex flex-col justify-between space-y-4 shadow-card">
         <div className="space-y-4">
-          <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+          <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
             <span className="text-xs font-mono font-bold text-white uppercase tracking-wider">
               Question Palette
             </span>
-            <span className="text-xs font-mono text-slate-400">
+            <span className="text-xs font-mono text-zinc-400">
               {answeredCount}/{questions.length} Answered
             </span>
           </div>
 
           {/* Legend */}
-          <div className="grid grid-cols-2 gap-2 text-[10px] font-mono text-slate-400 pb-2 border-b border-white/[0.06]">
+          <div className="grid grid-cols-2 gap-2 text-[10px] font-mono text-zinc-400 pb-2 border-b border-white/[0.06]">
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded bg-emerald-500" />
               <span>Answered ({answeredCount})</span>
@@ -206,7 +206,7 @@ export function MCQRunner({
               const isMarkedReview = markedForReview.includes(q.id);
               const isCurrent = currentIndex === idx;
 
-              let btnStyle = "bg-white/[0.04] text-slate-400 border border-white/[0.06]";
+              let btnStyle = "bg-white/[0.04] text-zinc-400 border border-white/[0.06]";
               if (isAnswered && isMarkedReview) {
                 btnStyle = "bg-purple-600/30 text-purple-300 border border-purple-500/40";
               } else if (isAnswered) {
@@ -231,13 +231,13 @@ export function MCQRunner({
         </div>
 
         {/* Section Info Card */}
-        <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] text-[11px] font-mono text-slate-400 space-y-1">
-          <div className="text-white font-semibold flex items-center gap-1">
+        <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-[11px] font-mono text-zinc-400 space-y-1">
+          <div className="text-white font-semibold flex items-center gap-1.5">
             <AlertCircle className="w-3.5 h-3.5 text-indigo-400" />
             <span>Section Lock Warning</span>
           </div>
           <p className="text-[10px] leading-relaxed">
-            Answers are auto-committed when this section timer ends. You cannot return once submitted.
+            Answers are auto-committed when section timer ends. You cannot return once submitted.
           </p>
         </div>
       </div>
