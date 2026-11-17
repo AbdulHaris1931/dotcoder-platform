@@ -4,15 +4,15 @@
 
 :root {
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', Menlo, Monaco, Consolas, monospace;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, Monaco, Consolas, monospace;
 }
 
-/* Obsidian Base Environment */
+/* Luxury Clean & Vibrant Environment (Stripe / Supabase / Apple Pro) */
 html,
 body {
-  background-color: #08080A;
-  color: #f4f4f5;
-  color-scheme: dark;
+  background-color: #F8FAFC;
+  color: #0F172A;
+  color-scheme: light;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -20,74 +20,67 @@ body {
 
 /* Hairline borders & subtle light-bevel card highlights */
 .border-hairline {
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid #E2E8F0;
 }
 
 .border-hairline-strong {
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid #CBD5E1;
 }
 
-.card-obsidian {
-  background-color: #0E0E12;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+/* Stripe / Apple Pro Layered Luxury Cards */
+.card-luxury {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 10px 24px -4px rgba(15, 23, 42, 0.05), 0 20px 48px -12px rgba(15, 23, 42, 0.07);
 }
 
-.card-interactive {
-  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+.card-luxury-interactive {
+  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.card-interactive:hover {
-  background-color: #14141A;
-  border-color: rgba(255, 255, 255, 0.16);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 8px 30px -4px rgba(0, 0, 0, 0.7);
-  transform: translateY(-1px);
+.card-luxury-interactive:hover {
+  background-color: #FFFFFF;
+  border-color: #C7D2FE;
+  box-shadow: 0 20px 35px -5px rgba(15, 23, 42, 0.09), 0 10px 15px -5px rgba(99, 102, 241, 0.08);
+  transform: translateY(-2px);
 }
 
-/* Ambient Radial Dot Background */
-.bg-grid-radial {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+/* Stripe-style Iridescent Ambient Mesh */
+.bg-stripe-mesh {
+  background-color: #F8FAFC;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.12) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(56, 189, 248, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(244, 63, 94, 0.08) 0px, transparent 50%);
+}
+
+.bg-dot-grid {
+  background-image: radial-gradient(#CBD5E1 1px, transparent 1px);
   background-size: 24px 24px;
-  mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, #000 70%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, #000 70%, transparent 100%);
 }
 
-.bg-dot-pattern {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px);
-  background-size: 20px 20px;
-}
-
-/* Linear-style Shiny Sheen Button */
-.btn-shiny {
-  position: relative;
-  overflow: hidden;
+/* Linear-style Vibrant Gradient Button */
+.btn-luxury-primary {
+  background: linear-gradient(135deg, #4F46E5 0%, #6366F1 50%, #7C3AED 100%);
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px 0 rgba(79, 70, 229, 0.35);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.btn-shiny::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.15),
-    transparent
-  );
-  transition: 0.5s;
+.btn-luxury-primary:hover {
+  box-shadow: 0 6px 20px 0 rgba(79, 70, 229, 0.45);
+  transform: translateY(-1px);
 }
 
-.btn-shiny:hover::before {
-  left: 100%;
+.btn-luxury-primary:active {
+  transform: translateY(0);
 }
 
 /* High-craft scrollbars */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -95,12 +88,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: #CBD5E1;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: #94A3B8;
 }
 
 /* Tabular figures for numbers, code telemetry, and timers */

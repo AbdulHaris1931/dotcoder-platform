@@ -162,20 +162,20 @@ export default function AdminDrivesManagerPage() {
     <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-8 font-sans">
       {/* Top Header */}
       <BlurFade delay={0.05}>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/[0.08] pb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/80 pb-6">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              <span className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold border border-indigo-200/80">
                 Placement Cell Command
               </span>
-              <span className="text-[11px] text-zinc-400 font-mono">
+              <span className="text-[11px] text-slate-500 font-medium">
                 Recruitment Drives & Shortlisting Pipeline
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mt-1">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mt-1">
               Campus Placement Drives & Pipeline Manager
             </h1>
-            <p className="text-xs text-zinc-400 font-mono mt-1">
+            <p className="text-xs text-slate-600 font-medium mt-1">
               Manage visiting corporate recruitment drives, candidate stage progression, and export HR shortlists.
             </p>
           </div>
@@ -183,7 +183,7 @@ export default function AdminDrivesManagerPage() {
           <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={() => setShowModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-mono text-xs font-semibold transition-all shadow-glow hover:shadow-indigo-500/50 active:scale-[0.98]"
+              className="flex items-center gap-1.5 px-5 py-2.5 rounded-2xl btn-luxury-primary text-white font-mono text-xs font-semibold shadow-md active:scale-[0.98]"
             >
               <Plus className="w-4 h-4" />
               <span>Post New Drive</span>
@@ -191,9 +191,9 @@ export default function AdminDrivesManagerPage() {
 
             <button
               onClick={handleExportHrCsv}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-obsidian-850 hover:bg-obsidian-800 text-emerald-400 font-mono text-xs font-bold border border-emerald-500/30 hover:border-emerald-500/50 transition-all shadow-glow-emerald active:scale-[0.98]"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white hover:bg-slate-50 text-emerald-700 font-mono text-xs font-bold border border-emerald-200 hover:border-emerald-300 transition-all shadow-sm hover:shadow active:scale-[0.98]"
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-4 h-4 text-emerald-600" />
               <span>Export HR Shortlist CSV</span>
             </button>
           </div>
@@ -207,10 +207,10 @@ export default function AdminDrivesManagerPage() {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-xs font-mono text-emerald-300 flex items-center gap-3 shadow-glow-emerald"
+            className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs font-mono text-emerald-800 flex items-center gap-3 shadow-sm"
           >
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-            <span className="font-semibold">{exportNotice}</span>
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+            <span className="font-bold">{exportNotice}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -222,8 +222,8 @@ export default function AdminDrivesManagerPage() {
             onClick={() => setSelectedDriveId("ALL")}
             className={`px-4 py-2 rounded-xl transition-all whitespace-nowrap ${
               selectedDriveId === "ALL"
-                ? "bg-indigo-600 text-white font-bold shadow-glow"
-                : "bg-obsidian-900 text-zinc-400 hover:text-white border border-white/[0.08]"
+                ? "bg-indigo-600 text-white font-bold shadow-md shadow-indigo-100"
+                : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200/80 shadow-xs"
             }`}
           >
             All Companies ({drives.length})
@@ -235,12 +235,12 @@ export default function AdminDrivesManagerPage() {
               onClick={() => setSelectedDriveId(d.id)}
               className={`px-4 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-2 ${
                 selectedDriveId === d.id
-                  ? "bg-indigo-600 text-white font-bold shadow-glow"
-                  : "bg-obsidian-900 text-zinc-400 hover:text-white border border-white/[0.08]"
+                  ? "bg-indigo-600 text-white font-bold shadow-md shadow-indigo-100"
+                  : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200/80 shadow-xs"
               }`}
             >
               <span>{d.company_name}</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.1] font-semibold">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold border border-slate-200">
                 {d.ctc_range}
               </span>
             </button>
@@ -250,26 +250,26 @@ export default function AdminDrivesManagerPage() {
 
       {/* Candidate Shortlist & Pipeline Table */}
       <BlurFade delay={0.15}>
-        <div className="rounded-2xl p-6 bg-obsidian-900 border border-white/[0.08] shadow-card space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.08] pb-4">
+        <div className="rounded-3xl p-7 bg-white border border-slate-200/90 shadow-luxury space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div>
-              <h2 className="text-sm font-bold text-white flex items-center gap-2">
-                <Users className="w-4 h-4 text-indigo-400" />
+              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Users className="w-4 h-4 text-indigo-600" />
                 <span>Applicant Roster ({driveApps.length} Candidates)</span>
               </h2>
-              <p className="text-[11px] text-zinc-400 font-mono mt-0.5">
+              <p className="text-[11px] text-slate-500 font-medium mt-0.5">
                 Advance candidates through recruitment rounds with 1-click stage progression.
               </p>
             </div>
 
-            <span className="text-[11px] font-mono px-3 py-1 rounded-lg bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 self-start sm:self-auto">
+            <span className="text-[11px] font-mono px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 font-bold border border-indigo-200/80 self-start sm:self-auto">
               {activeDrive?.role_title || "Campus Placement"}
             </span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
-              <thead className="text-[11px] font-mono uppercase text-zinc-500 border-b border-white/[0.08]">
+              <thead className="text-[11px] font-mono uppercase text-slate-400 border-b border-slate-100 font-bold">
                 <tr>
                   <th className="py-3 px-3">Roll No</th>
                   <th className="py-3 px-3">Candidate</th>
@@ -280,59 +280,59 @@ export default function AdminDrivesManagerPage() {
                   <th className="py-3 px-3 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.04]">
+              <tbody className="divide-y divide-slate-100">
                 {driveApps.map((app) => {
                   const stud = students.find((s) => s.id === app.student_id);
                   const drv = drives.find((d) => d.id === app.drive_id);
                   const isFinalStage = app.stage === "Offer Extended";
 
                   return (
-                    <tr key={app.id} className="hover:bg-white/[0.02] transition-colors group">
-                      <td className="py-3.5 px-3 font-mono font-semibold text-white">
+                    <tr key={app.id} className="hover:bg-slate-50/70 transition-colors group">
+                      <td className="py-4 px-3 font-mono font-bold text-slate-900">
                         {stud?.roll_no || "22CS001"}
                       </td>
 
-                      <td className="py-3.5 px-3 font-medium text-white">
+                      <td className="py-4 px-3 font-semibold text-slate-900">
                         {stud?.full_name || "Adithya K. Sundaram"}
                       </td>
 
-                      <td className="py-3.5 px-3 font-mono text-zinc-400">
+                      <td className="py-4 px-3 font-mono text-slate-500">
                         {stud?.department || "CSE"}
                       </td>
 
-                      <td className="py-3.5 px-3 font-mono font-bold text-emerald-400">
+                      <td className="py-4 px-3 font-mono font-extrabold text-emerald-600">
                         {stud?.readiness_score || 88}%
                       </td>
 
-                      <td className="py-3.5 px-3 text-zinc-300 font-medium">
+                      <td className="py-4 px-3 text-slate-700 font-medium">
                         {drv?.company_name || "Zoho Corporation"}
                       </td>
 
-                      <td className="py-3.5 px-3">
+                      <td className="py-4 px-3">
                         <span
-                          className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded border ${
+                          className={`text-[10px] font-mono font-bold px-3 py-1 rounded-full border ${
                             app.stage === "Offer Extended"
-                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                               : app.stage === "Technical Interview"
-                              ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
-                              : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                              ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                              : "bg-amber-50 text-amber-700 border-amber-200"
                           }`}
                         >
                           {app.stage}
                         </span>
                       </td>
 
-                      <td className="py-3.5 px-3 text-right">
+                      <td className="py-4 px-3 text-right">
                         {!isFinalStage ? (
                           <button
                             onClick={() => handleAdvanceStage(app.id, app.stage)}
-                            className="px-3 py-1 text-[11px] font-mono font-bold rounded-lg bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600 hover:text-white border border-indigo-500/30 transition-all inline-flex items-center gap-1 active:scale-95"
+                            className="px-3.5 py-1.5 text-[11px] font-mono font-bold rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white border border-indigo-200 transition-all inline-flex items-center gap-1 shadow-xs active:scale-95"
                           >
                             <span>Advance</span>
                             <ChevronRight className="w-3 h-3" />
                           </button>
                         ) : (
-                          <span className="text-[11px] font-mono text-emerald-400 font-bold">
+                          <span className="text-[11px] font-mono text-emerald-600 font-bold">
                             Offer Placed 🎉
                           </span>
                         )}
@@ -349,21 +349,21 @@ export default function AdminDrivesManagerPage() {
       {/* Post Drive Modal */}
       <AnimatePresence>
         {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-xl bg-obsidian-900 border border-white/[0.1] rounded-2xl p-6 shadow-2xl space-y-5"
+              className="w-full max-w-xl bg-white border border-slate-200 rounded-3xl p-7 shadow-2xl space-y-6"
             >
-              <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Briefcase className="w-5 h-5 text-indigo-400" />
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Briefcase className="w-5 h-5 text-indigo-600" />
                   <span>Configure Campus Recruitment Drive</span>
                 </h3>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="text-zinc-400 hover:text-white p-1 rounded"
+                  className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100"
                 >
                   ✕
                 </button>
@@ -371,7 +371,7 @@ export default function AdminDrivesManagerPage() {
 
               <form onSubmit={handleCreateDrive} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
+                  <label className="block text-xs font-mono uppercase text-slate-500 font-bold mb-1">
                     Company Name *
                   </label>
                   <input
@@ -380,13 +380,13 @@ export default function AdminDrivesManagerPage() {
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
                     placeholder="e.g. Zoho Corporation / TCS / Infosys"
-                    className="w-full bg-obsidian-800 border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-500 focus:bg-white transition-colors"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
+                    <label className="block text-xs font-mono uppercase text-slate-500 font-bold mb-1">
                       Role Title *
                     </label>
                     <input
@@ -395,12 +395,12 @@ export default function AdminDrivesManagerPage() {
                       value={roleTitle}
                       onChange={(e) => setRoleTitle(e.target.value)}
                       placeholder="e.g. Software Engineer"
-                      className="w-full bg-obsidian-800 border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-500 focus:bg-white transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
+                    <label className="block text-xs font-mono uppercase text-slate-500 font-bold mb-1">
                       CTC Package *
                     </label>
                     <input
@@ -409,14 +409,14 @@ export default function AdminDrivesManagerPage() {
                       value={ctcRange}
                       onChange={(e) => setCtcRange(e.target.value)}
                       placeholder="e.g. ₹7.5 - ₹9.0 LPA"
-                      className="w-full bg-obsidian-800 border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-500 focus:bg-white font-mono transition-colors"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
+                    <label className="block text-xs font-mono uppercase text-slate-500 font-bold mb-1">
                       Min Readiness Cutoff (%)
                     </label>
                     <input
@@ -426,12 +426,12 @@ export default function AdminDrivesManagerPage() {
                       max={100}
                       value={minReadiness}
                       onChange={(e) => setMinReadiness(Number(e.target.value))}
-                      className="w-full bg-obsidian-800 border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-500 focus:bg-white font-mono transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
+                    <label className="block text-xs font-mono uppercase text-slate-500 font-bold mb-1">
                       Drive Date
                     </label>
                     <input
@@ -439,13 +439,13 @@ export default function AdminDrivesManagerPage() {
                       required
                       value={driveDate}
                       onChange={(e) => setDriveDate(e.target.value)}
-                      className="w-full bg-obsidian-800 border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-500 focus:bg-white font-mono transition-colors"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
+                  <label className="block text-xs font-mono uppercase text-slate-500 font-bold mb-1">
                     Role Description & Evaluation Pattern
                   </label>
                   <textarea
@@ -453,22 +453,22 @@ export default function AdminDrivesManagerPage() {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Includes Aptitude screening, coding round on DotCoder, and technical interview."
-                    className="w-full bg-obsidian-800 border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 resize-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-500 focus:bg-white resize-none transition-colors"
                   />
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/[0.08]">
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="px-4 py-2 text-xs text-zinc-400 hover:text-white"
+                    className="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-900"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={saving}
-                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-mono text-xs font-bold transition-all shadow-glow hover:shadow-indigo-500/50 disabled:opacity-50 active:scale-95"
+                    className="px-6 py-2.5 rounded-2xl btn-luxury-primary text-white font-mono text-xs font-bold transition-all shadow-md disabled:opacity-50 active:scale-95"
                   >
                     {saving ? "Publishing Drive..." : "Publish to Campus Network"}
                   </button>

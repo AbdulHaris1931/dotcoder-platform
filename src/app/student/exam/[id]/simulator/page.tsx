@@ -31,7 +31,7 @@ import {
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
   loading: () => (
-    <div className="h-full bg-[#0C0C0E] flex items-center justify-center font-mono text-xs text-slate-500">
+    <div className="h-full bg-slate-900 flex items-center justify-center font-mono text-xs text-slate-400">
       Loading Code Canvas...
     </div>
   ),
@@ -72,7 +72,6 @@ export default function CompanyExamSimulatorPage() {
   const [solvedProblemIds, setSolvedProblemIds] = useState<string[]>([]);
 
   // Section Timers (in seconds)
-  // Quant: 15 mins (900s), Logic: 15 mins (900s), Coding: 30 mins (1800s)
   const [timeLeft, setTimeLeft] = useState(900);
   const [section1Locked, setSection1Locked] = useState(false);
   const [section2Locked, setSection2Locked] = useState(false);
@@ -80,22 +79,19 @@ export default function CompanyExamSimulatorPage() {
   // Final Results
   const [finalResult, setFinalResult] = useState<SimulatorResult | null>(null);
 
-  // Load User & Problems
   useEffect(() => {
     async function load() {
       setLoading(true);
-      const [user, probs] = await Promise.all([
-        DataService.getCurrentUser(),
-        DataService.getProblems(),
-      ]);
+      const user = await DataService.getCurrentUser();
       setCurrentUser(user);
-      const chosenProbs = probs.slice(0, 2);
-      setCodingProblems(chosenProbs);
+      const probs = await DataService.getProblems();
+      setCodingProblems(probs.slice(0, 2));
 
-      // Initialize starter codes
       const initialCodes: Record<string, string> = {};
-      chosenProbs.forEach((p) => {
-        initialCodes[p.id] = p.starter_code_json?.python || "# Write code here\n";
+      probs.slice(0, 2).forEach((p) => {
+        initialCodes[p.id] =
+          p.starter_code_json?.python ||
+          `# ${p.title}\ndef solution():\n    # Write your solution here\n    pass\n`;
       });
       setCodingCodes(initialCodes);
       setLoading(false);
@@ -103,38 +99,36 @@ export default function CompanyExamSimulatorPage() {
     load();
   }, []);
 
-  // Section Countdown Timer
+  // Countdown timer hook
   useEffect(() => {
     if (currentSectionIndex === 4) return;
-
-    const timer = setInterval(() => {
+    const interval = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          handleAutoAdvanceSection();
+          handleSectionTimeout();
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-
-    return () => clearInterval(timer);
+    return () => clearInterval(interval);
   }, [currentSectionIndex]);
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
     const s = secs % 60;
-    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   };
 
-  const handleAutoAdvanceSection = () => {
+  const handleSectionTimeout = () => {
     if (currentSectionIndex === 1) {
       setSection1Locked(true);
       setCurrentSectionIndex(2);
-      setTimeLeft(900); // 15 mins for Logic
+      setTimeLeft(900);
     } else if (currentSectionIndex === 2) {
       setSection2Locked(true);
       setCurrentSectionIndex(3);
-      setTimeLeft(1800); // 30 mins for Coding
+      setTimeLeft(1800);
     } else if (currentSectionIndex === 3) {
       handleFinalSubmit();
     }
@@ -142,7 +136,7 @@ export default function CompanyExamSimulatorPage() {
 
   const handleNextSectionManually = () => {
     if (currentSectionIndex === 1) {
-      if (confirm("Submit Section 1 (Quantitative)? You will NOT be able to return to this section.")) {
+      if (confirm("Submit Section 1 (Quantitative Aptitude)? You will NOT be able to return.")) {
         setSection1Locked(true);
         setCurrentSectionIndex(2);
         setTimeLeft(900);
@@ -161,7 +155,6 @@ export default function CompanyExamSimulatorPage() {
   };
 
   const handleFinalSubmit = () => {
-    // 1. Calculate Quant Score (Each correct +1, wrong -0.25)
     let quantScore = 0;
     quantQuestions.forEach((q) => {
       const ans = quantAnswers[q.id];
@@ -172,7 +165,6 @@ export default function CompanyExamSimulatorPage() {
     });
     quantScore = Math.max(0, quantScore);
 
-    // 2. Calculate Logic Score
     let logicScore = 0;
     logicQuestions.forEach((q) => {
       const ans = logicAnswers[q.id];
@@ -183,9 +175,7 @@ export default function CompanyExamSimulatorPage() {
     });
     logicScore = Math.max(0, logicScore);
 
-    // 3. Calculate Code Score (each problem = 5 points)
     const codeScore = solvedProblemIds.length * 5;
-
     const totalScore = Math.round((quantScore + logicScore + codeScore) * 10) / 10;
     const maxScore = 5 + 5 + 10; // 20 marks
 
@@ -210,7 +200,6 @@ export default function CompanyExamSimulatorPage() {
     setCurrentSectionIndex(4);
   };
 
-  // Run Coding Solution via Client Pyodide WASM / Mock Runner
   const handleRunCode = async () => {
     const curProb = codingProblems[activeCodingIndex];
     if (!curProb) return;
@@ -231,7 +220,7 @@ export default function CompanyExamSimulatorPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#09090B] flex items-center justify-center font-mono text-xs text-slate-400">
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-mono text-xs text-slate-500">
         Booting TCS NQT Recruitment Simulator Environment...
       </div>
     );
@@ -240,22 +229,22 @@ export default function CompanyExamSimulatorPage() {
   const activeCodingProb = codingProblems[activeCodingIndex];
 
   return (
-    <div className="min-h-screen bg-[#09090B] text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col font-sans">
       {/* 54px Top Command Header */}
-      <header className="h-[54px] border-b border-white/[0.08] bg-[#0C0C0E] px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-30">
+      <header className="h-[56px] border-b border-slate-200/90 bg-white/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-30 shadow-xs">
         {/* Left: Test Pattern Badge */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-extrabold text-xs tracking-tight text-white flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-extrabold text-xs tracking-tight text-slate-900 flex items-center gap-1.5">
               <span>TCS NQT National Simulator</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold border border-indigo-200">
                 2026 Batch
               </span>
             </span>
           </div>
 
-          <div className="hidden md:flex items-center gap-1 text-[11px] font-mono text-slate-400 border-l border-white/[0.08] pl-3">
+          <div className="hidden md:flex items-center gap-1.5 text-[11px] font-mono text-slate-500 border-l border-slate-200 pl-3">
             <span>{currentUser?.full_name}</span>
             <span>•</span>
             <span>{currentUser?.roll_no}</span>
@@ -265,38 +254,38 @@ export default function CompanyExamSimulatorPage() {
         {/* Center: Section Breadcrumbs */}
         <div className="hidden sm:flex items-center gap-2 text-xs font-mono">
           <div
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all ${
               currentSectionIndex === 1
-                ? "bg-indigo-600 text-white font-bold"
+                ? "bg-indigo-600 text-white font-bold shadow-sm"
                 : section1Locked
-                ? "text-slate-500 line-through"
-                : "text-slate-400"
+                ? "text-slate-400 line-through bg-slate-100"
+                : "text-slate-600 bg-white border border-slate-200"
             }`}
           >
-            {section1Locked && <Lock className="w-3 h-3 text-slate-500" />}
+            {section1Locked && <Lock className="w-3 h-3 text-slate-400" />}
             <span>Sec 1: Quant</span>
           </div>
-          <ChevronRight className="w-3 h-3 text-slate-600" />
+          <ChevronRight className="w-3 h-3 text-slate-400" />
           <div
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all ${
               currentSectionIndex === 2
-                ? "bg-indigo-600 text-white font-bold"
+                ? "bg-indigo-600 text-white font-bold shadow-sm"
                 : section2Locked
-                ? "text-slate-500 line-through"
-                : "text-slate-400"
+                ? "text-slate-400 line-through bg-slate-100"
+                : "text-slate-600 bg-white border border-slate-200"
             }`}
           >
-            {section2Locked && <Lock className="w-3 h-3 text-slate-500" />}
+            {section2Locked && <Lock className="w-3 h-3 text-slate-400" />}
             <span>Sec 2: Logic</span>
           </div>
-          <ChevronRight className="w-3 h-3 text-slate-600" />
+          <ChevronRight className="w-3 h-3 text-slate-400" />
           <div
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all ${
               currentSectionIndex === 3
-                ? "bg-indigo-600 text-white font-bold"
+                ? "bg-indigo-600 text-white font-bold shadow-sm"
                 : currentSectionIndex === 4
-                ? "text-emerald-400"
-                : "text-slate-400"
+                ? "text-emerald-700 bg-emerald-50 font-bold"
+                : "text-slate-600 bg-white border border-slate-200"
             }`}
           >
             <span>Sec 3: Coding</span>
@@ -306,16 +295,16 @@ export default function CompanyExamSimulatorPage() {
         {/* Right: Section Timer & Next Section CTA */}
         <div className="flex items-center gap-3">
           {currentSectionIndex !== 4 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 font-mono text-xs font-bold">
-              <Clock className="w-3.5 h-3.5 text-indigo-400" />
-              <span>{formatTime(timeLeft)}</span>
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 font-mono text-xs font-bold shadow-xs">
+              <Clock className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="tabular-nums">{formatTime(timeLeft)}</span>
             </div>
           )}
 
           {currentSectionIndex !== 4 && (
             <button
               onClick={handleNextSectionManually}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs font-mono transition-all shadow-[0_0_15px_-2px_rgba(99,102,241,0.5)]"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl btn-luxury-primary text-white font-bold text-xs font-mono transition-all shadow-md active:scale-95"
             >
               <span>{currentSectionIndex === 3 ? "Submit Exam" : "Finish Section"}</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -382,60 +371,60 @@ export default function CompanyExamSimulatorPage() {
 
         {/* Section 3: Technical Coding Round */}
         {currentSectionIndex === 3 && activeCodingProb && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 h-[calc(100vh-130px)]">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 h-[calc(100vh-135px)]">
             {/* Left 5 Cols: Problem Description & Selector */}
             <div className="lg:col-span-5 flex flex-col justify-between space-y-4 overflow-y-auto pr-1">
               <div className="space-y-4">
                 {/* Problem Toggle Tabs */}
-                <div className="flex items-center gap-2 p-1 rounded-xl bg-[#111114] border border-white/[0.08]">
+                <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white border border-slate-200/90 shadow-sm">
                   {codingProblems.map((p, idx) => (
                     <button
                       key={p.id}
                       onClick={() => setActiveCodingIndex(idx)}
-                      className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-mono font-medium transition-all flex items-center justify-center gap-1.5 ${
+                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-mono font-bold transition-all flex items-center justify-center gap-1.5 ${
                         activeCodingIndex === idx
-                          ? "bg-indigo-600 text-white font-bold"
-                          : "text-slate-400 hover:text-white"
+                          ? "bg-indigo-600 text-white shadow-sm"
+                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                       }`}
                     >
                       <Code2 className="w-3.5 h-3.5" />
                       <span>Challenge {idx + 1}</span>
                       {solvedProblemIds.includes(p.id) && (
-                        <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                       )}
                     </button>
                   ))}
                 </div>
 
                 {/* Problem Header */}
-                <div className="p-4 rounded-xl bg-[#111114] border border-white/[0.06] space-y-2">
+                <div className="p-5 rounded-3xl bg-white border border-slate-200/90 shadow-luxury space-y-2">
                   <div className="flex items-center justify-between">
                     <span
-                      className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${
+                      className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-bold ${
                         activeCodingProb.difficulty === "Easy"
-                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                          : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : "bg-amber-50 text-amber-700 border border-amber-200"
                       }`}
                     >
                       {activeCodingProb.difficulty}
                     </span>
-                    <span className="text-[10px] font-mono text-slate-400">
+                    <span className="text-[10px] font-mono text-slate-500 font-medium">
                       TCS NQT Hands-On
                     </span>
                   </div>
-                  <h3 className="text-base font-bold text-white">{activeCodingProb.title}</h3>
+                  <h3 className="text-base font-extrabold text-slate-900">{activeCodingProb.title}</h3>
                 </div>
 
                 {/* Markdown Description */}
-                <div className="p-4 rounded-xl bg-[#111114] border border-white/[0.06] text-xs text-slate-300 leading-relaxed font-sans space-y-3 whitespace-pre-line">
+                <div className="p-5 rounded-3xl bg-white border border-slate-200/90 shadow-luxury text-xs text-slate-600 leading-relaxed font-sans space-y-3 whitespace-pre-line">
                   {activeCodingProb.description_md}
                 </div>
               </div>
 
               {/* Execution Telemetry Console */}
               {codeOutput && (
-                <div className="p-3.5 rounded-xl bg-[#0C0C0E] border border-white/[0.08] font-mono text-xs text-slate-300 space-y-1">
-                  <div className="text-[10px] uppercase font-bold text-slate-500">
+                <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 font-mono text-xs text-slate-300 space-y-1 shadow-lg">
+                  <div className="text-[10px] uppercase font-bold text-slate-400">
                     Execution Telemetry
                   </div>
                   <pre className="text-emerald-400 whitespace-pre-wrap leading-relaxed text-[11px]">
@@ -446,11 +435,11 @@ export default function CompanyExamSimulatorPage() {
             </div>
 
             {/* Right 7 Cols: Monaco Code Canvas */}
-            <div className="lg:col-span-7 flex flex-col rounded-2xl border border-white/[0.08] bg-[#0C0C0E] overflow-hidden">
+            <div className="lg:col-span-7 flex flex-col rounded-3xl border border-slate-200/90 bg-white shadow-luxury overflow-hidden">
               {/* Editor Toolbar */}
-              <div className="h-10 border-b border-white/[0.06] bg-[#111114] px-4 flex items-center justify-between">
-                <span className="text-xs font-mono text-slate-400 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-indigo-500" />
+              <div className="h-11 border-b border-slate-100 bg-slate-50/80 px-4 flex items-center justify-between">
+                <span className="text-xs font-mono text-slate-600 font-medium flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
                   <span>main.{codingLang === "python" ? "py" : codingLang}</span>
                 </span>
 
@@ -458,7 +447,7 @@ export default function CompanyExamSimulatorPage() {
                   <button
                     onClick={handleRunCode}
                     disabled={executing}
-                    className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-bold transition-all shadow-md disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-bold transition-all shadow-md disabled:opacity-50 active:scale-95"
                   >
                     <Play className="w-3 h-3 fill-white" />
                     <span>{executing ? "Running..." : "Run Test Cases"}</span>
@@ -495,37 +484,37 @@ export default function CompanyExamSimulatorPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="max-w-3xl mx-auto space-y-6 pt-4"
+            className="max-w-3xl mx-auto space-y-6 pt-6"
           >
             {/* Header Badge */}
             <div className="text-center space-y-2">
-              <div className="w-14 h-14 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 mx-auto flex items-center justify-center shadow-[0_0_30px_-5px_rgba(99,102,241,0.5)]">
-                <Trophy className="w-7 h-7" />
+              <div className="w-16 h-16 rounded-3xl bg-indigo-50 border border-indigo-200 text-indigo-700 mx-auto flex items-center justify-center shadow-md">
+                <Trophy className="w-8 h-8" />
               </div>
-              <h2 className="text-2xl font-bold text-white tracking-tight">
-                TCS NQT National Benchmark Assessment Complete
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                TCS NQT National Benchmark Complete
               </h2>
-              <p className="text-xs text-slate-400 font-mono">
+              <p className="text-xs text-slate-500 font-mono">
                 Candidate: {finalResult.candidate_name} • Roll: {finalResult.roll_no}
               </p>
             </div>
 
             {/* Profile Qualification Bento Card */}
-            <div className="p-6 rounded-2xl bg-[#111114] border border-white/[0.08] space-y-6 shadow-2xl">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.06] pb-4">
+            <div className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-luxury space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
                 <div>
-                  <div className="text-xs font-mono uppercase tracking-wider text-slate-400">
+                  <div className="text-xs font-mono uppercase tracking-wider text-slate-500 font-bold">
                     Recruiter Profile Qualification
                   </div>
-                  <div className="text-xl font-extrabold text-white mt-1 flex items-center gap-2">
-                    <Award className="w-5 h-5 text-indigo-400" />
+                  <div className="text-xl font-extrabold text-slate-900 mt-1 flex items-center gap-2">
+                    <Award className="w-5 h-5 text-indigo-600" />
                     <span>{finalResult.qualified_profile}</span>
                   </div>
                 </div>
 
-                <div className="text-right">
-                  <div className="text-xs font-mono text-slate-400">Total Score</div>
-                  <div className="text-3xl font-extrabold font-mono text-emerald-400">
+                <div className="text-left sm:text-right">
+                  <div className="text-xs font-mono text-slate-500 font-medium">Total Score</div>
+                  <div className="text-3xl font-extrabold font-mono text-emerald-600">
                     {finalResult.total_score} / {finalResult.max_score}
                   </div>
                 </div>
@@ -533,41 +522,41 @@ export default function CompanyExamSimulatorPage() {
 
               {/* 3 Sectional Breakdown Bars */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 rounded-xl bg-[#0C0C0E] border border-white/[0.04] space-y-2 font-mono">
-                  <div className="text-slate-400 text-xs">Section 1: Quantitative</div>
-                  <div className="text-xl font-bold text-white">{finalResult.quant_score} / 5</div>
-                  <div className="text-[11px] text-slate-500">Numerical Ability</div>
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2 font-mono">
+                  <div className="text-slate-500 text-xs font-medium">Section 1: Quantitative</div>
+                  <div className="text-xl font-bold text-slate-900">{finalResult.quant_score} / 5</div>
+                  <div className="text-[11px] text-slate-400">Numerical Ability</div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-[#0C0C0E] border border-white/[0.04] space-y-2 font-mono">
-                  <div className="text-slate-400 text-xs">Section 2: Logical & CS</div>
-                  <div className="text-xl font-bold text-white">{finalResult.logic_score} / 5</div>
-                  <div className="text-[11px] text-slate-500">Reasoning & Tech</div>
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2 font-mono">
+                  <div className="text-slate-500 text-xs font-medium">Section 2: Logical & CS</div>
+                  <div className="text-xl font-bold text-slate-900">{finalResult.logic_score} / 5</div>
+                  <div className="text-[11px] text-slate-400">Reasoning & Tech</div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-[#0C0C0E] border border-white/[0.04] space-y-2 font-mono">
-                  <div className="text-slate-400 text-xs">Section 3: Hands-On Code</div>
-                  <div className="text-xl font-bold text-emerald-400">
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2 font-mono">
+                  <div className="text-slate-500 text-xs font-medium">Section 3: Hands-On Code</div>
+                  <div className="text-xl font-bold text-emerald-600">
                     {finalResult.code_score} / 10
                   </div>
-                  <div className="text-[11px] text-slate-500">
+                  <div className="text-[11px] text-slate-400">
                     {solvedProblemIds.length} of 2 Problems Solved
                   </div>
                 </div>
               </div>
 
               {/* CTAs */}
-              <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-white/[0.06]">
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-5 border-t border-slate-100">
                 <button
                   onClick={() => router.push("/student/dashboard")}
-                  className="px-4 py-2 rounded-xl text-xs font-mono text-slate-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+                  className="px-5 py-2.5 rounded-2xl text-xs font-mono font-semibold text-slate-700 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors"
                 >
                   Return to Student Hub
                 </button>
 
                 <button
                   onClick={() => router.push("/student/drives")}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs font-mono transition-all shadow-[0_0_20px_-3px_rgba(99,102,241,0.5)]"
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-2xl btn-luxury-primary text-white font-bold text-xs font-mono transition-all shadow-md active:scale-95"
                 >
                   <span>Apply to Campus Drives with Score</span>
                   <ArrowRight className="w-4 h-4" />

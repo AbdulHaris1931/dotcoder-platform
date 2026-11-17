@@ -19,9 +19,9 @@ export function ShinyButton({
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       className={cn(
-        "relative rounded-xl px-5 py-2.5 font-medium backdrop-blur-xl transition-all duration-300",
-        "bg-gradient-to-r from-indigo-500 via-indigo-600 to-indigo-700 text-white shadow-glow hover:shadow-indigo-500/50",
-        "border border-white/20 active:scale-95",
+        "relative rounded-xl px-6 py-3 font-medium transition-all duration-300",
+        "bg-gradient-to-r from-indigo-600 via-indigo-600 to-violet-600 text-white shadow-luxury hover:shadow-indigo-500/30",
+        "border border-indigo-400/30 active:scale-95",
         "overflow-hidden",
         className
       )}
@@ -31,7 +31,7 @@ export function ShinyButton({
         {children}
       </span>
       <span
-        className="pointer-events-none absolute -inset-full top-0 block -rotate-45 bg-gradient-to-r from-transparent via-white/25 to-transparent opacity-0 transition-opacity duration-500 hover:opacity-100"
+        className="pointer-events-none absolute -inset-full top-0 block -rotate-45 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 transition-opacity duration-500 hover:opacity-100"
         style={{ animation: "shimmer 2.5s infinite" }}
       />
     </motion.button>

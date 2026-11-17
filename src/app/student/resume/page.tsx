@@ -48,7 +48,7 @@ export default function StudentResumePage() {
 
   if (loading || !currentUser) {
     return (
-      <div className="min-h-screen bg-[#09090B] flex items-center justify-center font-mono text-xs text-slate-400">
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-mono text-xs text-slate-500">
         Generating Verified ATS Placement Resume...
       </div>
     );
@@ -57,12 +57,12 @@ export default function StudentResumePage() {
   const readiness = Number(currentUser.readiness_score) || 88;
 
   return (
-    <div className="min-h-screen bg-[#09090B] text-slate-100 py-8 px-4 font-sans">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 py-8 px-4 font-sans">
       {/* Top Floating Control Bar (Hidden during print) */}
       <div className="max-w-4xl mx-auto flex items-center justify-between pb-6 print:hidden">
         <button
           onClick={() => router.push("/student/dashboard")}
-          className="flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-white transition-colors"
+          className="flex items-center gap-1.5 text-xs font-mono font-medium text-slate-600 hover:text-slate-900 transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to Student Hub</span>
@@ -71,14 +71,14 @@ export default function StudentResumePage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push("/student/drives")}
-            className="px-3.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-xs font-mono text-slate-300 transition-colors"
+            className="px-4 py-2 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-xs font-mono font-semibold text-slate-700 transition-colors shadow-xs"
           >
             Apply to Drives
           </button>
 
           <button
             onClick={handlePrint}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-mono text-xs font-bold transition-all shadow-md"
+            className="flex items-center gap-2 px-5 py-2 rounded-2xl btn-luxury-primary text-white font-mono text-xs font-bold transition-all shadow-md active:scale-95"
           >
             <Printer className="w-4 h-4" />
             <span>Print / Save as PDF</span>
