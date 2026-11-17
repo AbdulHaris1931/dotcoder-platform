@@ -4,13 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // Backward compatibility: redirect legacy /tpo routes to /admin
-  if (pathname.startsWith("/tpo/dashboard")) {
-    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
-  }
-  if (pathname.startsWith("/tpo/students")) {
-    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
-  }
+  // Allowed routes proceed
 
   let supabaseResponse = NextResponse.next({
     request,
