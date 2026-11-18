@@ -550,6 +550,13 @@ export default function StudentDashboardPage() {
               <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Quick Actions</span>
               <div className="space-y-1">
                 <Link
+                  href="/curriculum"
+                  className="flex items-center justify-between py-2 px-1 text-[13px] font-medium text-indigo-700 hover:text-indigo-900 transition-colors group"
+                >
+                  <span className="font-semibold">Explore 10-Lesson Curriculum</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-700 transition-colors" />
+                </Link>
+                <Link
                   href="/student/resume"
                   className="flex items-center justify-between py-2 px-1 text-[13px] font-medium text-slate-700 hover:text-indigo-700 transition-colors group"
                 >

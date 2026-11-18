@@ -23,6 +23,7 @@ import {
   Briefcase,
   Award,
   Trophy,
+  BookOpen,
 } from "lucide-react";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -65,6 +66,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     pathname === "/" ||
     pathname === "/login" ||
     pathname === "/signup" ||
+    pathname === "/curriculum" ||
+    pathname.startsWith("/practice/") ||
+    pathname.startsWith("/assessment/") ||
     pathname.startsWith("/student/exam/") ||
     pathname.startsWith("/student/lab/") ||
     pathname === "/student/resume";
@@ -142,6 +146,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 )}
                 <Terminal className="w-4 h-4 text-indigo-600" />
                 <span>Coding Lab (DotLab)</span>
+              </button>
+
+              <button
+                onClick={() => router.push("/curriculum")}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all relative ${
+                  pathname.startsWith("/curriculum") || pathname.startsWith("/practice")
+                    ? "bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                }`}
+              >
+                {(pathname.startsWith("/curriculum") || pathname.startsWith("/practice")) && (
+                  <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-indigo-600 rounded-r" />
+                )}
+                <BookOpen className="w-4 h-4 text-purple-600" />
+                <span>Curriculum (10 Lessons)</span>
               </button>
 
               <button
