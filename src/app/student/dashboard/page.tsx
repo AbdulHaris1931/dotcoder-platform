@@ -1,743 +1,576 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { DataService } from "@/lib/supabase/db";
-import { DemoStore, subscribeToDemoStore } from "@/lib/demo-store";
+import { subscribeToDemoStore } from "@/lib/demo-store";
 import { UserProfile, Problem, Assessment, Submission, CampusDrive } from "@/types";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import {
-  Terminal,
-  ShieldCheck,
-  Flame,
-  Award,
-  CheckCircle2,
-  Clock,
   ArrowRight,
-  TrendingUp,
-  Sparkles,
-  Search,
-  Code2,
-  ChevronRight,
-  Zap,
+  ArrowUpRight,
   Check,
-  Briefcase,
-  Play,
-  Filter,
-  BarChart2,
-  Bookmark,
-  Calendar,
-  ExternalLink,
-  Target,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  Code2,
+  Flame,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  TrendingUp,
+  Zap,
 } from "lucide-react";
 
-interface TrackInfo {
-  id: string;
-  name: string;
-  role: string;
-  ctc: string;
-  tag: string;
-  color: string;
-  badgeColor: string;
+// ─── Helpers ────────────────────────────────────────────────────────
+function greetByTime(): string {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
 }
 
-const PREPARATION_TRACKS: TrackInfo[] = [
-  {
-    id: "all",
-    name: "All Challenges",
-    role: "Comprehensive Syllabus",
-    ctc: "Full Stack & DSA",
-    tag: "All",
-    color: "from-indigo-600 to-violet-600",
-    badgeColor: "bg-indigo-50 text-indigo-700 border-indigo-200",
-  },
-  {
-    id: "zoho",
-    name: "Zoho Corporation",
-    role: "SDE - Round 1 & 2 Coding",
-    ctc: "₹6.5 - ₹8.5 LPA",
-    tag: "Zoho",
-    color: "from-blue-600 to-indigo-600",
-    badgeColor: "bg-blue-50 text-blue-700 border-blue-200",
-  },
-  {
-    id: "tcs",
-    name: "TCS Digital / Ninja",
-    role: "NQT Advanced Coding",
-    ctc: "₹7.5 LPA",
-    tag: "TCS NQT",
-    color: "from-purple-600 to-pink-600",
-    badgeColor: "bg-purple-50 text-purple-700 border-purple-200",
-  },
-  {
-    id: "infosys",
-    name: "Infosys Specialist",
-    role: "Specialist Programmer (SP)",
-    ctc: "₹9.5 LPA",
-    tag: "Infosys",
-    color: "from-sky-600 to-blue-600",
-    badgeColor: "bg-sky-50 text-sky-700 border-sky-200",
-  },
-  {
-    id: "cognizant",
-    name: "Cognizant GenC",
-    role: "GenC Next Developer",
-    ctc: "₹6.75 LPA",
-    tag: "Cognizant",
-    color: "from-emerald-600 to-teal-600",
-    badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  },
+function daysUntil(dateStr: string): number {
+  const diff = new Date(dateStr).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diff / 86_400_000));
+}
+
+function progressPct(n: number, d: number): number {
+  return d === 0 ? 0 : Math.round((n / d) * 100);
+}
+
+// ─── Constants ──────────────────────────────────────────────────────
+const COMPANY_TAGS = ["All", "TCS NQT", "Zoho", "Infosys", "Cognizant"] as const;
+
+const ACTIVITY_GRID = (() => {
+  // Generate 12 weeks × 7 days of simulated activity for the heatmap
+  const grid: number[][] = [];
+  for (let w = 0; w < 12; w++) {
+    const week: number[] = [];
+    for (let d = 0; d < 7; d++) {
+      // Later weeks have higher chance of activity to show "improvement"
+      const r = Math.random();
+      const bias = w / 14;
+      week.push(r < 0.2 - bias ? 0 : r < 0.45 ? 1 : r < 0.7 + bias ? 2 : 3);
+    }
+    grid.push(week);
+  }
+  return grid;
+})();
+
+const HEAT_COLORS = [
+  "bg-slate-100",         // 0 — no activity
+  "bg-emerald-200",       // 1 — light
+  "bg-emerald-400",       // 2 — medium
+  "bg-emerald-600",       // 3 — heavy
 ];
 
+// ─── Component ──────────────────────────────────────────────────────
 export default function StudentDashboardPage() {
   const router = useRouter();
 
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [problems, setProblems] = useState<Problem[]>([]);
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [drives, setDrives] = useState<CampusDrive[]>([]);
 
-  // Filtering states
-  const [selectedTrack, setSelectedTrack] = useState<string>("All");
-  const [difficultyFilter, setDifficultyFilter] = useState<"All" | "Easy" | "Medium" | "Hard">("All");
-  const [statusFilter, setStatusFilter] = useState<"All" | "Unsolved" | "Solved">("All");
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [trackFilter, setTrackFilter] = useState<string>("All");
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
-    async function loadData() {
-      const user = await DataService.getCurrentUser();
-      setCurrentUser(user);
-
-      const probs = await DataService.getProblems();
-      setProblems(probs);
-
-      const assessments = await DataService.getAssessments(user.college_name);
-      if (assessments && assessments.length > 0) {
-        setAssessment(assessments[0]);
-      }
-
-      const subs = await DataService.getSubmissions(user.college_name);
-      setSubmissions(subs);
-
-      const campusDrives = await DataService.getCampusDrives();
-      setDrives(campusDrives.slice(0, 3));
+    async function load() {
+      const u = await DataService.getCurrentUser();
+      setUser(u);
+      setProblems(await DataService.getProblems());
+      const a = await DataService.getAssessments(u.college_name);
+      if (a.length) setAssessment(a[0]);
+      setSubmissions(await DataService.getSubmissions(u.college_name));
+      setDrives((await DataService.getCampusDrives()).slice(0, 3));
     }
-
-    loadData();
-
-    const unsub = subscribeToDemoStore(() => {
-      loadData();
-    });
-    return unsub;
+    load();
+    return subscribeToDemoStore(() => { load(); });
   }, []);
 
-  const studentSubmissions = submissions.filter((s) => s.user_id === currentUser?.id);
-  const solvedProblemIds = new Set(
-    studentSubmissions.filter((s) => s.status === "Accepted").map((s) => s.problem_id)
+  // ─── Derived data ───────────────────────────────────────────────
+  const mySubmissions = useMemo(
+    () => submissions.filter((s) => s.user_id === user?.id),
+    [submissions, user]
+  );
+  const solvedIds = useMemo(
+    () => new Set(mySubmissions.filter((s) => s.status === "Accepted").map((s) => s.problem_id)),
+    [mySubmissions]
   );
 
-  // Difficulty counts
-  const easyProblems = problems.filter((p) => p.difficulty === "Easy");
-  const mediumProblems = problems.filter((p) => p.difficulty === "Medium");
-  const hardProblems = problems.filter((p) => p.difficulty === "Hard");
+  const countByDiff = (diff: string) => problems.filter((p) => p.difficulty === diff).length;
+  const solvedByDiff = (diff: string) =>
+    problems.filter((p) => p.difficulty === diff && solvedIds.has(p.id)).length;
 
-  const solvedEasy = easyProblems.filter((p) => solvedProblemIds.has(p.id)).length;
-  const solvedMedium = mediumProblems.filter((p) => solvedProblemIds.has(p.id)).length;
-  const solvedHard = hardProblems.filter((p) => solvedProblemIds.has(p.id)).length;
+  const nextProblem = problems.find((p) => !solvedIds.has(p.id)) || problems[0];
 
-  // Filtered problems
-  const filteredProblems = problems.filter((p) => {
-    const matchesTrack =
-      selectedTrack === "All" || p.company_tags.includes(selectedTrack);
+  const filtered = useMemo(() => {
+    return problems.filter((p) => {
+      const tag = trackFilter === "All" || p.company_tags.includes(trackFilter);
+      const q =
+        !query ||
+        p.title.toLowerCase().includes(query.toLowerCase()) ||
+        p.company_tags.some((t) => t.toLowerCase().includes(query.toLowerCase()));
+      return tag && q;
+    });
+  }, [problems, trackFilter, query]);
 
-    const matchesDifficulty =
-      difficultyFilter === "All" || p.difficulty === difficultyFilter;
+  const score = user?.readiness_score ?? 75;
 
-    const isSolved = solvedProblemIds.has(p.id);
-    const matchesStatus =
-      statusFilter === "All" ||
-      (statusFilter === "Solved" && isSolved) ||
-      (statusFilter === "Unsolved" && !isSolved);
-
-    const matchesSearch =
-      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.company_tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-
-    return matchesTrack && matchesDifficulty && matchesStatus && matchesSearch;
-  });
-
-  // Pick the recommended "Hero Challenge" (first unsolved problem or fallback)
-  const heroProblem = problems.find((p) => !solvedProblemIds.has(p.id)) || problems[0];
-
-  const readinessScore = currentUser?.readiness_score || 75;
-
+  // ─── Render ─────────────────────────────────────────────────────
   return (
-    <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8 font-sans">
-      {/* 1. Header: Student Identity & Live Mode Status */}
-      <BlurFade delay={0.05}>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold border border-indigo-200/80">
-                Candidate Workspace
-              </span>
-              <span className="text-xs text-slate-500 font-medium truncate max-w-xs sm:max-w-md">
-                {currentUser?.college_name || "Cauvery Institute of Technology, Thanjavur"}
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-              Welcome back, {currentUser?.full_name?.split(" ")[0] || "Candidate"}
-            </h1>
-            <p className="text-xs text-slate-500 font-mono">
-              Roll No: {currentUser?.roll_no || "22CS001"} • {currentUser?.department || "CSE"} Department (Batch {currentUser?.batch_year || 2026})
+    <div className="max-w-[1200px] mx-auto px-5 sm:px-6 lg:px-8 py-8 space-y-10 font-sans">
+
+      {/* ━━━ 1. GREETING BAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <BlurFade delay={0.04}>
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+          <div>
+            <p className="text-xs text-slate-500 font-medium">
+              {user?.department ?? "CSE"} &middot; {user?.college_name ?? "Cauvery Institute of Technology"}
             </p>
+            <h1 className="text-[26px] sm:text-[30px] font-semibold tracking-tight text-slate-900 leading-tight">
+              {greetByTime()}, {user?.full_name?.split(" ")[0] ?? "Candidate"}
+            </h1>
           </div>
 
-          {/* Right Header Badges & Fast Action */}
-          <div className="flex items-center gap-3">
-            <Link
-              href="/student/resume"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-xs"
+          {assessment && (
+            <button
+              onClick={() => router.push(`/student/exam/${assessment.id}`)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[13px] font-medium transition-colors active:scale-[0.98] shadow-sm"
             >
-              <Award className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Verified ATS Resume</span>
-            </Link>
-
-            {assessment && (
-              <button
-                type="button"
-                onClick={() => router.push(`/student/exam/${assessment.id}`)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-md shadow-indigo-500/20 transition-all active:scale-[0.98]"
-              >
-                <ShieldCheck className="w-4 h-4 text-emerald-300" />
-                <span>Enter Proctored Exam</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>Enter Mock Assessment</span>
+              <ArrowRight className="w-3.5 h-3.5 opacity-60" />
+            </button>
+          )}
         </div>
       </BlurFade>
 
-      {/* 2. Main 12-Column Layout: 8 Cols Core Curriculum + 4 Cols Telemetry */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* ========================================================= */}
-        {/* LEFT COLUMN: 8 Columns Main Workspace Feed               */}
-        {/* ========================================================= */}
-        <div className="lg:col-span-8 space-y-8">
-          {/* A. Hero Recommended Problem Card ("Continue Coding") */}
-          {heroProblem && (
-            <BlurFade delay={0.1}>
-              <div className="relative rounded-3xl bg-gradient-to-br from-[#0B0F19] via-[#101526] to-[#0A0D17] text-white p-6 sm:p-7 border border-slate-800 shadow-xl overflow-hidden group">
-                {/* Background subtle ambient glow */}
-                <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute bottom-0 left-10 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* ━━━ 2. METRIC STRIP — 4 cards, horizontal ━━━━━━━━━━━━━━━ */}
+      <BlurFade delay={0.08}>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Score */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Readiness</span>
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                score >= 75
+                  ? "bg-emerald-50 text-emerald-700"
+                  : score >= 55
+                  ? "bg-amber-50 text-amber-700"
+                  : "bg-rose-50 text-rose-700"
+              }`}>
+                {score >= 75 ? "On Track" : score >= 55 ? "Needs Work" : "At Risk"}
+              </span>
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-3xl font-bold tabular-nums text-slate-900">{score}</span>
+              <span className="text-sm text-slate-400 font-medium">/100</span>
+            </div>
+            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  score >= 75 ? "bg-emerald-500" : score >= 55 ? "bg-amber-500" : "bg-rose-500"
+                }`}
+                style={{ width: `${score}%` }}
+              />
+            </div>
+          </div>
 
-                <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                  <div className="space-y-3 max-w-lg">
-                    {/* Badge */}
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[11px] font-mono font-semibold tracking-wider uppercase">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34D399]" />
-                      Today&apos;s Recommended Challenge
-                    </div>
+          {/* Problems Solved */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+            <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Solved</span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-3xl font-bold tabular-nums text-slate-900">{solvedIds.size}</span>
+              <span className="text-sm text-slate-400 font-medium">/{problems.length}</span>
+            </div>
+            <div className="flex items-center gap-3 text-[11px] font-medium">
+              <span className="text-emerald-600">{solvedByDiff("Easy")}E</span>
+              <span className="text-amber-600">{solvedByDiff("Medium")}M</span>
+              <span className="text-rose-600">{solvedByDiff("Hard")}H</span>
+            </div>
+          </div>
 
-                    {/* Problem Title */}
-                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white group-hover:text-indigo-300 transition-colors">
-                      {heroProblem.title}
-                    </h2>
+          {/* Streak */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+            <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Streak</span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-3xl font-bold tabular-nums text-slate-900">5</span>
+              <span className="text-sm text-slate-400 font-medium">days</span>
+              <Flame className="w-4 h-4 text-amber-500 ml-1" />
+            </div>
+            {/* Mini 7-day dots */}
+            <div className="flex items-center gap-1">
+              {["M","T","W","T","F","S","S"].map((d, i) => (
+                <div key={i} className="flex flex-col items-center gap-0.5 flex-1">
+                  <div className={`h-1.5 w-full rounded-full ${i < 5 ? "bg-amber-400" : "bg-slate-100"}`} />
+                  <span className="text-[8px] text-slate-400">{d}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
-                    {/* Metadata tags */}
-                    <div className="flex flex-wrap items-center gap-2 text-xs">
-                      <span
-                        className={`font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-md ${
-                          heroProblem.difficulty === "Easy"
-                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                            : heroProblem.difficulty === "Medium"
-                            ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                            : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
-                        }`}
-                      >
-                        {heroProblem.difficulty}
-                      </span>
+          {/* Next Drive */}
+          {drives[0] ? (
+            <Link
+              href="/student/drives"
+              className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3 hover:border-indigo-300 transition-colors group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Next Drive</span>
+                <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+              </div>
+              <div className="text-sm font-semibold text-slate-900 line-clamp-1">{drives[0].company_name}</div>
+              <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
+                <Clock className="w-3 h-3" />
+                <span>{daysUntil(drives[0].drive_date)}d left</span>
+                <span className="text-slate-300">·</span>
+                <span>{drives[0].ctc_range}</span>
+              </div>
+            </Link>
+          ) : (
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+              <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Next Drive</span>
+              <div className="text-sm text-slate-400">No drives scheduled</div>
+            </div>
+          )}
+        </div>
+      </BlurFade>
 
-                      {heroProblem.company_tags.slice(0, 3).map((tag) => (
-                        <span
-                          key={tag}
-                          className="px-2 py-0.5 rounded-md bg-slate-800/80 text-slate-300 text-[11px] font-mono border border-slate-700/60"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-
-                      <span className="text-slate-400 text-xs font-mono">
-                        • +120 XP Reward
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
-                      Optimize algorithmic time and space complexity with 0ms client-side Pyodide WASM execution and real-time test case assertions.
-                    </p>
+      {/* ━━━ 3. CONTINUE WHERE YOU LEFT OFF ━━━━━━━━━━━━━━━━━━━━━━ */}
+      {nextProblem && (
+        <BlurFade delay={0.12}>
+          <button
+            onClick={() => router.push(`/student/lab/${nextProblem.slug}`)}
+            className="w-full text-left p-5 sm:p-6 rounded-2xl border border-slate-200 bg-white hover:border-indigo-400 hover:shadow-md transition-all group"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-100 transition-colors">
+                  <Zap className="w-5 h-5" />
+                </div>
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-medium text-indigo-600">Continue where you left off</span>
                   </div>
-
-                  {/* Primary Action Button */}
-                  <div className="flex-shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => router.push(`/student/lab/${heroProblem.slug}`)}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-lg shadow-indigo-600/30 transition-all active:scale-95"
-                    >
-                      <Play className="w-3.5 h-3.5 fill-current" />
-                      <span>Start Solving Now</span>
-                    </button>
+                  <h3 className="text-base font-semibold text-slate-900 group-hover:text-indigo-700 transition-colors">
+                    {nextProblem.title}
+                  </h3>
+                  <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
+                    <span className={`font-semibold ${
+                      nextProblem.difficulty === "Easy" ? "text-emerald-600"
+                      : nextProblem.difficulty === "Medium" ? "text-amber-600"
+                      : "text-rose-600"
+                    }`}>{nextProblem.difficulty}</span>
+                    <span className="text-slate-300">·</span>
+                    {nextProblem.company_tags.slice(0, 2).map((t) => (
+                      <span key={t} className="text-slate-500">{t}</span>
+                    ))}
                   </div>
                 </div>
               </div>
-            </BlurFade>
-          )}
+              <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 group-hover:text-indigo-700 transition-colors pl-14 sm:pl-0">
+                <span>Open in Editor</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          </button>
+        </BlurFade>
+      )}
 
-          {/* B. Company Preparation Tracks Deck */}
-          <BlurFade delay={0.15}>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 tracking-tight">
-                    Campus Preparation Pathways
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Select a target company track to filter problem difficulty and placement patterns.
-                  </p>
+      {/* ━━━ 4. MAIN GRID: Problems (left 8) + Sidebar (right 4) ━ */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+        {/* ─── LEFT: Problem Library ──────────────────────────── */}
+        <div className="lg:col-span-8 space-y-5">
+          <BlurFade delay={0.16}>
+            {/* Filter Bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              {/* Company tag pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                {COMPANY_TAGS.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => setTrackFilter(tag)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+                      trackFilter === tag
+                        ? "bg-slate-900 text-white shadow-sm"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+
+              {/* Search */}
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-[11px] pointer-events-none" />
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search problems…"
+                  className="pl-8 pr-3 py-2 w-full sm:w-56 text-[13px] bg-white border border-slate-200 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                />
+              </div>
+            </div>
+          </BlurFade>
+
+          {/* Problem list */}
+          <BlurFade delay={0.2}>
+            <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden divide-y divide-slate-100">
+              {/* Table header */}
+              <div className="grid grid-cols-12 px-5 py-3 text-[11px] font-medium text-slate-400 uppercase tracking-wide bg-slate-50/60">
+                <div className="col-span-1">Status</div>
+                <div className="col-span-6">Problem</div>
+                <div className="col-span-3">Tags</div>
+                <div className="col-span-2 text-right">Difficulty</div>
+              </div>
+
+              {filtered.length === 0 ? (
+                <div className="p-16 text-center space-y-2">
+                  <Code2 className="w-6 h-6 text-slate-300 mx-auto" />
+                  <p className="text-sm text-slate-500">No problems match your filters</p>
+                  <button
+                    onClick={() => { setTrackFilter("All"); setQuery(""); }}
+                    className="text-xs text-indigo-600 hover:underline"
+                  >
+                    Clear filters
+                  </button>
                 </div>
-                <span className="text-xs font-mono text-indigo-600 font-semibold">
-                  {PREPARATION_TRACKS.length - 1} Company Tracks
+              ) : (
+                filtered.map((p) => {
+                  const solved = solvedIds.has(p.id);
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => router.push(`/student/lab/${p.slug}`)}
+                      className="w-full grid grid-cols-12 items-center px-5 py-3.5 text-left hover:bg-slate-50 transition-colors group"
+                    >
+                      {/* Status */}
+                      <div className="col-span-1">
+                        {solved ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                        ) : (
+                          <div className="w-4 h-4 rounded-full border-[1.5px] border-slate-300 group-hover:border-indigo-400 transition-colors" />
+                        )}
+                      </div>
+
+                      {/* Title */}
+                      <div className="col-span-6">
+                        <span className="text-[13px] font-medium text-slate-800 group-hover:text-indigo-700 transition-colors">
+                          {p.title}
+                        </span>
+                      </div>
+
+                      {/* Tags */}
+                      <div className="col-span-3 flex flex-wrap gap-1">
+                        {p.company_tags.slice(0, 2).map((t) => (
+                          <span key={t} className="text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+
+                      {/* Difficulty */}
+                      <div className="col-span-2 text-right">
+                        <span className={`text-[11px] font-semibold ${
+                          p.difficulty === "Easy" ? "text-emerald-600"
+                          : p.difficulty === "Medium" ? "text-amber-600"
+                          : "text-rose-600"
+                        }`}>
+                          {p.difficulty}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </BlurFade>
+        </div>
+
+        {/* ─── RIGHT: Sidebar ─────────────────────────────────── */}
+        <div className="lg:col-span-4 space-y-6">
+
+          {/* Activity Heatmap (GitHub-style) */}
+          <BlurFade delay={0.16}>
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
+                  12-Week Activity
+                </span>
+                <span className="text-xs font-medium text-slate-700">
+                  84 contributions
                 </span>
               </div>
 
-              {/* Horizontal Scrollable Track Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                {PREPARATION_TRACKS.map((track) => {
-                  const isSelected = selectedTrack === track.tag;
-                  return (
-                    <button
-                      key={track.id}
-                      type="button"
-                      onClick={() => setSelectedTrack(track.tag)}
-                      className={`p-3.5 rounded-2xl text-left border transition-all flex flex-col justify-between h-28 relative ${
-                        isSelected
-                          ? "bg-indigo-50/70 border-indigo-400 shadow-xs ring-2 ring-indigo-500/20"
-                          : "bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/80 shadow-2xs"
-                      }`}
-                    >
-                      <div className="space-y-1">
-                        <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
-                          {track.tag === "All" ? "All Tracks" : "Placement"}
-                        </div>
-                        <div className="text-xs font-bold text-slate-900 line-clamp-1">
-                          {track.name}
-                        </div>
-                      </div>
+              {/* Grid */}
+              <div className="flex gap-[3px]">
+                {ACTIVITY_GRID.map((week, wi) => (
+                  <div key={wi} className="flex flex-col gap-[3px]">
+                    {week.map((level, di) => (
+                      <div
+                        key={di}
+                        className={`w-[11px] h-[11px] rounded-[2px] ${HEAT_COLORS[level]}`}
+                        title={`Week ${wi + 1}, Day ${di + 1}: ${level === 0 ? "No" : level} submissions`}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
 
-                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-mono">
-                        <span className="text-slate-500 truncate max-w-[80px]">
-                          {track.ctc}
-                        </span>
-                        {isSelected && (
-                          <span className="w-2 h-2 rounded-full bg-indigo-600" />
-                        )}
+              {/* Legend */}
+              <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                <span>Less</span>
+                {HEAT_COLORS.map((c, i) => (
+                  <div key={i} className={`w-[10px] h-[10px] rounded-[2px] ${c}`} />
+                ))}
+                <span>More</span>
+              </div>
+            </div>
+          </BlurFade>
+
+          {/* Difficulty Breakdown */}
+          <BlurFade delay={0.2}>
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
+              <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
+                Progress by Difficulty
+              </span>
+
+              <div className="space-y-3">
+                {([
+                  { label: "Easy", color: "bg-emerald-500", textColor: "text-emerald-600" },
+                  { label: "Medium", color: "bg-amber-500", textColor: "text-amber-600" },
+                  { label: "Hard", color: "bg-rose-500", textColor: "text-rose-600" },
+                ] as const).map(({ label, color, textColor }) => {
+                  const total = countByDiff(label);
+                  const done = solvedByDiff(label);
+                  const pct = progressPct(done, total);
+                  return (
+                    <div key={label} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-[12px]">
+                        <span className={`font-semibold ${textColor}`}>{label}</span>
+                        <span className="text-slate-500 tabular-nums">{done}/{total}</span>
                       </div>
-                    </button>
+                      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full ${color} transition-all duration-500`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
                   );
                 })}
               </div>
             </div>
           </BlurFade>
 
-          {/* C. Problem Library & Curriculum */}
-          <BlurFade delay={0.2}>
-            <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 space-y-6">
-              {/* Header & Search / Filter Controls */}
-              <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <h3 className="text-base font-bold text-slate-900 tracking-tight">
-                      Coding Challenge Repository
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      Showing {filteredProblems.length} curated problems for {selectedTrack === "All" ? "all tracks" : selectedTrack}
-                    </p>
-                  </div>
-
-                  {/* Search Input */}
-                  <div className="relative w-full sm:w-64">
-                    <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
-                    <input
-                      type="text"
-                      placeholder="Search title or tag..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-3.5 py-2 text-xs bg-[#F9FAF8] border border-slate-200/90 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
-                    />
-                  </div>
-                </div>
-
-                {/* Filter Badges & Tabs Bar */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100">
-                  {/* Status Filter */}
-                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
-                    {(["All", "Unsolved", "Solved"] as const).map((status) => (
-                      <button
-                        key={status}
-                        type="button"
-                        onClick={() => setStatusFilter(status)}
-                        className={`px-3 py-1 rounded-lg transition-all ${
-                          statusFilter === status
-                            ? "bg-white text-indigo-700 shadow-xs font-bold"
-                            : "text-slate-600 hover:text-slate-900"
-                        }`}
-                      >
-                        {status}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Difficulty Filter */}
-                  <div className="flex items-center gap-1.5 text-xs">
-                    {(["All", "Easy", "Medium", "Hard"] as const).map((diff) => (
-                      <button
-                        key={diff}
-                        type="button"
-                        onClick={() => setDifficultyFilter(diff)}
-                        className={`px-2.5 py-1 rounded-lg border font-mono text-[11px] transition-all ${
-                          difficultyFilter === diff
-                            ? "bg-slate-900 text-white border-slate-900 font-bold"
-                            : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                        }`}
-                      >
-                        {diff}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Problem Rows List (Clean, modern cards) */}
-              <div className="space-y-2.5">
-                {filteredProblems.length === 0 ? (
-                  <div className="p-12 text-center space-y-3 bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
-                    <Code2 className="w-8 h-8 text-slate-400 mx-auto" />
-                    <div className="text-sm font-semibold text-slate-700">
-                      No problems match this filter criteria
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedTrack("All");
-                        setDifficultyFilter("All");
-                        setStatusFilter("All");
-                        setSearchQuery("");
-                      }}
-                      className="text-xs text-indigo-600 hover:underline font-semibold"
-                    >
-                      Reset all filters
-                    </button>
-                  </div>
-                ) : (
-                  filteredProblems.map((p) => {
-                    const isSolved = solvedProblemIds.has(p.id);
-                    return (
-                      <div
-                        key={p.id}
-                        onClick={() => router.push(`/student/lab/${p.slug}`)}
-                        className="p-4 rounded-2xl border border-slate-200/80 bg-white hover:border-indigo-400/80 hover:shadow-md transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
-                      >
-                        {/* Left: Status + Title + Company Tags */}
-                        <div className="flex items-start sm:items-center gap-3.5">
-                          <div className="mt-0.5 sm:mt-0 flex-shrink-0">
-                            {isSolved ? (
-                              <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                                <Check className="w-3.5 h-3.5 stroke-[3]" />
-                              </div>
-                            ) : (
-                              <div className="w-6 h-6 rounded-full border-2 border-slate-300 group-hover:border-indigo-400 transition-colors" />
-                            )}
-                          </div>
-
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
-                                {p.title}
-                              </span>
-                              {isSolved && (
-                                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
-                                  Solved
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              {p.company_tags.map((tag) => (
-                                <span
-                                  key={tag}
-                                  className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-medium"
-                                >
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Right: Difficulty + Action CTA */}
-                        <div className="flex items-center justify-between sm:justify-end gap-3 pl-9 sm:pl-0">
-                          <span
-                            className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-md border ${
-                              p.difficulty === "Easy"
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                : p.difficulty === "Medium"
-                                ? "bg-amber-50 text-amber-700 border-amber-200"
-                                : "bg-rose-50 text-rose-700 border-rose-200"
-                            }`}
-                          >
-                            {p.difficulty}
-                          </span>
-
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 group-hover:text-indigo-800 transition-colors">
-                            <span>Solve</span>
-                            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          </BlurFade>
-        </div>
-
-        {/* ========================================================= */}
-        {/* RIGHT COLUMN: 4 Columns Telemetry, Streaks & Drives       */}
-        {/* ========================================================= */}
-        <div className="lg:col-span-4 space-y-6">
-          {/* 1. Placement Readiness Gauge */}
-          <BlurFade delay={0.1}>
-            <div className="rounded-3xl bg-white border border-slate-200/90 shadow-sm p-6 space-y-5">
+          {/* Upcoming Drives */}
+          <BlurFade delay={0.24}>
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-                  Placement Readiness
+                <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
+                  Campus Drives
                 </span>
-                <span
-                  className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
-                    readinessScore >= 75
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                      : readinessScore >= 60
-                      ? "bg-amber-50 text-amber-700 border-amber-200"
-                      : "bg-rose-50 text-rose-700 border-rose-200"
-                  }`}
-                >
-                  {readinessScore >= 75
-                    ? "Tier-1 Qualified"
-                    : readinessScore >= 60
-                    ? "Needs Practice"
-                    : "At-Risk"}
-                </span>
-              </div>
-
-              {/* Score Circular Gauge */}
-              <div className="flex items-center gap-5">
-                <div className="relative w-20 h-20 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                    <path
-                      className="text-slate-100"
-                      strokeWidth="3.5"
-                      stroke="currentColor"
-                      fill="none"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                    <path
-                      className={
-                        readinessScore >= 75
-                          ? "text-emerald-500"
-                          : readinessScore >= 60
-                          ? "text-amber-500"
-                          : "text-rose-500"
-                      }
-                      strokeDasharray={`${readinessScore}, 100`}
-                      strokeWidth="3.5"
-                      strokeLinecap="round"
-                      stroke="currentColor"
-                      fill="none"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                  </svg>
-                  <span className="absolute font-mono font-extrabold text-base text-slate-900 tabular-nums">
-                    {readinessScore}%
-                  </span>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                    <TrendingUp className="w-4 h-4 text-emerald-600" />
-                    <span>Top 8% in Batch</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 font-medium">
-                    {solvedProblemIds.size} of {problems.length} problems solved
-                  </p>
-                </div>
-              </div>
-
-              {/* Competency Skill Bars */}
-              <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs">
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[11px] font-medium text-slate-600">
-                    <span>Data Structures & Algorithmic Logic</span>
-                    <span className="font-mono font-bold text-slate-900">85%</span>
-                  </div>
-                  <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                    <div className="bg-indigo-600 h-full rounded-full" style={{ width: "85%" }} />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[11px] font-medium text-slate-600">
-                    <span>Code Execution Speed & Memory</span>
-                    <span className="font-mono font-bold text-slate-900">78%</span>
-                  </div>
-                  <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: "78%" }} />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[11px] font-medium text-slate-600">
-                    <span>Mock Screening Test Accuracy</span>
-                    <span className="font-mono font-bold text-slate-900">92%</span>
-                  </div>
-                  <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                    <div className="bg-amber-500 h-full rounded-full" style={{ width: "92%" }} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </BlurFade>
-
-          {/* 2. Consistency Habit & Weekly Streak */}
-          <BlurFade delay={0.15}>
-            <div className="rounded-3xl bg-white border border-slate-200/90 shadow-sm p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-                  Practice Consistency
-                </span>
-                <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-mono font-bold">
-                  <Flame className="w-3.5 h-3.5 fill-current text-amber-500" />
-                  <span>5 Days Streak</span>
-                </div>
-              </div>
-
-              {/* Weekly Punch Card */}
-              <div className="flex items-center justify-between gap-1.5 pt-1">
-                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, idx) => (
-                  <div key={day} className="flex flex-col items-center gap-1.5 flex-1">
-                    <div
-                      className={`w-full h-2.5 rounded-full transition-all ${
-                        idx < 5
-                          ? "bg-amber-500 shadow-xs"
-                          : "bg-slate-100 border border-slate-200/60"
-                      }`}
-                    />
-                    <span className="text-[9px] font-mono text-slate-400">{day}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                <div>
-                  <div className="text-[10px] font-mono text-slate-400 uppercase">Weekly XP</div>
-                  <div className="font-mono font-bold text-slate-900 text-sm">1,420 XP</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-[10px] font-mono text-slate-400 uppercase">College Rank</div>
-                  <div className="font-mono font-bold text-indigo-600 text-sm">#14 of 420</div>
-                </div>
-              </div>
-            </div>
-          </BlurFade>
-
-          {/* 3. Upcoming Campus Drives & Deadlines */}
-          <BlurFade delay={0.2}>
-            <div className="rounded-3xl bg-white border border-slate-200/90 shadow-sm p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold flex items-center gap-1.5">
-                  <Briefcase className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>Upcoming Campus Drives</span>
-                </span>
-                <Link
-                  href="/student/drives"
-                  className="text-xs font-semibold text-indigo-600 hover:underline"
-                >
-                  View All →
+                <Link href="/student/drives" className="text-[11px] font-medium text-indigo-600 hover:underline">
+                  View all
                 </Link>
               </div>
 
-              <div className="space-y-3">
-                {drives.length === 0 ? (
-                  <div className="text-xs text-slate-500">No active drives scheduled today.</div>
-                ) : (
-                  drives.map((d) => (
+              <div className="space-y-2.5">
+                {drives.map((d) => {
+                  const days = daysUntil(d.drive_date);
+                  return (
                     <div
                       key={d.id}
-                      className="p-3 rounded-2xl bg-slate-50/70 border border-slate-200/80 hover:bg-white hover:border-slate-300 transition-all space-y-1.5"
+                      className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1 hover:bg-white hover:border-slate-200 transition-all"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-900">{d.company_name}</span>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
-                          {d.status}
+                        <span className="text-[13px] font-semibold text-slate-800">{d.company_name}</span>
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                          d.status === "Ongoing"
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-slate-100 text-slate-600"
+                        }`}>
+                          {d.status === "Ongoing" ? "Live" : `${days}d`}
                         </span>
                       </div>
-                      <div className="text-[11px] text-slate-500">{d.role_title} • {d.ctc_range}</div>
+                      <p className="text-[11px] text-slate-500">
+                        {d.role_title} &middot; {d.ctc_range}
+                      </p>
                     </div>
-                  ))
-                )}
+                  );
+                })}
               </div>
             </div>
           </BlurFade>
 
-          {/* 4. Recent Verified Verdicts */}
-          <BlurFade delay={0.25}>
-            <div className="rounded-3xl bg-white border border-slate-200/90 shadow-sm p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-                  Recent Submissions
-                </span>
-                <span className="text-xs font-mono text-emerald-600 font-semibold">
-                  ● Pyodide Live
-                </span>
-              </div>
+          {/* Recent Submissions */}
+          <BlurFade delay={0.28}>
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
+              <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
+                Recent Submissions
+              </span>
 
-              <div className="space-y-2 text-xs">
-                {studentSubmissions.slice(0, 3).map((sub, i) => (
-                  <div
-                    key={sub.id || i}
-                    className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between"
-                  >
-                    <div>
-                      <div className="font-semibold text-slate-800 line-clamp-1">
-                        {sub.problem_title || "Array Challenge"}
+              {mySubmissions.length === 0 ? (
+                <p className="text-xs text-slate-400 italic">No submissions yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {mySubmissions.slice(0, 4).map((s, i) => (
+                    <div key={s.id || i} className="flex items-center justify-between py-1.5">
+                      <div className="space-y-0.5">
+                        <span className="text-[13px] font-medium text-slate-800 line-clamp-1">
+                          {s.problem_title ?? "Challenge"}
+                        </span>
+                        <div className="text-[10px] text-slate-400 font-medium">
+                          {s.language.toUpperCase()} &middot; {s.execution_time_ms}ms
+                        </div>
                       </div>
-                      <div className="text-[10px] text-slate-400 font-mono">
-                        {sub.language.toUpperCase()} • {sub.execution_time_ms}ms
-                      </div>
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                        s.status === "Accepted"
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "bg-rose-50 text-rose-600"
+                      }`}>
+                        {s.status === "Accepted" ? "AC" : s.status.split(" ").map(w => w[0]).join("")}
+                      </span>
                     </div>
-                    <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                      {sub.status}
-                    </span>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              )}
+            </div>
+          </BlurFade>
 
-                {studentSubmissions.length === 0 && (
-                  <div className="text-xs text-slate-400 italic">
-                    No submissions recorded yet. Run code to earn XP!
-                  </div>
+          {/* Quick Links */}
+          <BlurFade delay={0.32}>
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-2.5">
+              <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Quick Actions</span>
+              <div className="space-y-1">
+                <Link
+                  href="/student/resume"
+                  className="flex items-center justify-between py-2 px-1 text-[13px] font-medium text-slate-700 hover:text-indigo-700 transition-colors group"
+                >
+                  <span>View ATS Resume</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                </Link>
+                <Link
+                  href="/student/drives"
+                  className="flex items-center justify-between py-2 px-1 text-[13px] font-medium text-slate-700 hover:text-indigo-700 transition-colors group"
+                >
+                  <span>Browse Campus Drives</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                </Link>
+                {assessment && (
+                  <button
+                    onClick={() => router.push(`/student/exam/${assessment.id}`)}
+                    className="flex items-center justify-between py-2 px-1 w-full text-left text-[13px] font-medium text-slate-700 hover:text-indigo-700 transition-colors group"
+                  >
+                    <span>Take Mock Assessment</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                  </button>
                 )}
               </div>
             </div>
