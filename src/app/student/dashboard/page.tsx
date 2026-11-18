@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import Link from "next/link";
 import { DataService } from "@/lib/supabase/db";
 import { DemoStore, subscribeToDemoStore } from "@/lib/demo-store";
-import { UserProfile, Problem, Assessment, Submission } from "@/types";
+import { UserProfile, Problem, Assessment, Submission, CampusDrive } from "@/types";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import {
   Terminal,
@@ -21,15 +21,88 @@ import {
   Code2,
   ChevronRight,
   Zap,
+  Check,
+  Briefcase,
+  Play,
+  Filter,
+  BarChart2,
+  Bookmark,
+  Calendar,
+  ExternalLink,
+  Target,
 } from "lucide-react";
+
+interface TrackInfo {
+  id: string;
+  name: string;
+  role: string;
+  ctc: string;
+  tag: string;
+  color: string;
+  badgeColor: string;
+}
+
+const PREPARATION_TRACKS: TrackInfo[] = [
+  {
+    id: "all",
+    name: "All Challenges",
+    role: "Comprehensive Syllabus",
+    ctc: "Full Stack & DSA",
+    tag: "All",
+    color: "from-indigo-600 to-violet-600",
+    badgeColor: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  },
+  {
+    id: "zoho",
+    name: "Zoho Corporation",
+    role: "SDE - Round 1 & 2 Coding",
+    ctc: "₹6.5 - ₹8.5 LPA",
+    tag: "Zoho",
+    color: "from-blue-600 to-indigo-600",
+    badgeColor: "bg-blue-50 text-blue-700 border-blue-200",
+  },
+  {
+    id: "tcs",
+    name: "TCS Digital / Ninja",
+    role: "NQT Advanced Coding",
+    ctc: "₹7.5 LPA",
+    tag: "TCS NQT",
+    color: "from-purple-600 to-pink-600",
+    badgeColor: "bg-purple-50 text-purple-700 border-purple-200",
+  },
+  {
+    id: "infosys",
+    name: "Infosys Specialist",
+    role: "Specialist Programmer (SP)",
+    ctc: "₹9.5 LPA",
+    tag: "Infosys",
+    color: "from-sky-600 to-blue-600",
+    badgeColor: "bg-sky-50 text-sky-700 border-sky-200",
+  },
+  {
+    id: "cognizant",
+    name: "Cognizant GenC",
+    role: "GenC Next Developer",
+    ctc: "₹6.75 LPA",
+    tag: "Cognizant",
+    color: "from-emerald-600 to-teal-600",
+    badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  },
+];
 
 export default function StudentDashboardPage() {
   const router = useRouter();
+
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [problems, setProblems] = useState<Problem[]>([]);
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [drives, setDrives] = useState<CampusDrive[]>([]);
+
+  // Filtering states
   const [selectedTrack, setSelectedTrack] = useState<string>("All");
+  const [difficultyFilter, setDifficultyFilter] = useState<"All" | "Easy" | "Medium" | "Hard">("All");
+  const [statusFilter, setStatusFilter] = useState<"All" | "Unsolved" | "Solved">("All");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
@@ -47,6 +120,9 @@ export default function StudentDashboardPage() {
 
       const subs = await DataService.getSubmissions(user.college_name);
       setSubmissions(subs);
+
+      const campusDrives = await DataService.getCampusDrives();
+      setDrives(campusDrives.slice(0, 3));
     }
 
     loadData();
@@ -71,358 +147,603 @@ export default function StudentDashboardPage() {
   const solvedMedium = mediumProblems.filter((p) => solvedProblemIds.has(p.id)).length;
   const solvedHard = hardProblems.filter((p) => solvedProblemIds.has(p.id)).length;
 
-  // Filtered problems by company track and query
+  // Filtered problems
   const filteredProblems = problems.filter((p) => {
     const matchesTrack =
       selectedTrack === "All" || p.company_tags.includes(selectedTrack);
+
+    const matchesDifficulty =
+      difficultyFilter === "All" || p.difficulty === difficultyFilter;
+
+    const isSolved = solvedProblemIds.has(p.id);
+    const matchesStatus =
+      statusFilter === "All" ||
+      (statusFilter === "Solved" && isSolved) ||
+      (statusFilter === "Unsolved" && !isSolved);
+
     const matchesSearch =
       p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.company_tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesTrack && matchesSearch;
+
+    return matchesTrack && matchesDifficulty && matchesStatus && matchesSearch;
   });
 
-  const readinessScore = currentUser?.readiness_score || 0;
+  // Pick the recommended "Hero Challenge" (first unsolved problem or fallback)
+  const heroProblem = problems.find((p) => !solvedProblemIds.has(p.id)) || problems[0];
+
+  const readinessScore = currentUser?.readiness_score || 75;
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-8 font-sans">
-      {/* Page Title & Institution Header */}
+    <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8 font-sans">
+      {/* 1. Header: Student Identity & Live Mode Status */}
       <BlurFade delay={0.05}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-6">
-          <div>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200">
+          <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold border border-indigo-200/80">
-                Student Lab Workspace
+                Candidate Workspace
               </span>
-              <span className="text-[11px] text-slate-500 font-medium">
+              <span className="text-xs text-slate-500 font-medium truncate max-w-xs sm:max-w-md">
                 {currentUser?.college_name || "Cauvery Institute of Technology, Thanjavur"}
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mt-1">
-              Welcome back, {currentUser?.full_name || "Candidate"}
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+              Welcome back, {currentUser?.full_name?.split(" ")[0] || "Candidate"}
             </h1>
-            <p className="text-xs text-slate-500 font-mono mt-1">
-              Roll No: {currentUser?.roll_no} • {currentUser?.department} Department (Batch 2026)
+            <p className="text-xs text-slate-500 font-mono">
+              Roll No: {currentUser?.roll_no || "22CS001"} • {currentUser?.department || "CSE"} Department (Batch {currentUser?.batch_year || 2026})
             </p>
           </div>
 
-          {/* Quick Proctored Exam Trigger Button */}
-          {assessment && (
-            <button
-              onClick={() => router.push(`/student/exam/${assessment.id}`)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl btn-luxury-primary text-white text-xs font-bold transition-all shadow-md flex-shrink-0 active:scale-[0.98]"
+          {/* Right Header Badges & Fast Action */}
+          <div className="flex items-center gap-3">
+            <Link
+              href="/student/resume"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-xs"
             >
-              <ShieldCheck className="w-4 h-4" />
-              <span>Launch Live Mock Assessment</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          )}
+              <Award className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Verified ATS Resume</span>
+            </Link>
+
+            {assessment && (
+              <button
+                type="button"
+                onClick={() => router.push(`/student/exam/${assessment.id}`)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-md shadow-indigo-500/20 transition-all active:scale-[0.98]"
+              >
+                <ShieldCheck className="w-4 h-4 text-emerald-300" />
+                <span>Enter Proctored Exam</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
       </BlurFade>
 
-      {/* Top Bento Grid (4 Cards) */}
-      <BlurFade delay={0.1}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-          {/* Bento 1: Placement Readiness Radial / Score */}
-          <div className="rounded-3xl p-6 bg-white border border-slate-200/80 shadow-luxury flex flex-col justify-between space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-                Placement Readiness
-              </span>
-              <span
-                className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
-                  readinessScore >= 75
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+      {/* 2. Main 12-Column Layout: 8 Cols Core Curriculum + 4 Cols Telemetry */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* ========================================================= */}
+        {/* LEFT COLUMN: 8 Columns Main Workspace Feed               */}
+        {/* ========================================================= */}
+        <div className="lg:col-span-8 space-y-8">
+          {/* A. Hero Recommended Problem Card ("Continue Coding") */}
+          {heroProblem && (
+            <BlurFade delay={0.1}>
+              <div className="relative rounded-3xl bg-gradient-to-br from-[#0B0F19] via-[#101526] to-[#0A0D17] text-white p-6 sm:p-7 border border-slate-800 shadow-xl overflow-hidden group">
+                {/* Background subtle ambient glow */}
+                <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute bottom-0 left-10 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+                <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                  <div className="space-y-3 max-w-lg">
+                    {/* Badge */}
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[11px] font-mono font-semibold tracking-wider uppercase">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34D399]" />
+                      Today&apos;s Recommended Challenge
+                    </div>
+
+                    {/* Problem Title */}
+                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white group-hover:text-indigo-300 transition-colors">
+                      {heroProblem.title}
+                    </h2>
+
+                    {/* Metadata tags */}
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      <span
+                        className={`font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-md ${
+                          heroProblem.difficulty === "Easy"
+                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                            : heroProblem.difficulty === "Medium"
+                            ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                            : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                        }`}
+                      >
+                        {heroProblem.difficulty}
+                      </span>
+
+                      {heroProblem.company_tags.slice(0, 3).map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-2 py-0.5 rounded-md bg-slate-800/80 text-slate-300 text-[11px] font-mono border border-slate-700/60"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+
+                      <span className="text-slate-400 text-xs font-mono">
+                        • +120 XP Reward
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                      Optimize algorithmic time and space complexity with 0ms client-side Pyodide WASM execution and real-time test case assertions.
+                    </p>
+                  </div>
+
+                  {/* Primary Action Button */}
+                  <div className="flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/student/lab/${heroProblem.slug}`)}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-lg shadow-indigo-600/30 transition-all active:scale-95"
+                    >
+                      <Play className="w-3.5 h-3.5 fill-current" />
+                      <span>Start Solving Now</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </BlurFade>
+          )}
+
+          {/* B. Company Preparation Tracks Deck */}
+          <BlurFade delay={0.15}>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 tracking-tight">
+                    Campus Preparation Pathways
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Select a target company track to filter problem difficulty and placement patterns.
+                  </p>
+                </div>
+                <span className="text-xs font-mono text-indigo-600 font-semibold">
+                  {PREPARATION_TRACKS.length - 1} Company Tracks
+                </span>
+              </div>
+
+              {/* Horizontal Scrollable Track Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                {PREPARATION_TRACKS.map((track) => {
+                  const isSelected = selectedTrack === track.tag;
+                  return (
+                    <button
+                      key={track.id}
+                      type="button"
+                      onClick={() => setSelectedTrack(track.tag)}
+                      className={`p-3.5 rounded-2xl text-left border transition-all flex flex-col justify-between h-28 relative ${
+                        isSelected
+                          ? "bg-indigo-50/70 border-indigo-400 shadow-xs ring-2 ring-indigo-500/20"
+                          : "bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/80 shadow-2xs"
+                      }`}
+                    >
+                      <div className="space-y-1">
+                        <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+                          {track.tag === "All" ? "All Tracks" : "Placement"}
+                        </div>
+                        <div className="text-xs font-bold text-slate-900 line-clamp-1">
+                          {track.name}
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-mono">
+                        <span className="text-slate-500 truncate max-w-[80px]">
+                          {track.ctc}
+                        </span>
+                        {isSelected && (
+                          <span className="w-2 h-2 rounded-full bg-indigo-600" />
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </BlurFade>
+
+          {/* C. Problem Library & Curriculum */}
+          <BlurFade delay={0.2}>
+            <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 space-y-6">
+              {/* Header & Search / Filter Controls */}
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900 tracking-tight">
+                      Coding Challenge Repository
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Showing {filteredProblems.length} curated problems for {selectedTrack === "All" ? "all tracks" : selectedTrack}
+                    </p>
+                  </div>
+
+                  {/* Search Input */}
+                  <div className="relative w-full sm:w-64">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
+                    <input
+                      type="text"
+                      placeholder="Search title or tag..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-9 pr-3.5 py-2 text-xs bg-[#F9FAF8] border border-slate-200/90 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Filter Badges & Tabs Bar */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100">
+                  {/* Status Filter */}
+                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+                    {(["All", "Unsolved", "Solved"] as const).map((status) => (
+                      <button
+                        key={status}
+                        type="button"
+                        onClick={() => setStatusFilter(status)}
+                        className={`px-3 py-1 rounded-lg transition-all ${
+                          statusFilter === status
+                            ? "bg-white text-indigo-700 shadow-xs font-bold"
+                            : "text-slate-600 hover:text-slate-900"
+                        }`}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Difficulty Filter */}
+                  <div className="flex items-center gap-1.5 text-xs">
+                    {(["All", "Easy", "Medium", "Hard"] as const).map((diff) => (
+                      <button
+                        key={diff}
+                        type="button"
+                        onClick={() => setDifficultyFilter(diff)}
+                        className={`px-2.5 py-1 rounded-lg border font-mono text-[11px] transition-all ${
+                          difficultyFilter === diff
+                            ? "bg-slate-900 text-white border-slate-900 font-bold"
+                            : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                        }`}
+                      >
+                        {diff}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Problem Rows List (Clean, modern cards) */}
+              <div className="space-y-2.5">
+                {filteredProblems.length === 0 ? (
+                  <div className="p-12 text-center space-y-3 bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
+                    <Code2 className="w-8 h-8 text-slate-400 mx-auto" />
+                    <div className="text-sm font-semibold text-slate-700">
+                      No problems match this filter criteria
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedTrack("All");
+                        setDifficultyFilter("All");
+                        setStatusFilter("All");
+                        setSearchQuery("");
+                      }}
+                      className="text-xs text-indigo-600 hover:underline font-semibold"
+                    >
+                      Reset all filters
+                    </button>
+                  </div>
+                ) : (
+                  filteredProblems.map((p) => {
+                    const isSolved = solvedProblemIds.has(p.id);
+                    return (
+                      <div
+                        key={p.id}
+                        onClick={() => router.push(`/student/lab/${p.slug}`)}
+                        className="p-4 rounded-2xl border border-slate-200/80 bg-white hover:border-indigo-400/80 hover:shadow-md transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
+                      >
+                        {/* Left: Status + Title + Company Tags */}
+                        <div className="flex items-start sm:items-center gap-3.5">
+                          <div className="mt-0.5 sm:mt-0 flex-shrink-0">
+                            {isSolved ? (
+                              <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                              </div>
+                            ) : (
+                              <div className="w-6 h-6 rounded-full border-2 border-slate-300 group-hover:border-indigo-400 transition-colors" />
+                            )}
+                          </div>
+
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                                {p.title}
+                              </span>
+                              {isSolved && (
+                                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
+                                  Solved
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {p.company_tags.map((tag) => (
+                                <span
+                                  key={tag}
+                                  className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-medium"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right: Difficulty + Action CTA */}
+                        <div className="flex items-center justify-between sm:justify-end gap-3 pl-9 sm:pl-0">
+                          <span
+                            className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-md border ${
+                              p.difficulty === "Easy"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                : p.difficulty === "Medium"
+                                ? "bg-amber-50 text-amber-700 border-amber-200"
+                                : "bg-rose-50 text-rose-700 border-rose-200"
+                            }`}
+                          >
+                            {p.difficulty}
+                          </span>
+
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 group-hover:text-indigo-800 transition-colors">
+                            <span>Solve</span>
+                            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </BlurFade>
+        </div>
+
+        {/* ========================================================= */}
+        {/* RIGHT COLUMN: 4 Columns Telemetry, Streaks & Drives       */}
+        {/* ========================================================= */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* 1. Placement Readiness Gauge */}
+          <BlurFade delay={0.1}>
+            <div className="rounded-3xl bg-white border border-slate-200/90 shadow-sm p-6 space-y-5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold">
+                  Placement Readiness
+                </span>
+                <span
+                  className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
+                    readinessScore >= 75
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : readinessScore >= 60
+                      ? "bg-amber-50 text-amber-700 border-amber-200"
+                      : "bg-rose-50 text-rose-700 border-rose-200"
+                  }`}
+                >
+                  {readinessScore >= 75
+                    ? "Tier-1 Qualified"
                     : readinessScore >= 60
-                    ? "bg-amber-50 text-amber-700 border-amber-200"
-                    : "bg-rose-50 text-rose-700 border-rose-200"
-                }`}
-              >
-                {readinessScore >= 75
-                  ? "Tier 1 Ready"
-                  : readinessScore >= 60
-                  ? "Needs Practice"
-                  : "At-Risk"}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="relative w-16 h-16 flex items-center justify-center flex-shrink-0">
-                <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                  <path
-                    className="text-slate-100"
-                    strokeWidth="3.5"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                  <path
-                    className={
-                      readinessScore >= 75
-                        ? "text-emerald-500"
-                        : readinessScore >= 60
-                        ? "text-amber-500"
-                        : "text-rose-500"
-                    }
-                    strokeDasharray={`${readinessScore}, 100`}
-                    strokeWidth="3.5"
-                    strokeLinecap="round"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                </svg>
-                <span className="absolute font-mono font-extrabold text-sm text-slate-900 tabular-nums">
-                  {readinessScore}%
+                    ? "Needs Practice"
+                    : "At-Risk"}
                 </span>
               </div>
 
-              <div className="space-y-0.5">
-                <div className="text-xs font-bold text-slate-900 flex items-center gap-1">
-                  <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
-                  Benchmark Hit
+              {/* Score Circular Gauge */}
+              <div className="flex items-center gap-5">
+                <div className="relative w-20 h-20 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                    <path
+                      className="text-slate-100"
+                      strokeWidth="3.5"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                    <path
+                      className={
+                        readinessScore >= 75
+                          ? "text-emerald-500"
+                          : readinessScore >= 60
+                          ? "text-amber-500"
+                          : "text-rose-500"
+                      }
+                      strokeDasharray={`${readinessScore}, 100`}
+                      strokeWidth="3.5"
+                      strokeLinecap="round"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                  </svg>
+                  <span className="absolute font-mono font-extrabold text-base text-slate-900 tabular-nums">
+                    {readinessScore}%
+                  </span>
                 </div>
-                <div className="text-[11px] text-slate-500 font-mono">
-                  {solvedProblemIds.size} of {problems.length} solved
+
+                <div className="space-y-1">
+                  <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                    <TrendingUp className="w-4 h-4 text-emerald-600" />
+                    <span>Top 8% in Batch</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    {solvedProblemIds.size} of {problems.length} problems solved
+                  </p>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Bento 2: Coding Streak & Weekly Dots */}
-          <div className="rounded-3xl p-6 bg-white border border-slate-200/80 shadow-luxury flex flex-col justify-between space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-                Active Practice Streak
-              </span>
-              <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center">
-                <Flame className="w-4 h-4" />
+              {/* Competency Skill Bars */}
+              <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs">
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[11px] font-medium text-slate-600">
+                    <span>Data Structures & Algorithmic Logic</span>
+                    <span className="font-mono font-bold text-slate-900">85%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                    <div className="bg-indigo-600 h-full rounded-full" style={{ width: "85%" }} />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[11px] font-medium text-slate-600">
+                    <span>Code Execution Speed & Memory</span>
+                    <span className="font-mono font-bold text-slate-900">78%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: "78%" }} />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[11px] font-medium text-slate-600">
+                    <span>Mock Screening Test Accuracy</span>
+                    <span className="font-mono font-bold text-slate-900">92%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                    <div className="bg-amber-500 h-full rounded-full" style={{ width: "92%" }} />
+                  </div>
+                </div>
               </div>
             </div>
+          </BlurFade>
 
-            <div className="space-y-2">
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-extrabold text-slate-900 font-mono tabular-nums">
-                  5 Days
+          {/* 2. Consistency Habit & Weekly Streak */}
+          <BlurFade delay={0.15}>
+            <div className="rounded-3xl bg-white border border-slate-200/90 shadow-sm p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold">
+                  Practice Consistency
                 </span>
-                <span className="text-[11px] text-amber-600 font-mono font-bold">
-                  Consecutive
-                </span>
+                <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-mono font-bold">
+                  <Flame className="w-3.5 h-3.5 fill-current text-amber-500" />
+                  <span>5 Days Streak</span>
+                </div>
               </div>
 
-              {/* Weekly punch-card dots */}
-              <div className="flex items-center gap-1.5 pt-1">
-                {["M", "T", "W", "T", "F", "S", "S"].map((day, idx) => (
-                  <div key={idx} className="flex flex-col items-center gap-1 flex-1">
+              {/* Weekly Punch Card */}
+              <div className="flex items-center justify-between gap-1.5 pt-1">
+                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, idx) => (
+                  <div key={day} className="flex flex-col items-center gap-1.5 flex-1">
                     <div
-                      className={`w-full h-2 rounded-full ${
-                        idx < 5 ? "bg-amber-400 shadow-xs" : "bg-slate-100"
+                      className={`w-full h-2.5 rounded-full transition-all ${
+                        idx < 5
+                          ? "bg-amber-500 shadow-xs"
+                          : "bg-slate-100 border border-slate-200/60"
                       }`}
                     />
                     <span className="text-[9px] font-mono text-slate-400">{day}</span>
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
 
-          {/* Bento 3: Solved Problems Breakdown by Difficulty */}
-          <div className="rounded-3xl p-6 bg-white border border-slate-200/80 shadow-luxury flex flex-col justify-between space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-                Difficulty Mastery
-              </span>
-              <span className="text-[11px] font-mono font-bold text-slate-700">
-                {solvedProblemIds.size}/{problems.length}
-              </span>
-            </div>
-
-            <div className="space-y-2 text-xs font-mono">
-              {/* Easy */}
-              <div className="space-y-1">
-                <div className="flex justify-between text-[10px] text-slate-500 font-medium">
-                  <span className="text-emerald-600 font-bold">Easy</span>
-                  <span>{solvedEasy}/{easyProblems.length}</span>
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                <div>
+                  <div className="text-[10px] font-mono text-slate-400 uppercase">Weekly XP</div>
+                  <div className="font-mono font-bold text-slate-900 text-sm">1,420 XP</div>
                 </div>
-                <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                  <div
-                    className="bg-emerald-500 h-full rounded-full"
-                    style={{ width: `${(solvedEasy / Math.max(1, easyProblems.length)) * 100}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Medium */}
-              <div className="space-y-1">
-                <div className="flex justify-between text-[10px] text-slate-500 font-medium">
-                  <span className="text-amber-600 font-bold">Medium</span>
-                  <span>{solvedMedium}/{mediumProblems.length}</span>
-                </div>
-                <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                  <div
-                    className="bg-amber-500 h-full rounded-full"
-                    style={{ width: `${(solvedMedium / Math.max(1, mediumProblems.length)) * 100}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Hard */}
-              <div className="space-y-1">
-                <div className="flex justify-between text-[10px] text-slate-500 font-medium">
-                  <span className="text-rose-600 font-bold">Hard</span>
-                  <span>{solvedHard}/{hardProblems.length}</span>
-                </div>
-                <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                  <div
-                    className="bg-rose-500 h-full rounded-full"
-                    style={{ width: `${(solvedHard / Math.max(1, hardProblems.length)) * 100}%` }}
-                  />
+                <div className="text-right">
+                  <div className="text-[10px] font-mono text-slate-400 uppercase">College Rank</div>
+                  <div className="font-mono font-bold text-indigo-600 text-sm">#14 of 420</div>
                 </div>
               </div>
             </div>
-          </div>
+          </BlurFade>
 
-          {/* Bento 4: Upcoming Scheduled Assessment */}
-          <div className="rounded-3xl p-6 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/50 border border-indigo-200/70 shadow-luxury flex flex-col justify-between space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-indigo-700 font-bold flex items-center gap-1.5">
-                <Sparkles className="w-3 h-3 text-indigo-600" /> Live Mock Drive
-              </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
-                Active
-              </span>
-            </div>
-
-            <div className="space-y-1">
-              <h3 className="font-extrabold text-xs text-slate-900 line-clamp-1">
-                {assessment?.title || "Campus Placement Screening"}
-              </h3>
-              <p className="text-[11px] text-slate-600 line-clamp-2">
-                Mandatory proctored assessment with MCQs and live coding rounds.
-              </p>
-            </div>
-
-            <button
-              onClick={() => router.push(`/student/exam/${assessment?.id}`)}
-              className="w-full py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
-            >
-              <span>Enter Assessment Room</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      </BlurFade>
-
-      {/* Company Tracks & Coding Repository Section */}
-      <BlurFade delay={0.15}>
-        <div className="rounded-3xl p-7 bg-white border border-slate-200/90 shadow-luxury space-y-6">
-          {/* Controls: Company Filter Pills + Search */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-            {/* Track Filter Pills */}
-            <div className="flex flex-wrap items-center gap-2">
-              {["All", "TCS NQT", "Zoho", "Infosys", "Cognizant"].map((track) => (
-                <button
-                  key={track}
-                  onClick={() => setSelectedTrack(track)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                    selectedTrack === track
-                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-100"
-                      : "bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80 shadow-xs"
-                  }`}
+          {/* 3. Upcoming Campus Drives & Deadlines */}
+          <BlurFade delay={0.2}>
+            <div className="rounded-3xl bg-white border border-slate-200/90 shadow-sm p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold flex items-center gap-1.5">
+                  <Briefcase className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Upcoming Campus Drives</span>
+                </span>
+                <Link
+                  href="/student/drives"
+                  className="text-xs font-semibold text-indigo-600 hover:underline"
                 >
-                  {track}
-                </button>
-              ))}
-            </div>
+                  View All →
+                </Link>
+              </div>
 
-            {/* Search Input */}
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Search by challenge title or tag..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white w-56 sm:w-64 transition-all"
-              />
-            </div>
-          </div>
-
-          {/* High-Density Problem Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left">
-              <thead className="text-[11px] font-mono uppercase text-slate-400 border-b border-slate-100 font-bold">
-                <tr>
-                  <th className="py-3 px-3">Status</th>
-                  <th className="py-3 px-3">Problem Title</th>
-                  <th className="py-3 px-3">Company Tags</th>
-                  <th className="py-3 px-3">Difficulty</th>
-                  <th className="py-3 px-3 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredProblems.map((p) => {
-                  const isSolved = solvedProblemIds.has(p.id);
-                  return (
-                    <tr
-                      key={p.id}
-                      onClick={() => router.push(`/student/lab/${p.slug}`)}
-                      className="hover:bg-slate-50/70 cursor-pointer transition-colors group"
+              <div className="space-y-3">
+                {drives.length === 0 ? (
+                  <div className="text-xs text-slate-500">No active drives scheduled today.</div>
+                ) : (
+                  drives.map((d) => (
+                    <div
+                      key={d.id}
+                      className="p-3 rounded-2xl bg-slate-50/70 border border-slate-200/80 hover:bg-white hover:border-slate-300 transition-all space-y-1.5"
                     >
-                      <td className="py-4 px-3">
-                        {isSolved ? (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                        ) : (
-                          <div className="w-4 h-4 rounded-full border-2 border-slate-300" />
-                        )}
-                      </td>
-
-                      <td className="py-4 px-3">
-                        <div className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors flex items-center gap-2">
-                          <span>{p.title}</span>
-                        </div>
-                      </td>
-
-                      <td className="py-4 px-3">
-                        <div className="flex flex-wrap gap-1.5">
-                          {p.company_tags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 font-medium"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-
-                      <td className="py-4 px-3">
-                        <span
-                          className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
-                            p.difficulty === "Easy"
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : p.difficulty === "Medium"
-                              ? "bg-amber-50 text-amber-700 border-amber-200"
-                              : "bg-rose-50 text-rose-700 border-rose-200"
-                          }`}
-                        >
-                          {p.difficulty}
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-900">{d.company_name}</span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
+                          {d.status}
                         </span>
-                      </td>
+                      </div>
+                      <div className="text-[11px] text-slate-500">{d.role_title} • {d.ctc_range}</div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </BlurFade>
 
-                      <td className="py-4 px-3 text-right">
-                        <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-indigo-600 group-hover:text-indigo-800 transition-colors">
-                          <span>Solve</span>
-                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          {/* 4. Recent Verified Verdicts */}
+          <BlurFade delay={0.25}>
+            <div className="rounded-3xl bg-white border border-slate-200/90 shadow-sm p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold">
+                  Recent Submissions
+                </span>
+                <span className="text-xs font-mono text-emerald-600 font-semibold">
+                  ● Pyodide Live
+                </span>
+              </div>
+
+              <div className="space-y-2 text-xs">
+                {studentSubmissions.slice(0, 3).map((sub, i) => (
+                  <div
+                    key={sub.id || i}
+                    className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between"
+                  >
+                    <div>
+                      <div className="font-semibold text-slate-800 line-clamp-1">
+                        {sub.problem_title || "Array Challenge"}
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-mono">
+                        {sub.language.toUpperCase()} • {sub.execution_time_ms}ms
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                      {sub.status}
+                    </span>
+                  </div>
+                ))}
+
+                {studentSubmissions.length === 0 && (
+                  <div className="text-xs text-slate-400 italic">
+                    No submissions recorded yet. Run code to earn XP!
+                  </div>
+                )}
+              </div>
+            </div>
+          </BlurFade>
         </div>
-      </BlurFade>
+      </div>
     </div>
   );
 }
