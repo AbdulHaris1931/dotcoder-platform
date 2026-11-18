@@ -254,7 +254,7 @@ export function SplitPaneIDE({
             title="Shortcut: Ctrl+Shift+Enter"
           >
             <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>{isSubmitting ? "Grading 6 Cases..." : "Submit"}</span>
+            <span>{isSubmitting ? "Grading..." : "Submit"}</span>
           </button>
         </div>
       </div>
@@ -305,7 +305,7 @@ export function SplitPaneIDE({
                   }`}
                 >
                   <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Hints (3)</span>
+                  <span>Hints</span>
                 </button>
               </>
             )}
@@ -339,7 +339,7 @@ export function SplitPaneIDE({
                 {/* Constraints Card */}
                 <div className="p-3.5 rounded-xl bg-[#141B2D]/80 border border-[#1E293B] space-y-2">
                   <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-                    Input Constraints
+                    Constraints
                   </div>
                   <pre className="text-xs font-mono text-emerald-300 whitespace-pre-line">
                     {problem.constraints_text}
@@ -349,13 +349,13 @@ export function SplitPaneIDE({
                 {/* Sample Testcases (TC 1 & TC 2) */}
                 <div className="space-y-3">
                   <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-                    Sample Test Cases (Public)
+                    Sample Cases
                   </div>
                   {testCases.slice(0, 2).map((tc) => (
                     <div key={tc.id} className="p-3.5 rounded-xl bg-[#141B2D]/60 border border-[#1E293B] space-y-2">
                       <div className="flex items-center justify-between text-xs font-mono text-slate-400">
                         <span>Case {tc.case_number}</span>
-                        <span className="text-[10px] text-emerald-400 font-semibold">Sample Case</span>
+                        <span className="text-[10px] text-emerald-400 font-semibold">Sample</span>
                       </div>
                       <div className="space-y-1">
                         <div className="text-[10px] text-slate-500 font-mono">Input:</div>
@@ -364,7 +364,7 @@ export function SplitPaneIDE({
                         </pre>
                       </div>
                       <div className="space-y-1">
-                        <div className="text-[10px] text-slate-500 font-mono">Expected Output:</div>
+                        <div className="text-[10px] text-slate-500 font-mono">Expected:</div>
                         <pre className="p-2 rounded-lg bg-[#0B0F17] font-mono text-xs text-emerald-400 overflow-x-auto">
                           {tc.expected_output}
                         </pre>
@@ -375,7 +375,7 @@ export function SplitPaneIDE({
 
                 {/* Company Tags */}
                 <div className="pt-2 border-t border-[#1E293B] flex items-center gap-2 text-xs">
-                  <span className="text-slate-500 font-mono text-[11px]">Frequently asked by:</span>
+                  <span className="text-slate-500 font-mono text-[11px]">Tags:</span>
                   <div className="flex flex-wrap gap-1.5">
                     {problem.company_tags.map((tag) => (
                       <span
@@ -395,7 +395,7 @@ export function SplitPaneIDE({
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>3-Minute Editorial & Big-O Cheat Sheet</span>
+                  <span>Concept & Big-O</span>
                 </div>
                 <div className="whitespace-pre-line text-xs font-sans leading-relaxed text-slate-300 space-y-3">
                   {conceptNoteMarkdown || "Refer to the topic concept note for algorithmic invariants."}
@@ -406,10 +406,6 @@ export function SplitPaneIDE({
             {/* Step-by-Step Progressive Accordion Hints (Practice Mode Only) */}
             {activeLeftTab === "hints" && (
               <div className="space-y-3">
-                <div className="text-xs text-slate-400">
-                  Reveal hints progressively. Try not to open Hint 3 unless you are stuck!
-                </div>
-
                 {/* Hint 1: Intuition */}
                 <div className="rounded-xl border border-[#1E293B] bg-[#141B2D]/70 overflow-hidden">
                   <button
@@ -419,7 +415,7 @@ export function SplitPaneIDE({
                   >
                     <div className="flex items-center gap-2">
                       <Lightbulb className="w-4 h-4 text-amber-400" />
-                      <span className="font-bold">Hint 1: Algorithmic Intuition</span>
+                      <span className="font-bold">Hint 1: Intuition</span>
                     </div>
                     {unlockedHints.intuition ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </button>
@@ -439,7 +435,7 @@ export function SplitPaneIDE({
                   >
                     <div className="flex items-center gap-2">
                       <Cpu className="w-4 h-4 text-indigo-400" />
-                      <span className="font-bold">Hint 2: Data Structure & State Invariant</span>
+                      <span className="font-bold">Hint 2: Data Structure</span>
                     </div>
                     {unlockedHints.data_structure ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </button>
@@ -459,7 +455,7 @@ export function SplitPaneIDE({
                   >
                     <div className="flex items-center gap-2">
                       <ShieldAlert className="w-4 h-4 text-rose-400" />
-                      <span className="font-bold">Hint 3: Boundary Cases & Traps Warning</span>
+                      <span className="font-bold">Hint 3: Edge Cases</span>
                     </div>
                     {unlockedHints.edge_case_warning ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </button>
@@ -477,7 +473,7 @@ export function SplitPaneIDE({
               <div className="space-y-3">
                 {submissionHistory.length === 0 ? (
                   <div className="p-8 text-center text-xs text-slate-500 font-mono">
-                    No submissions recorded yet for this challenge. Click Submit to record an attempt!
+                    No submissions yet.
                   </div>
                 ) : (
                   submissionHistory.map((sub, idx) => (
@@ -554,7 +550,7 @@ export function SplitPaneIDE({
                       : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
-                  Test Cases
+                  Cases
                 </button>
                 <button
                   type="button"
@@ -565,7 +561,7 @@ export function SplitPaneIDE({
                       : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
-                  <span>Test Result</span>
+                  <span>Result</span>
                   {lastResult && (
                     <span
                       className={`w-2 h-2 rounded-full ${
@@ -584,10 +580,10 @@ export function SplitPaneIDE({
                       lastResult.status === "Accepted" ? "text-emerald-400 font-semibold" : "text-rose-400 font-semibold"
                     }
                   >
-                    {lastResult.status} ({lastResult.passed_cases}/{lastResult.total_cases} Passed)
+                    {lastResult.status} ({lastResult.passed_cases}/{lastResult.total_cases})
                   </span>
                 ) : (
-                  <span>Ready to evaluate</span>
+                  <span>Ready</span>
                 )}
               </div>
             </div>
@@ -626,19 +622,19 @@ export function SplitPaneIDE({
                           : "bg-[#141B2D] text-slate-400 hover:text-slate-200"
                       }`}
                     >
-                      + Custom Input
+                      + Custom
                     </button>
                   </div>
 
                   {/* Case Content */}
                   {isCustomInput ? (
                     <div className="space-y-1.5">
-                      <div className="text-[11px] text-slate-400 font-mono">Custom Stdin Input:</div>
+                      <div className="text-[11px] text-slate-400 font-mono">Custom Input:</div>
                       <textarea
                         rows={3}
                         value={customInputValue}
                         onChange={(e) => setCustomInputValue(e.target.value)}
-                        placeholder="Enter sample input matching problem format..."
+                        placeholder="Enter sample input..."
                         className="w-full p-2.5 rounded-lg bg-[#0B0F17] border border-[#1E293B] font-mono text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       />
                     </div>
@@ -651,7 +647,7 @@ export function SplitPaneIDE({
                         </pre>
                       </div>
                       <div className="space-y-1">
-                        <div className="text-[10px] text-slate-400">Expected Output:</div>
+                        <div className="text-[10px] text-slate-400">Expected:</div>
                         <pre className="p-2.5 rounded-lg bg-[#0B0F17] text-emerald-400 border border-[#1E293B] overflow-x-auto">
                           {selectedTestCase?.expected_output}
                         </pre>
@@ -666,7 +662,7 @@ export function SplitPaneIDE({
                 <div className="space-y-3">
                   {!lastResult ? (
                     <div className="p-6 text-center text-xs text-slate-500 font-mono">
-                      Click &quot;Run&quot; to test visible sample cases or &quot;Submit&quot; to grade all 6 test cases.
+                      Run code or submit to view test results.
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -697,7 +693,7 @@ export function SplitPaneIDE({
                               <span>TC {r.case_number}</span>
                               {r.is_hidden && (
                                 <span className="text-[9px] uppercase tracking-wider opacity-60">
-                                  (Hidden)
+                                  Hidden
                                 </span>
                               )}
                             </button>
@@ -710,21 +706,20 @@ export function SplitPaneIDE({
                         <div className="p-3.5 rounded-xl bg-[#0B0F17] border border-[#1E293B] space-y-2 text-xs font-mono">
                           <div className="flex items-center justify-between text-slate-400">
                             <span className="font-bold">
-                              Testcase {selectedCaseResult.case_number}{" "}
-                              {selectedCaseResult.is_hidden ? "• Hidden Assessment Case" : "• Public Sample Case"}
+                              Case {selectedCaseResult.case_number} · {selectedCaseResult.is_hidden ? "Hidden" : "Public"}
                             </span>
                             <span
                               className={`font-semibold ${
                                 selectedCaseResult.passed ? "text-emerald-400" : "text-rose-400"
                               }`}
                             >
-                              {selectedCaseResult.passed ? "Passed (✓)" : "Failed (✗)"}
+                              {selectedCaseResult.passed ? "Passed" : "Failed"}
                             </span>
                           </div>
 
                           {/* Failure Category Diagnostic Warning */}
                           <div className="p-2 rounded-lg bg-[#141B2D] border border-[#1E293B] text-[11px] flex items-center justify-between">
-                            <span className="text-slate-400">Diagnostic Category:</span>
+                            <span className="text-slate-400">Category:</span>
                             <span className="text-amber-300 font-semibold">
                               {selectedCaseResult.failure_category}
                             </span>
@@ -735,13 +730,10 @@ export function SplitPaneIDE({
                             <div className="p-3 rounded-lg bg-[#141B2D]/50 border border-slate-800 text-[11px] text-slate-400 space-y-1">
                               <div className="flex items-center gap-1.5 text-indigo-400 font-semibold">
                                 <Terminal className="w-3.5 h-3.5" />
-                                <span>Hidden Case Protection Active</span>
+                                <span>Hidden Test Case</span>
                               </div>
                               <p className="text-[10px] text-slate-500">
-                                Hidden assessment input and expected output strings are redacted to preserve examination integrity.
-                                {selectedCaseResult.passed
-                                  ? " Code execution passed all bounds for this case."
-                                  : ` Failed due to ${selectedCaseResult.failure_category}. Review edge case handling.`}
+                                Redacted for test integrity. {selectedCaseResult.passed ? "Passed all assertions." : `Failed: ${selectedCaseResult.failure_category}.`}
                               </p>
                             </div>
                           ) : (

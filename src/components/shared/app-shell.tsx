@@ -86,17 +86,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // Build dynamic breadcrumb label
   const getBreadcrumb = () => {
-    if (pathname.startsWith("/student/dashboard")) return "Student Workspace • DotLab";
-    if (pathname.startsWith("/student/drives")) return "Campus Recruitment Drives • Openings";
-    if (pathname.startsWith("/student/resume")) return "Placement Resume • Verified ATS Portfolio";
-    if (pathname.startsWith("/student/exam")) return "Proctored Exam Suite • DotExam";
-    if (pathname.startsWith("/admin/dashboard") || pathname.startsWith("/tpo/dashboard")) return "Placement Officer Command • Analytics";
-    if (pathname.startsWith("/admin/drives")) return "Placement Drives Manager • Hiring Pipeline";
-    if (pathname.startsWith("/admin/problems")) return "Question Bank Manager • Coding Challenges";
-    if (pathname.startsWith("/admin/assessments")) return "Assessment Creator • Test Scheduler";
-    if (pathname.startsWith("/tpo/students")) return "Roster Manager • Bulk CSV Import";
-    if (pathname === "/") return "Platform Overview";
-    return "Campus Workspace";
+    if (pathname.startsWith("/student/dashboard")) return "Dashboard";
+    if (pathname.startsWith("/student/drives")) return "Campus Drives";
+    if (pathname.startsWith("/student/resume")) return "Resume";
+    if (pathname.startsWith("/student/exam")) return "Exam Suite";
+    if (pathname.startsWith("/admin/dashboard") || pathname.startsWith("/tpo/dashboard")) return "Analytics";
+    if (pathname.startsWith("/admin/drives")) return "Drives";
+    if (pathname.startsWith("/admin/problems")) return "Question Bank";
+    if (pathname.startsWith("/admin/assessments")) return "Assessments";
+    if (pathname.startsWith("/tpo/students")) return "Students";
+    if (pathname === "/") return "Overview";
+    return "Workspace";
   };
 
   return (
@@ -130,7 +130,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {/* Student Section */}
             <div className="space-y-1">
               <div className="px-3 text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-                Student Coding Hub
+                Student
               </div>
 
               <button
@@ -145,7 +145,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-indigo-600 rounded-r" />
                 )}
                 <Terminal className="w-4 h-4 text-indigo-600" />
-                <span>Coding Lab (DotLab)</span>
+                <span>Coding Lab</span>
               </button>
 
               <button
@@ -160,7 +160,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-indigo-600 rounded-r" />
                 )}
                 <BookOpen className="w-4 h-4 text-purple-600" />
-                <span>Curriculum (10 Lessons)</span>
+                <span>Curriculum</span>
               </button>
 
               <button
@@ -190,7 +190,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-indigo-600 rounded-r" />
                 )}
                 <Award className="w-4 h-4 text-emerald-600" />
-                <span>Placement Resume</span>
+                <span>Resume</span>
               </button>
 
               <button
@@ -205,7 +205,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-indigo-600 rounded-r" />
                 )}
                 <Trophy className="w-4 h-4 text-indigo-600" />
-                <span>TCS Exam Simulator</span>
+                <span>Simulator</span>
               </button>
 
               <button
@@ -220,14 +220,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-indigo-600 rounded-r" />
                 )}
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>DotExam Suite</span>
+                <span>Exam Suite</span>
               </button>
             </div>
 
             {/* Placement Administration Section */}
             <div className="space-y-1">
               <div className="px-3 text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-                Placement Cell (Admin)
+                Admin
               </div>
 
               <button
@@ -242,7 +242,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-indigo-600 rounded-r" />
                 )}
                 <BarChart3 className="w-4 h-4 text-amber-500" />
-                <span>Executive Analytics</span>
+                <span>Analytics</span>
               </button>
 
               <button
@@ -257,7 +257,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-indigo-600 rounded-r" />
                 )}
                 <Briefcase className="w-4 h-4 text-indigo-600" />
-                <span>Drives & Pipeline</span>
+                <span>Drives</span>
               </button>
 
               <button
@@ -287,7 +287,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-indigo-600 rounded-r" />
                 )}
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>Assessments Manager</span>
+                <span>Assessments</span>
               </button>
 
               <button
@@ -302,7 +302,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-indigo-600 rounded-r" />
                 )}
                 <Users className="w-4 h-4 text-slate-500" />
-                <span>Bulk CSV Onboarding</span>
+                <span>Students</span>
               </button>
             </div>
           </div>

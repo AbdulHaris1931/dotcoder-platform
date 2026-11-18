@@ -69,7 +69,7 @@ export function CurriculumSidebar({
               <Layers className="w-3.5 h-3.5" />
             </div>
             <span className="font-bold text-xs uppercase tracking-wider text-white">
-              Curriculum Map
+              Curriculum
             </span>
           </div>
           <span className="text-[10px] font-mono text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20 font-semibold">
@@ -189,7 +189,7 @@ export function CurriculumSidebar({
                         {/* Progress Bar (X / 25) */}
                         <div className="space-y-1">
                           <div className="flex justify-between text-[10px] font-mono text-slate-400">
-                            <span>Solved: {solvedProblems}/{totalProblems}</span>
+                            <span>{solvedProblems}/{totalProblems}</span>
                             <span className="text-indigo-400">{Math.round((solvedProblems / Math.max(1, totalProblems)) * 100)}%</span>
                           </div>
                           <div className="h-1 bg-[#1A2338] rounded-full overflow-hidden">
@@ -239,14 +239,14 @@ export function CurriculumSidebar({
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-1.5 font-bold text-white">
                                     <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
-                                    <span>Module Assessment</span>
+                                    <span>Assessment</span>
                                   </div>
                                   <span className="text-[10px] text-purple-400 font-bold group-hover:translate-x-0.5 transition-transform">
                                     90m ↗
                                   </span>
                                 </div>
                                 <div className="text-[10px] text-slate-400 mt-0.5">
-                                  10 MCQs + 5 Coding (80% Passing)
+                                  10 MCQ · 5 Code · 80% pass
                                 </div>
                               </Link>
                             </div>

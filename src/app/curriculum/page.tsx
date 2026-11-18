@@ -88,9 +88,7 @@ function CurriculumContent() {
           <DotCoderLogo theme="dark" size="sm" href="/" />
           <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-slate-400">
             <span>/</span>
-            <span className="text-white font-semibold">Campus Placement Curriculum</span>
-            <span className="text-slate-600">•</span>
-            <span className="text-indigo-400">Coursera-Style Progressive Mastery</span>
+            <span className="text-white font-semibold">Curriculum</span>
           </div>
         </div>
 
@@ -99,14 +97,14 @@ function CurriculumContent() {
             href="/student/dashboard"
             className="text-xs font-mono text-slate-400 hover:text-white transition-colors"
           >
-            ← Student Dashboard
+            ← Dashboard
           </Link>
           <Link
             href={`/assessment/${activeModuleId}`}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-md shadow-purple-600/30 transition-all active:scale-95"
           >
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Launch Module Assessment</span>
+            <span>Assessment (90m)</span>
           </Link>
         </div>
       </header>
@@ -130,7 +128,7 @@ function CurriculumContent() {
           <div className="space-y-2 pb-6 border-b border-[#1E293B]">
             <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
               <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bold uppercase">
-                Lesson {activeLesson?.lesson_number || 1} • {activeLesson?.track_type === "shared_core" ? "Shared Core" : "Branch Track"}
+                Lesson {activeLesson?.lesson_number || 1} · {activeLesson?.track_type === "shared_core" ? "Core" : "Track"}
               </span>
               <span className="text-slate-600">›</span>
               <span className="text-slate-400 font-semibold">
@@ -141,12 +139,9 @@ function CurriculumContent() {
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
               {activeTopic?.title || "Time & Space Big-O Analysis"}
             </h1>
-            <p className="text-xs text-slate-400 max-w-3xl leading-relaxed">
-              Step through 5 progressive practice stages (Guided Warmup → Pattern Application → Edge-Case Trap → Combined Concept → Company Hard Challenge) before attempting the 90-minute Module Assessment.
-            </p>
 
-            {/* View Switcher Tabs: Problems vs 3-min Concept Guide */}
-            <div className="flex items-center gap-2 pt-4">
+            {/* View Switcher Tabs: Problems vs Concept Guide */}
+            <div className="flex items-center gap-2 pt-3">
               <button
                 type="button"
                 onClick={() => setTopicTab("problems")}
@@ -157,7 +152,7 @@ function CurriculumContent() {
                 }`}
               >
                 <Code2 className="w-3.5 h-3.5" />
-                <span>Practice Problems (5 Stages)</span>
+                <span>Practice</span>
               </button>
 
               <button
@@ -170,7 +165,7 @@ function CurriculumContent() {
                 }`}
               >
                 <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
-                <span>3-Minute Concept Guide & Big-O Cheat Sheet</span>
+                <span>Concept Guide</span>
               </button>
             </div>
           </div>
@@ -180,10 +175,10 @@ function CurriculumContent() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
-                  Sequential Practice Curriculum
+                  Problems
                 </span>
                 <span className="text-xs font-mono text-indigo-400">
-                  {activeTopic?.problems?.filter((p) => p.is_solved).length || 0} of {activeTopic?.problems?.length || 5} Completed
+                  {activeTopic?.problems?.filter((p) => p.is_solved).length || 0}/{activeTopic?.problems?.length || 5} Done
                 </span>
               </div>
 
@@ -199,7 +194,7 @@ function CurriculumContent() {
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-bold uppercase">
-                            Stage {prob.order_index}: {prob.practice_stage_name}
+                            Stage {prob.order_index} · {prob.practice_stage_name}
                           </span>
                           <span
                             className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
@@ -218,7 +213,7 @@ function CurriculumContent() {
                           {prob.title}
                         </h3>
 
-                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                           {prob.company_tags.map((tag) => (
                             <span
                               key={tag}
@@ -227,9 +222,6 @@ function CurriculumContent() {
                               {tag}
                             </span>
                           ))}
-                          <span className="text-[11px] font-mono text-slate-500 pl-1">
-                            • 6 Test Cases (2 Public, 4 Hidden)
-                          </span>
                         </div>
                       </div>
 
@@ -247,7 +239,7 @@ function CurriculumContent() {
                           onClick={() => router.push(`/practice/${prob.slug || prob.id}`)}
                           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all shadow-md active:scale-95 group-hover:shadow-indigo-500/25"
                         >
-                          <span>Solve in IDE</span>
+                          <span>Solve</span>
                           <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                         </button>
                       </div>
@@ -263,7 +255,7 @@ function CurriculumContent() {
             <div className="p-6 rounded-2xl bg-[#0E131F]/90 border border-[#1E293B] space-y-6">
               <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono">
                 <Sparkles className="w-4 h-4" />
-                <span className="font-bold">EDITORIAL CONCEPT GUIDE & TIME/SPACE TARGETS</span>
+                <span className="font-bold">CONCEPT GUIDE & TARGETS</span>
               </div>
 
               <div className="prose prose-invert prose-sm max-w-none text-slate-300 whitespace-pre-line text-xs font-sans leading-relaxed">
@@ -277,10 +269,10 @@ function CurriculumContent() {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-purple-400" />
-                <span className="font-bold text-sm text-white">Module Proctored Assessment Ready</span>
+                <span className="font-bold text-sm text-white">Module Assessment</span>
               </div>
               <p className="text-xs text-slate-400">
-                Test your mastery across all 5 topics under timed exam conditions (90 minutes, 10 MCQs + 5 Coding Challenges).
+                90 mins · 10 MCQs · 5 Code · 80% pass
               </p>
             </div>
 
@@ -288,7 +280,7 @@ function CurriculumContent() {
               href={`/assessment/${activeModuleId}`}
               className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs shadow-lg shadow-purple-600/30 transition-all shrink-0 active:scale-95"
             >
-              <span>Enter Assessment Mode (90m)</span>
+              <span>Start Assessment</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>

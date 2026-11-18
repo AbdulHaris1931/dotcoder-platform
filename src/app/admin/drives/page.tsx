@@ -126,7 +126,7 @@ export default function AdminDrivesManagerPage() {
     const filename = `HR_Shortlist_${activeDrive?.company_name.replace(/\s+/g, "_") || "Campus"}_${Date.now()}.csv`;
     downloadFile(filename, csvContent, "text/csv");
 
-    setExportNotice(`Exported ${filename} successfully formatted for visiting HR team!`);
+    setExportNotice(`Exported ${filename}`);
     setTimeout(() => setExportNotice(null), 4000);
   };
 
@@ -164,37 +164,29 @@ export default function AdminDrivesManagerPage() {
       <BlurFade delay={0.05}>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/80 pb-6">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold border border-indigo-200/80">
-                Placement Cell Command
-              </span>
-              <span className="text-[11px] text-slate-500 font-medium">
-                Recruitment Drives & Shortlisting Pipeline
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mt-1">
-              Campus Placement Drives & Pipeline Manager
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+              Campus Drives
             </h1>
-            <p className="text-xs text-slate-600 font-medium mt-1">
-              Manage visiting corporate recruitment drives, candidate stage progression, and export HR shortlists.
+            <p className="text-xs text-slate-500 font-sans mt-0.5">
+              Recruitment drives and candidate pipeline.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={() => setShowModal(true)}
-              className="flex items-center gap-1.5 px-5 py-2.5 rounded-2xl btn-luxury-primary text-white font-mono text-xs font-semibold shadow-md active:scale-[0.98]"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl btn-luxury-primary text-white font-mono text-xs font-semibold shadow-md active:scale-[0.98]"
             >
               <Plus className="w-4 h-4" />
-              <span>Post New Drive</span>
+              <span>+ New Drive</span>
             </button>
 
             <button
               onClick={handleExportHrCsv}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white hover:bg-slate-50 text-emerald-700 font-mono text-xs font-bold border border-emerald-200 hover:border-emerald-300 transition-all shadow-sm hover:shadow active:scale-[0.98]"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-emerald-700 font-mono text-xs font-bold border border-emerald-200 hover:border-emerald-300 transition-all shadow-sm active:scale-[0.98]"
             >
               <Download className="w-4 h-4 text-emerald-600" />
-              <span>Export HR Shortlist CSV</span>
+              <span>Export Shortlist</span>
             </button>
           </div>
         </div>
@@ -207,7 +199,7 @@ export default function AdminDrivesManagerPage() {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs font-mono text-emerald-800 flex items-center gap-3 shadow-sm"
+            className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-mono text-emerald-800 flex items-center gap-2 shadow-sm"
           >
             <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
             <span className="font-bold">{exportNotice}</span>
@@ -220,20 +212,20 @@ export default function AdminDrivesManagerPage() {
         <div className="flex items-center gap-2 overflow-x-auto pb-2 text-xs font-mono">
           <button
             onClick={() => setSelectedDriveId("ALL")}
-            className={`px-4 py-2 rounded-xl transition-all whitespace-nowrap ${
+            className={`px-3.5 py-1.5 rounded-xl transition-all whitespace-nowrap ${
               selectedDriveId === "ALL"
                 ? "bg-indigo-600 text-white font-bold shadow-md shadow-indigo-100"
                 : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200/80 shadow-xs"
             }`}
           >
-            All Companies ({drives.length})
+            All ({drives.length})
           </button>
 
           {drives.map((d) => (
             <button
               key={d.id}
               onClick={() => setSelectedDriveId(d.id)}
-              className={`px-4 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-2 ${
+              className={`px-3.5 py-1.5 rounded-xl transition-all whitespace-nowrap flex items-center gap-2 ${
                 selectedDriveId === d.id
                   ? "bg-indigo-600 text-white font-bold shadow-md shadow-indigo-100"
                   : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200/80 shadow-xs"
@@ -255,11 +247,8 @@ export default function AdminDrivesManagerPage() {
             <div>
               <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <Users className="w-4 h-4 text-indigo-600" />
-                <span>Applicant Roster ({driveApps.length} Candidates)</span>
+                <span>Applicants ({driveApps.length})</span>
               </h2>
-              <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                Advance candidates through recruitment rounds with 1-click stage progression.
-              </p>
             </div>
 
             <span className="text-[11px] font-mono px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 font-bold border border-indigo-200/80 self-start sm:self-auto">

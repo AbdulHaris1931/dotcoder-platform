@@ -115,8 +115,8 @@ export default function AdminDashboardPage() {
     const filename = `Placement_Audit_${collegeTag}_${dateStr}.csv`;
     downloadFile(filename, csvContent, "text/csv");
 
-    setExportNotice(`Exported ${filename} conforming to NAAC Criterion 5.2.1 / NBA placement audit specifications.`);
-    setTimeout(() => setExportNotice(null), 5000);
+    setExportNotice(`Exported ${filename}`);
+    setTimeout(() => setExportNotice(null), 4000);
   };
 
   const filteredStudents = students.filter((s) => {
@@ -151,19 +151,11 @@ export default function AdminDashboardPage() {
       {/* Top Header: Title & Global College Filter Dropdown */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/90 pb-6">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-bold">
-              Admin Command Center
-            </span>
-            <span className="text-[11px] text-slate-500 font-mono">
-              Open Placement Intelligence
-            </span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mt-1">
-            Institutional Command & Placement Analytics
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+            Placement Analytics
           </h1>
           <p className="text-xs text-slate-500 font-sans mt-0.5">
-            Cross-campus candidate benchmarks, real-time proctoring telemetry, and automated NAAC audit reporting.
+            Candidate benchmarks and test telemetry.
           </p>
         </div>
 
@@ -177,7 +169,7 @@ export default function AdminDashboardPage() {
               onChange={(e) => setSelectedCollege(e.target.value)}
               className="bg-transparent text-xs font-mono font-semibold text-slate-800 focus:outline-none cursor-pointer max-w-[200px] sm:max-w-xs truncate"
             >
-              <option value="ALL">All Colleges (Global View)</option>
+              <option value="ALL">All Campuses</option>
               {colleges.map((c) => (
                 <option key={c} value={c}>
                   {c}
@@ -207,7 +199,7 @@ export default function AdminDashboardPage() {
             className="px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2 active:scale-[0.98]"
           >
             <Download className="w-4 h-4" />
-            <span>Export NAAC CSV</span>
+            <span>Export CSV</span>
           </button>
         </div>
       </div>
@@ -245,9 +237,6 @@ export default function AdminDashboardPage() {
               {distinctCollegesCount} Campuses
             </span>
           </div>
-          <div className="text-[11px] text-slate-500 font-mono">
-            {selectedCollege === "ALL" ? "Across all registered campuses" : selectedCollege}
-          </div>
         </div>
 
         {/* KPI 2: Placement Ready */}
@@ -263,11 +252,8 @@ export default function AdminDashboardPage() {
               {placedReady}
             </span>
             <span className="text-[11px] font-mono font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-              &ge; 75% Score
+              ≥ 75%
             </span>
-          </div>
-          <div className="text-[11px] text-slate-500 font-mono">
-            {totalStudents > 0 ? `${Math.round((placedReady / totalStudents) * 100)}% Conversion Ratio` : "No candidates"}
           </div>
         </div>
 
@@ -283,12 +269,6 @@ export default function AdminDashboardPage() {
             <span className="text-3xl font-extrabold text-slate-900 font-mono tabular-nums">
               {avgReadiness}%
             </span>
-            <span className="text-[11px] font-mono font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200">
-              State Index
-            </span>
-          </div>
-          <div className="text-[11px] text-slate-500 font-mono">
-            TCS & Zoho Benchmark
           </div>
         </div>
 
@@ -307,9 +287,6 @@ export default function AdminDashboardPage() {
             <span className="text-[11px] font-mono font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
               Defocus / Tabs
             </span>
-          </div>
-          <div className="text-[11px] text-slate-500 font-mono">
-            Logged during live proctored sessions
           </div>
         </div>
       </div>

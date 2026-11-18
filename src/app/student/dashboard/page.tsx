@@ -131,7 +131,7 @@ export default function StudentDashboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
           <div>
             <p className="text-xs text-slate-500 font-medium">
-              {user?.department ?? "CSE"} &middot; {user?.college_name ?? "Cauvery Institute of Technology"}
+              {user?.department ?? "CSE"} · {user?.college_name ?? "Cauvery IT"}
             </p>
             <h1 className="text-[26px] sm:text-[30px] font-semibold tracking-tight text-slate-900 leading-tight">
               {greetByTime()}, {user?.full_name?.split(" ")[0] ?? "Candidate"}
@@ -144,7 +144,7 @@ export default function StudentDashboardPage() {
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[13px] font-medium transition-colors active:scale-[0.98] shadow-sm"
             >
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Enter Mock Assessment</span>
+              <span>Mock Exam</span>
               <ArrowRight className="w-3.5 h-3.5 opacity-60" />
             </button>
           )}
@@ -256,7 +256,7 @@ export default function StudentDashboardPage() {
                 </div>
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-medium text-indigo-600">Continue where you left off</span>
+                    <span className="text-[11px] font-medium text-indigo-600">Up Next</span>
                   </div>
                   <h3 className="text-base font-semibold text-slate-900 group-hover:text-indigo-700 transition-colors">
                     {nextProblem.title}
@@ -275,7 +275,7 @@ export default function StudentDashboardPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 group-hover:text-indigo-700 transition-colors pl-14 sm:pl-0">
-                <span>Open in Editor</span>
+                <span>Continue</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
@@ -315,7 +315,7 @@ export default function StudentDashboardPage() {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search problems…"
+                  placeholder="Search..."
                   className="pl-8 pr-3 py-2 w-full sm:w-56 text-[13px] bg-white border border-slate-200 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
                 />
               </div>
@@ -404,10 +404,10 @@ export default function StudentDashboardPage() {
             <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
-                  12-Week Activity
+                  Activity
                 </span>
                 <span className="text-xs font-medium text-slate-700">
-                  84 contributions
+                  84 submissions
                 </span>
               </div>
 
@@ -441,7 +441,7 @@ export default function StudentDashboardPage() {
           <BlurFade delay={0.2}>
             <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
               <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
-                Progress by Difficulty
+                Difficulty
               </span>
 
               <div className="space-y-3">
@@ -474,10 +474,10 @@ export default function StudentDashboardPage() {
             <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
-                  Campus Drives
+                  Drives
                 </span>
                 <Link href="/student/drives" className="text-[11px] font-medium text-indigo-600 hover:underline">
-                  View all
+                  All
                 </Link>
               </div>
 
@@ -513,7 +513,7 @@ export default function StudentDashboardPage() {
           <BlurFade delay={0.28}>
             <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
               <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
-                Recent Submissions
+                Submissions
               </span>
 
               {mySubmissions.length === 0 ? (
@@ -547,27 +547,27 @@ export default function StudentDashboardPage() {
           {/* Quick Links */}
           <BlurFade delay={0.32}>
             <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-2.5">
-              <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Quick Actions</span>
+              <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Actions</span>
               <div className="space-y-1">
                 <Link
                   href="/curriculum"
                   className="flex items-center justify-between py-2 px-1 text-[13px] font-medium text-indigo-700 hover:text-indigo-900 transition-colors group"
                 >
-                  <span className="font-semibold">Explore 10-Lesson Curriculum</span>
+                  <span className="font-semibold">Curriculum</span>
                   <ChevronRight className="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-700 transition-colors" />
                 </Link>
                 <Link
                   href="/student/resume"
                   className="flex items-center justify-between py-2 px-1 text-[13px] font-medium text-slate-700 hover:text-indigo-700 transition-colors group"
                 >
-                  <span>View ATS Resume</span>
+                  <span>Resume</span>
                   <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600 transition-colors" />
                 </Link>
                 <Link
                   href="/student/drives"
                   className="flex items-center justify-between py-2 px-1 text-[13px] font-medium text-slate-700 hover:text-indigo-700 transition-colors group"
                 >
-                  <span>Browse Campus Drives</span>
+                  <span>Drives</span>
                   <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600 transition-colors" />
                 </Link>
                 {assessment && (
@@ -575,7 +575,7 @@ export default function StudentDashboardPage() {
                     onClick={() => router.push(`/student/exam/${assessment.id}`)}
                     className="flex items-center justify-between py-2 px-1 w-full text-left text-[13px] font-medium text-slate-700 hover:text-indigo-700 transition-colors group"
                   >
-                    <span>Take Mock Assessment</span>
+                    <span>Assessment</span>
                     <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600 transition-colors" />
                   </button>
                 )}

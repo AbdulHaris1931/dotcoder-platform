@@ -163,13 +163,13 @@ export default function ModuleAssessmentPage() {
           </div>
           <div className="truncate">
             <div className="text-xs font-bold text-white flex items-center gap-2">
-              <span>Module Assessment</span>
-              <span className="text-[10px] font-mono px-2 py-0.2 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                PROCTORED
+              <span>Assessment</span>
+              <span className="text-[10px] font-mono text-purple-400">
+                80% pass
               </span>
             </div>
             <div className="text-[11px] text-slate-400 font-mono truncate">
-              Passing: 80% • 10 MCQs + 5 Coding Challenges
+              10 MCQ · 5 Code
             </div>
           </div>
         </div>
@@ -184,7 +184,6 @@ export default function ModuleAssessmentPage() {
         >
           <Clock className="w-3.5 h-3.5 text-indigo-400" />
           <span>{formatTime(timeLeft)}</span>
-          <span className="text-[10px] text-slate-500 font-normal">Remaining</span>
         </div>
 
         {/* Right: Submit Assessment Button */}
@@ -194,7 +193,7 @@ export default function ModuleAssessmentPage() {
             onClick={() => setShowConfirmModal(true)}
             className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-md shadow-purple-600/30 transition-all active:scale-95"
           >
-            Submit Assessment
+            Submit
           </button>
         </div>
       </header>
@@ -204,7 +203,7 @@ export default function ModuleAssessmentPage() {
         {/* MCQ Question Pills (1 to 10) */}
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] font-mono uppercase text-slate-500 font-bold pr-1">
-            MCQs:
+            MCQ
           </span>
           {mcqs.map((m, idx) => {
             const isAnswered = mcqAnswers[m.id] !== undefined;
@@ -244,7 +243,7 @@ export default function ModuleAssessmentPage() {
         {/* Coding Question Pills (1 to 5) */}
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] font-mono uppercase text-slate-500 font-bold pr-1">
-            Coding:
+            Code
           </span>
           {codingProblems.map((p, idx) => {
             const hasSubmitted = codingSubmissions[p.id] !== undefined;
@@ -289,7 +288,7 @@ export default function ModuleAssessmentPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-mono font-bold text-indigo-400">
-                    Question {currentMCQIndex + 1} of 10
+                    Q{currentMCQIndex + 1}/10
                   </span>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-bold uppercase">
                     {currentMCQ.question_category}
@@ -321,7 +320,7 @@ export default function ModuleAssessmentPage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between pb-2 border-b border-[#1E293B]">
                   <span className="text-xs font-mono font-bold uppercase text-slate-400">
-                    Select Single Answer
+                    Select Answer
                   </span>
 
                   {/* Mark for Review Toggle */}
@@ -392,7 +391,7 @@ export default function ModuleAssessmentPage() {
                   }}
                   className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-mono font-bold text-white transition-all shadow-md active:scale-95 flex items-center gap-1.5"
                 >
-                  <span>{currentMCQIndex === mcqs.length - 1 ? "Next: Coding Section →" : "Next Question"}</span>
+                  <span>{currentMCQIndex === mcqs.length - 1 ? "Coding →" : "Next →"}</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -406,7 +405,7 @@ export default function ModuleAssessmentPage() {
             <div className="bg-[#0E131F] px-4 py-1.5 border-b border-[#1E293B] flex items-center justify-between text-xs font-mono">
               <div className="flex items-center gap-2">
                 <span className="font-bold text-purple-400">
-                  Coding Challenge {currentCodeIndex + 1} of 5 (Q{11 + currentCodeIndex})
+                  Q{11 + currentCodeIndex} · Challenge {currentCodeIndex + 1}/5
                 </span>
                 <span className="text-slate-500">•</span>
                 <span className="text-slate-400">{currentCodingProblem.title}</span>
@@ -472,28 +471,24 @@ export default function ModuleAssessmentPage() {
           <div className="w-full max-w-md rounded-2xl bg-[#0E131F] border border-[#1E293B] p-6 space-y-5 shadow-2xl">
             <div className="flex items-center gap-3 text-purple-400">
               <ShieldCheck className="w-6 h-6" />
-              <h3 className="text-lg font-bold text-white">Finalize Module Assessment?</h3>
+              <h3 className="text-lg font-bold text-white">Submit Assessment?</h3>
             </div>
 
             <div className="space-y-3 text-xs font-mono text-slate-300">
               <div className="p-3 rounded-xl bg-[#141B2D] border border-[#1E293B] space-y-1.5">
                 <div className="flex justify-between">
-                  <span>MCQs Answered:</span>
+                  <span>MCQ:</span>
                   <span className="text-white font-bold">{Object.keys(mcqAnswers).length} / 10</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Coding Challenges Submitted:</span>
+                  <span>Code:</span>
                   <span className="text-white font-bold">{Object.keys(codingSubmissions).length} / 5</span>
                 </div>
                 <div className="flex justify-between text-amber-300">
-                  <span>Marked for Review:</span>
+                  <span>Review:</span>
                   <span>{Object.values(markedForReview).filter(Boolean).length}</span>
                 </div>
               </div>
-
-              <p className="text-slate-400 text-[11px] leading-relaxed">
-                Once submitted, your responses will be evaluated against all 6 test cases per problem and your topic-wise mastery report will be recorded.
-              </p>
             </div>
 
             <div className="flex items-center gap-3">
@@ -502,14 +497,14 @@ export default function ModuleAssessmentPage() {
                 onClick={() => setShowConfirmModal(false)}
                 className="w-1/2 py-2.5 rounded-xl border border-[#1E293B] hover:bg-[#141B2D] text-xs font-mono text-slate-300 transition-colors"
               >
-                Return to Exam
+                Back
               </button>
               <button
                 type="button"
                 onClick={() => handleFinalSubmit(false)}
                 className="w-1/2 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-mono text-xs font-bold shadow-md shadow-purple-600/30 transition-all active:scale-95"
               >
-                Confirm & Grade
+                Submit
               </button>
             </div>
           </div>
@@ -525,16 +520,16 @@ export default function ModuleAssessmentPage() {
               <div className="space-y-1">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-mono">
                   <Award className="w-3.5 h-3.5" />
-                  <span>Official Assessment Performance Report</span>
+                  <span>Results</span>
                 </div>
                 <h2 className="text-2xl font-bold text-white">
-                  {analyticsResult.passed ? "Assessment Passed! 🎉" : "Assessment Completed — Needs Practice"}
+                  {analyticsResult.passed ? "Passed" : "Needs Practice"}
                 </h2>
               </div>
 
               {/* Total Score Badge */}
               <div className="text-right">
-                <div className="text-[11px] font-mono text-slate-400 uppercase">Total Score</div>
+                <div className="text-[11px] font-mono text-slate-400 uppercase">Score</div>
                 <div className="text-3xl font-extrabold font-mono text-white">
                   <span className={analyticsResult.passed ? "text-emerald-400" : "text-amber-400"}>
                     {analyticsResult.total_score}
@@ -548,7 +543,7 @@ export default function ModuleAssessmentPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 rounded-2xl bg-[#141B2D] border border-[#1E293B] space-y-1">
                 <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
-                  MCQ Theory Score (50%)
+                  MCQ (50%)
                 </div>
                 <div className="text-xl font-bold font-mono text-slate-200">
                   {analyticsResult.mcq_score}%
@@ -557,7 +552,7 @@ export default function ModuleAssessmentPage() {
 
               <div className="p-4 rounded-2xl bg-[#141B2D] border border-[#1E293B] space-y-1">
                 <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
-                  Coding Testcase Score (50%)
+                  Code (50%)
                 </div>
                 <div className="text-xl font-bold font-mono text-slate-200">
                   {analyticsResult.coding_score}%
@@ -568,8 +563,8 @@ export default function ModuleAssessmentPage() {
             {/* Topic Mastery Bars across all 5 Module Topics */}
             <div className="space-y-3">
               <div className="flex items-center justify-between text-xs font-mono">
-                <span className="font-bold text-slate-300 uppercase">Topic-Wise Competency Analysis</span>
-                <span className="text-slate-500">80% Passing Threshold</span>
+                <span className="font-bold text-slate-300 uppercase">Topic Mastery</span>
+                <span className="text-slate-500">80% Pass</span>
               </div>
 
               <div className="space-y-2.5">
@@ -591,7 +586,7 @@ export default function ModuleAssessmentPage() {
                         </span>
                         {stat.is_weak && (
                           <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-500/10 text-rose-300 border border-rose-500/20 font-bold uppercase">
-                            Weak Area
+                            Weak
                           </span>
                         )}
                       </div>
@@ -623,7 +618,7 @@ export default function ModuleAssessmentPage() {
                   className="w-full sm:w-auto flex-1 py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
                 >
                   <Sparkles className="w-4 h-4 text-emerald-300" />
-                  <span>Practice Weak Topic: {weakestTopicEntry[1].topic_title.slice(0, 28)}...</span>
+                  <span>Practice Weak Area: {weakestTopicEntry[1].topic_title.slice(0, 24)}...</span>
                 </button>
               )}
 
@@ -632,7 +627,7 @@ export default function ModuleAssessmentPage() {
                 onClick={() => router.push("/curriculum")}
                 className="w-full sm:w-auto py-3 px-5 rounded-xl border border-[#1E293B] hover:bg-[#141B2D] text-slate-300 font-semibold text-xs transition-colors"
               >
-                Back to Curriculum Explorer
+                Back to Curriculum
               </button>
             </div>
           </div>
