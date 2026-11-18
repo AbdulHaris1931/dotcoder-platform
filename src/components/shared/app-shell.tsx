@@ -60,9 +60,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Fullscreen / lockdown routes:
+  // Standalone / fullscreen / lockdown routes:
   const isPlainLayout =
+    pathname === "/" ||
     pathname === "/login" ||
+    pathname === "/signup" ||
     pathname.startsWith("/student/exam/") ||
     pathname.startsWith("/student/lab/") ||
     pathname === "/student/resume";
