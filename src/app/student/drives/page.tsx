@@ -93,7 +93,7 @@ export default function StudentDrivesPage() {
                 Campus Placement Recruitment
               </span>
               <span className="text-[11px] text-slate-500 font-medium">
-                {currentUser?.college_name || "Cauvery Institute of Technology"}
+                {currentUser?.college_name || "Annai Vailankanni Arts and Science College, Thanjavur"}
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mt-1">

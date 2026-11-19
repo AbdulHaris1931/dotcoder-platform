@@ -71,7 +71,7 @@ export const SEED_DRIVE_APPLICATIONS: DriveApplication[] = [
   {
     id: "44444444-0000-0000-0000-000000000001",
     drive_id: "33333333-0000-0000-0000-000000000001", // Zoho
-    student_id: "00000000-0000-0000-0000-000000000002", // Adithya K. Sundaram
+    student_id: "a0000000-0000-0000-0000-000000000002", // Karthik S.
     stage: "Shortlisted for Test",
     applied_at: "2026-11-16T10:30:00Z",
     notes: "Readiness score: 88%. Cleared internal campus benchmark.",
@@ -79,7 +79,7 @@ export const SEED_DRIVE_APPLICATIONS: DriveApplication[] = [
   {
     id: "44444444-0000-0000-0000-000000000002",
     drive_id: "33333333-0000-0000-0000-000000000002", // TCS
-    student_id: "00000000-0000-0000-0000-000000000002", // Adithya
+    student_id: "a0000000-0000-0000-0000-000000000002", // Karthik S.
     stage: "Technical Interview",
     applied_at: "2026-11-15T14:20:00Z",
     notes: "Qualified TCS Digital simulator test with 18/20 score.",
@@ -87,7 +87,7 @@ export const SEED_DRIVE_APPLICATIONS: DriveApplication[] = [
   {
     id: "44444444-0000-0000-0000-000000000003",
     drive_id: "33333333-0000-0000-0000-000000000001", // Zoho
-    student_id: "00000000-0000-0000-0000-000000000003", // Kavitha
+    student_id: "a0000000-0000-0000-0000-000000000003", // Priya Dharshini M.
     stage: "Technical Interview",
     applied_at: "2026-11-16T09:15:00Z",
     notes: "Readiness score: 92.5%. Excellent string algorithms performance.",
@@ -95,9 +95,9 @@ export const SEED_DRIVE_APPLICATIONS: DriveApplication[] = [
   {
     id: "44444444-0000-0000-0000-000000000004",
     drive_id: "33333333-0000-0000-0000-000000000003", // Cognizant
-    student_id: "00000000-0000-0000-0000-000000000004", // Manoj
+    student_id: "a0000000-0000-0000-0000-000000000004", // Saravanan V.
     stage: "Applied",
     applied_at: "2026-11-17T11:00:00Z",
-    notes: "Readiness score: 64%. Eligible for GenC Elevate tier.",
+    notes: "Readiness score: 78.5%. Eligible for GenC Elevate tier.",
   },
 ];

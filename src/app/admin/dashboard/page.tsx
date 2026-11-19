@@ -88,7 +88,8 @@ export default function AdminDashboardPage() {
   const distinctCollegesCount = new Set(students.map((s) => s.college_name)).size;
 
   // Department Stats
-  const departments = ["CSE", "IT", "ECE", "EEE", "Mech"];
+  const discoveredDepts = Array.from(new Set(students.map((s) => s.department).filter(Boolean)));
+  const departments = discoveredDepts.length > 0 ? discoveredDepts : ["BCA", "B.Sc CS", "B.Sc IT", "MCA"];
   const departmentStats = departments.map((dept) => {
     const deptStudents = students.filter((s) => s.department === dept);
     const total = deptStudents.length;
@@ -370,11 +371,11 @@ export default function AdminDashboardPage() {
               className="py-1.5 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono shadow-sm"
             >
               <option value="ALL">All Departments</option>
-              <option value="CSE">CSE</option>
-              <option value="IT">IT</option>
-              <option value="ECE">ECE</option>
-              <option value="EEE">EEE</option>
-              <option value="Mech">Mech</option>
+              {departments.map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept}
+                </option>
+              ))}
             </select>
 
             <select

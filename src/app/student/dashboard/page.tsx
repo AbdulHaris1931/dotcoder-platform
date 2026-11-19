@@ -131,7 +131,7 @@ export default function StudentDashboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
           <div>
             <p className="text-xs text-slate-500 font-medium">
-              {user?.department ?? "CSE"} · {user?.college_name ?? "Cauvery IT"}
+              {user?.department ?? "BCA"} · {user?.college_name ?? "Annai Vailankanni Arts and Science College, Thanjavur"}
             </p>
             <h1 className="text-[26px] sm:text-[30px] font-semibold tracking-tight text-slate-900 leading-tight">
               {greetByTime()}, {user?.full_name?.split(" ")[0] ?? "Candidate"}

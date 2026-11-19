@@ -16,10 +16,10 @@ import {
 } from "./seed-data";
 
 const STORAGE_KEYS = {
-  CURRENT_USER: "dotcoder_current_user",
-  STUDENTS: "dotcoder_students",
-  SUBMISSIONS: "dotcoder_submissions",
-  ASSESSMENT_PROGRESS: "dotcoder_assessment_progress",
+  CURRENT_USER: "dotcoder_v2_current_user",
+  STUDENTS: "dotcoder_v2_students",
+  SUBMISSIONS: "dotcoder_v2_submissions",
+  ASSESSMENT_PROGRESS: "dotcoder_v2_assessment_progress",
 };
 
 // Check if running in browser
@@ -245,7 +245,7 @@ export class DemoStore {
   // Department Analytics
   static getDepartmentAnalytics(): DepartmentStat[] {
     const students = this.getStudents();
-    const depts = ["CSE", "IT", "ECE", "EEE", "Mech"];
+    const depts = ["BCA", "B.Sc CS", "B.Sc IT", "MCA"];
 
     return depts.map((dept) => {
       const deptStudents = students.filter((s) => s.department === dept);

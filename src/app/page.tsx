@@ -613,42 +613,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Evaluator Demo Bar */}
-      <section className="py-12 bg-indigo-900 text-white px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="space-y-1 text-center sm:text-left">
-            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-indigo-800/80 text-indigo-200 text-xs font-mono">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>INSTANT EVALUATION ENVIRONMENT</span>
-            </div>
-            <h3 className="text-xl sm:text-2xl font-bold">Experience DotCoder Live</h3>
-            <p className="text-xs text-indigo-200">
-              Switch roles with one click to test candidate coding labs or placement officer analytics.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handleLaunchStudent}
-              className="px-5 py-3 rounded-xl bg-white text-indigo-900 hover:bg-indigo-50 font-semibold text-xs transition-all shadow-md active:scale-95 flex items-center gap-2"
-            >
-              <GraduationCap className="w-4 h-4 text-indigo-600" />
-              <span>Launch Student Demo</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleLaunchTpo}
-              className="px-5 py-3 rounded-xl bg-indigo-800 hover:bg-indigo-700 text-white font-semibold text-xs transition-all border border-indigo-700 active:scale-95 flex items-center gap-2"
-            >
-              <Building2 className="w-4 h-4 text-emerald-400" />
-              <span>Launch TPO Demo</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
       {/* Footer matching Figma Make */}
       <footer id="company" className="bg-slate-900 text-slate-400 text-xs border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 grid grid-cols-2 md:grid-cols-5 gap-8">

@@ -64,30 +64,6 @@ export function CommandPalette({
   const allItems: CommandItem[] = [
     // Quick Actions
     {
-      id: "act-student",
-      category: "Actions",
-      title: "Switch to Student Workspace",
-      subtitle: "Adithya K. Sundaram • CSE • Roll 22CS001",
-      icon: GraduationCap,
-      action: () => {
-        DemoStore.switchRole("student");
-        router.push("/student/dashboard");
-        onClose();
-      },
-    },
-    {
-      id: "act-tpo",
-      category: "Actions",
-      title: "Switch to Admin / Placement Command",
-      subtitle: "Executive Analytics • College Filter • Leaderboards",
-      icon: Building2,
-      action: () => {
-        DemoStore.switchRole("tpo");
-        router.push("/admin/dashboard");
-        onClose();
-      },
-    },
-    {
       id: "act-drives-student",
       category: "Actions",
       title: "Campus Placement Drives",

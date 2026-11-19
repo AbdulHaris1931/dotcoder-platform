@@ -6,6 +6,7 @@ import Link from "next/link";
 import { AuthShowcasePanel } from "@/components/auth/auth-showcase-panel";
 import { DotCoderLogo } from "@/components/shared/dotcoder-logo";
 import { DemoStore } from "@/lib/demo-store";
+import { SEED_TPO } from "@/lib/seed-data";
 import { createClient } from "@/lib/supabase/client";
 import { ArrowRight, AlertTriangle, CheckCircle2 } from "lucide-react";
 
@@ -43,9 +44,25 @@ function LoginForm() {
         if (data.user) {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("role")
+            .select("*")
             .eq("id", data.user.id)
             .single();
+
+          if (profile) {
+            DemoStore.setCurrentUser({
+              id: profile.id,
+              email: data.user.email || profile.email || "",
+              full_name: profile.full_name || "Campus User",
+              role: profile.role || "student",
+              college_name: profile.college_name || "Annai Vailankanni Arts and Science College, Thanjavur",
+              roll_no: profile.roll_no || "",
+              department: profile.department || "",
+              batch_year: profile.batch_year || 2026,
+              readiness_score: Number(profile.readiness_score) || 0,
+              problems_solved: profile.problems_solved || 0,
+              created_at: profile.created_at,
+            });
+          }
 
           if (profile?.role === "admin" || profile?.role === "super_admin") {
             router.push("/admin/dashboard");
@@ -61,7 +78,7 @@ function LoginForm() {
       }
     }
 
-    // Demo Mode Sign In Fallback
+    // Local fallback sign-in
     setTimeout(() => {
       setLoading(false);
       const isCandidateAdmin =
@@ -70,10 +87,12 @@ function LoginForm() {
         email.toLowerCase().includes("faculty");
 
       if (isCandidateAdmin) {
-        DemoStore.switchRole("tpo");
+        DemoStore.setCurrentUser(SEED_TPO);
         router.push("/admin/dashboard");
       } else {
-        DemoStore.switchRole("student");
+        const students = DemoStore.getStudents();
+        const matched = students.find((s) => s.email?.toLowerCase() === email.toLowerCase());
+        DemoStore.setCurrentUser(matched || students[0]);
         router.push("/student/dashboard");
       }
     }, 400);
@@ -232,46 +251,6 @@ function LoginForm() {
             >
               Create an account
             </Link>
-          </div>
-
-          {/* Instant 1-Click Demo Evaluation Pills */}
-          <div className="pt-6 border-t border-slate-100 space-y-2">
-            <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-              <span>DEMO EVALUATOR ACCESS:</span>
-              <span className="text-emerald-600 font-semibold">● ACTIVE</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  DemoStore.switchRole("student");
-                  router.push("/student/dashboard");
-                }}
-                className="p-2.5 rounded-lg border border-slate-200 bg-slate-50/80 hover:bg-white text-left transition-all group"
-              >
-                <div className="text-[10px] font-semibold text-slate-500 group-hover:text-indigo-600">
-                  Student Demo
-                </div>
-                <div className="text-xs font-bold text-slate-800 truncate">
-                  Adithya K. (CSE)
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  DemoStore.switchRole("tpo");
-                  router.push("/admin/dashboard");
-                }}
-                className="p-2.5 rounded-lg border border-slate-200 bg-slate-50/80 hover:bg-white text-left transition-all group"
-              >
-                <div className="text-[10px] font-semibold text-slate-500 group-hover:text-indigo-600">
-                  TPO Officer Demo
-                </div>
-                <div className="text-xs font-bold text-slate-800 truncate">
-                  Dr. Ramanathan
-                </div>
-              </button>
-            </div>
           </div>
         </div>
 

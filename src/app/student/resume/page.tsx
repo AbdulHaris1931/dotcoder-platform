@@ -98,14 +98,14 @@ export default function StudentResumePage() {
               Software Development Engineer • Campus Candidate (Batch {currentUser.batch_year || 2026})
             </p>
             <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 font-mono pt-1">
-              <span>{currentUser.email || "adithya.22cs@cauvery.edu.in"}</span>
+              <span>{currentUser.email || "karthik.bca@avc.edu.in"}</span>
               <span>•</span>
-              <span>Roll: {currentUser.roll_no || "22CS001"}</span>
+              <span>Roll: {currentUser.roll_no || "23BCA01"}</span>
               <span>•</span>
-              <span>{currentUser.department} Department</span>
+              <span>{currentUser.department || "BCA"} Department</span>
             </div>
             <div className="text-xs text-slate-600 font-medium">
-              {currentUser.college_name || "Cauvery Institute of Technology, Thanjavur"}
+              {currentUser.college_name || "Annai Vailankanni Arts and Science College, Thanjavur"}
             </div>
           </div>
 
@@ -236,10 +236,10 @@ export default function StudentResumePage() {
           <div className="flex justify-between items-start text-xs">
             <div>
               <div className="font-bold text-slate-900">
-                Bachelor of Engineering (B.E.) — Computer Science & Engineering
+                Bachelor of Computer Applications (BCA) / Computer Science
               </div>
               <div className="text-slate-600">
-                {currentUser.college_name || "Cauvery Institute of Technology, Thanjavur"}
+                {currentUser.college_name || "Annai Vailankanni Arts and Science College, Thanjavur"}
               </div>
             </div>
             <div className="text-right font-mono">

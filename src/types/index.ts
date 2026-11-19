@@ -130,26 +130,7 @@ export interface ProctorViolationLog {
 }
 
 export const POPULAR_COLLEGES: string[] = [
-  "Cauvery Institute of Technology, Thanjavur",
-  "Anna University, CEG Campus, Chennai",
-  "PSG College of Technology, Coimbatore",
-  "Coimbatore Institute of Technology (CIT), Coimbatore",
-  "Thiagarajar College of Engineering, Madurai",
-  "Government College of Technology (GCT), Coimbatore",
-  "SSN College of Engineering, Chennai",
-  "SASTRA Deemed University, Thanjavur",
-  "Vellore Institute of Technology (VIT), Vellore",
-  "SRM Institute of Science and Technology, Chennai",
-  "Indian Institute of Technology (IIT) Madras",
-  "National Institute of Technology (NIT) Trichy",
-  "Amrita Vishwa Vidyapeetham, Coimbatore",
-  "Kumaraguru College of Technology, Coimbatore",
-  "Sri Krishna College of Engineering and Technology (SKCET), Coimbatore",
-  "Bannari Amman Institute of Technology, Sathyamangalam",
-  "Rajalakshmi Engineering College, Chennai",
-  "St. Joseph's College of Engineering, Chennai",
-  "Kongu Engineering College, Perundurai",
-  "Mepco Schlenk Engineering College, Sivakasi",
+  "Annai Vailankanni Arts and Science College, Thanjavur",
 ];
 
 export interface MCQQuestion {

@@ -101,7 +101,7 @@ export default function TPODashboardPage() {
   const handleExportCsv = () => {
     const csvContent = generatePlacementCsv(students, submissions);
     const dateStr = new Date().toISOString().split("T")[0];
-    const filename = `Cauvery_Institute_Placement_Audit_${dateStr}.csv`;
+    const filename = `AVASC_Thanjavur_Placement_Audit_${dateStr}.csv`;
     downloadFile(filename, csvContent, "text/csv");
 
     setExportNotice(`Exported ${filename} conforming to NAAC Criterion 5.2.1 / NBA placement audit specifications.`);
@@ -144,7 +144,7 @@ export default function TPODashboardPage() {
               TPO Executive Intelligence
             </span>
             <span className="text-[11px] text-slate-500 font-mono">
-              Cauvery Institute of Technology
+              Annai Vailankanni Arts and Science College, Thanjavur
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mt-1">
@@ -292,7 +292,7 @@ export default function TPODashboardPage() {
           </span>
         </div>
 
-        <div className="grid md:grid-cols-5 gap-4">
+        <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
           {departmentStats.map((dept) => {
             const readyPercent = dept.totalStudents > 0 ? Math.round((dept.placedReady / dept.totalStudents) * 100) : 0;
             return (
@@ -355,11 +355,11 @@ export default function TPODashboardPage() {
               className="py-1.5 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono shadow-sm"
             >
               <option value="ALL">All Departments</option>
-              <option value="CSE">CSE</option>
-              <option value="IT">IT</option>
-              <option value="ECE">ECE</option>
-              <option value="EEE">EEE</option>
-              <option value="Mech">Mech</option>
+              {departmentStats.map((d) => (
+                <option key={d.department} value={d.department}>
+                  {d.department}
+                </option>
+              ))}
             </select>
 
             <select

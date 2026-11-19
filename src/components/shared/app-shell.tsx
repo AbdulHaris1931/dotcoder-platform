@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { DemoStore, subscribeToDemoStore } from "@/lib/demo-store";
+import { DataService } from "@/lib/supabase/db";
+import { createClient } from "@/lib/supabase/client";
 import { UserProfile } from "@/types";
 import { CommandPalette } from "./command-palette";
 import {
@@ -33,12 +35,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [isCmdKOpen, setIsCmdKOpen] = useState(false);
 
   useEffect(() => {
-    setCurrentUser(DemoStore.getCurrentUser());
+    async function fetchUser() {
+      const user = await DataService.getCurrentUser();
+      setCurrentUser(user);
+    }
+    fetchUser();
     const unsub = subscribeToDemoStore(() => {
-      setCurrentUser(DemoStore.getCurrentUser());
+      fetchUser();
     });
     return unsub;
   }, []);
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+    router.push("/login");
+  };
 
   // Global Cmd+K keyboard shortcut listener
   useEffect(() => {
@@ -51,15 +65,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
-
-  const handleRoleSwitch = (role: "student" | "tpo") => {
-    DemoStore.switchRole(role);
-    if (role === "student") {
-      router.push("/student/dashboard");
-    } else {
-      router.push("/admin/dashboard");
-    }
-  };
 
   // Standalone / fullscreen / lockdown routes:
   const isPlainLayout =
@@ -118,8 +123,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     {currentUser?.role ? currentUser.role.toUpperCase() : "PRO"}
                   </span>
                 </div>
-                <div className="text-[11px] text-slate-500 font-medium truncate" title={currentUser?.college_name || "Cauvery Inst of Tech"}>
-                  {currentUser?.college_name || "Cauvery Inst of Tech"}
+                <div className="text-[11px] text-slate-500 font-medium truncate" title={currentUser?.college_name || "Annai Vailankanni Arts and Science College, Thanjavur"}>
+                  {currentUser?.college_name || "Annai Vailankanni Arts and Science College, Thanjavur"}
                 </div>
               </div>
             </div>
@@ -308,51 +313,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        {/* Sidebar Footer: Role Profile & Switcher */}
-        <div className="p-3.5 border-t border-slate-100 bg-slate-50/60 space-y-2.5">
+        {/* Sidebar Footer: Role Profile */}
+        <div className="p-3.5 border-t border-slate-100 bg-slate-50/60">
           {currentUser && (
-            <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl bg-white border border-slate-200/80 shadow-sm">
-              <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200/60 flex items-center justify-center font-bold text-xs font-mono">
-                {currentUser.full_name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .slice(0, 2)
-                  .join("")}
-              </div>
-              <div className="truncate flex-1">
-                <div className="font-semibold text-xs text-slate-900 truncate">
-                  {currentUser.full_name}
+            <div className="flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-xl bg-white border border-slate-200/80 shadow-xs">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200/60 flex items-center justify-center font-bold text-xs font-mono shrink-0">
+                  {currentUser.full_name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .slice(0, 2)
+                    .join("")}
                 </div>
-                <div className="text-[10px] text-slate-500 font-mono truncate">
-                  {currentUser.role.toUpperCase()} • {currentUser.roll_no}
+                <div className="truncate flex-1 min-w-0">
+                  <div className="font-semibold text-xs text-slate-900 truncate">
+                    {currentUser.full_name}
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-mono truncate">
+                    {currentUser.role.toUpperCase()} • {currentUser.roll_no}
+                  </div>
                 </div>
               </div>
+              <button
+                onClick={handleSignOut}
+                title="Sign out"
+                className="text-slate-400 hover:text-red-600 transition-colors p-1.5 rounded-lg hover:bg-slate-50 shrink-0"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
             </div>
           )}
-
-          {/* Persona Switcher Pills */}
-          <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono">
-            <button
-              onClick={() => handleRoleSwitch("student")}
-              className={`py-1.5 px-2 rounded-lg transition-all text-center ${
-                currentUser?.role === "student"
-                  ? "bg-indigo-600 text-white font-bold shadow-sm"
-                  : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200/80 shadow-sm"
-              }`}
-            >
-              Student
-            </button>
-            <button
-              onClick={() => handleRoleSwitch("tpo")}
-              className={`py-1.5 px-2 rounded-lg transition-all text-center ${
-                currentUser?.role === "tpo" || currentUser?.role === "admin" || currentUser?.role === "super_admin"
-                  ? "bg-indigo-600 text-white font-bold shadow-sm"
-                  : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200/80 shadow-sm"
-              }`}
-            >
-              Admin
-            </button>
-          </div>
         </div>
       </aside>
 
@@ -383,17 +373,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </kbd>
             </button>
 
-            {/* Pitch Demo Pill */}
+            {/* System Status */}
             <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-[11px] font-semibold shadow-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>Campus Live</span>
             </div>
 
-            {/* Relogin / Switch button */}
+            {/* Logout button */}
             <button
-              onClick={() => router.push("/login")}
+              onClick={handleSignOut}
               className="text-xs text-slate-400 hover:text-slate-700 p-2 rounded-lg hover:bg-slate-100 transition-colors"
-              title="Return to Login Switcher"
+              title="Sign out"
             >
               <LogOut className="w-4 h-4" />
             </button>

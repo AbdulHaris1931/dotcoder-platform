@@ -36,9 +36,9 @@ export default function SignupPage() {
             data: {
               full_name: fullName,
               role: role,
-              college_name: "Cauvery Institute of Technology, Thanjavur",
-              roll_no: "22CS001",
-              department: "CSE",
+              college_name: "Annai Vailankanni Arts and Science College, Thanjavur",
+              roll_no: role === "admin" ? "AV-TPO-01" : "23BCA01",
+              department: role === "admin" ? "Placement Cell" : "BCA",
               batch_year: 2026,
             },
           },
@@ -70,9 +70,9 @@ export default function SignupPage() {
         email,
         full_name: fullName || (role === "admin" ? "Placement Officer" : "Candidate"),
         role: role,
-        college_name: "Cauvery Institute of Technology, Thanjavur",
-        roll_no: "22CS001",
-        department: "CSE",
+        college_name: "Annai Vailankanni Arts and Science College, Thanjavur",
+        roll_no: role === "admin" ? "AV-TPO-01" : "23BCA01",
+        department: role === "admin" ? "Placement Cell" : "BCA",
         batch_year: 2026,
         readiness_score: 75,
         problems_solved: 0,
@@ -270,46 +270,6 @@ export default function SignupPage() {
             >
               Log in
             </Link>
-          </div>
-
-          {/* Instant 1-Click Demo Evaluation Pills */}
-          <div className="pt-6 border-t border-slate-100 space-y-2">
-            <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-              <span>DEMO EVALUATOR ACCESS:</span>
-              <span className="text-emerald-600 font-semibold">● ACTIVE</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  DemoStore.switchRole("student");
-                  router.push("/student/dashboard");
-                }}
-                className="p-2.5 rounded-lg border border-slate-200 bg-slate-50/80 hover:bg-white text-left transition-all group"
-              >
-                <div className="text-[10px] font-semibold text-slate-500 group-hover:text-indigo-600">
-                  Student Demo
-                </div>
-                <div className="text-xs font-bold text-slate-800 truncate">
-                  Adithya K. (CSE)
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  DemoStore.switchRole("tpo");
-                  router.push("/admin/dashboard");
-                }}
-                className="p-2.5 rounded-lg border border-slate-200 bg-slate-50/80 hover:bg-white text-left transition-all group"
-              >
-                <div className="text-[10px] font-semibold text-slate-500 group-hover:text-indigo-600">
-                  TPO Officer Demo
-                </div>
-                <div className="text-xs font-bold text-slate-800 truncate">
-                  Dr. Ramanathan
-                </div>
-              </button>
-            </div>
           </div>
         </div>
 

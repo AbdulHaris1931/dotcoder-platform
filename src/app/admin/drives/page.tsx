@@ -109,11 +109,11 @@ export default function AdminDrivesManagerPage() {
       const stud = students.find((s) => s.id === app.student_id);
       const drv = drives.find((d) => d.id === app.drive_id);
       rows.push([
-        stud?.full_name || "Adithya K. Sundaram",
-        stud?.roll_no || "22CS001",
-        stud?.department || "CSE",
+        stud?.full_name || "Karthik S.",
+        stud?.roll_no || "23BCA01",
+        stud?.department || "BCA",
         String(stud?.batch_year || 2026),
-        stud?.email || "candidate@cauvery.edu.in",
+        stud?.email || "candidate@avc.edu.in",
         `${stud?.readiness_score || 88}%`,
         drv?.company_name || "Zoho Corporation",
         drv?.role_title || "SDE",

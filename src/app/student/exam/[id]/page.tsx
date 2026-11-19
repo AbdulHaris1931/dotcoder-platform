@@ -333,7 +333,7 @@ export default function ProctoredExamRoomPage() {
             </div>
             <div className="flex justify-between text-slate-600">
               <span>Institution:</span>
-              <span className="text-slate-900">Cauvery Institute of Technology</span>
+              <span className="text-slate-900">{currentUser?.college_name || "Annai Vailankanni Arts and Science College, Thanjavur"}</span>
             </div>
           </div>
 

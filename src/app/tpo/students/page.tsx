@@ -151,17 +151,17 @@ export default function BulkStudentOnboardingPage() {
     if (valid.length === 0) return;
 
     const res = DemoStore.addStudents(valid);
-    setImportStatus(`Success! Successfully enrolled ${res.added} candidate(s) into Cauvery Institute.`);
+    setImportStatus(`Success! Successfully enrolled ${res.added} candidate(s) into Annai Vailankanni Arts and Science College.`);
     setParsedRows([]);
   };
 
   const handleLoadSampleCsv = () => {
     const sample = `full_name,roll_no,department,email,batch_year
-Sanjay Venkat,22CS088,CSE,sanjay.22cs@cauvery.edu.in,2026
-Meena Krishnan,22IT044,IT,meena.22it@cauvery.edu.in,2026
-Harish Sundar,22EC055,ECE,harish.22ec@cauvery.edu.in,2026
-Invalid Student,22CS001,CSE,bad-email-format,2026
-Duplicate Batch,22IT044,IT,dup@cauvery.edu.in,2026`;
+Sanjay Venkat,23BCA088,BCA,sanjay.bca@avc.edu.in,2026
+Meena Krishnan,23CS044,B.Sc CS,meena.cs@avc.edu.in,2026
+Harish Sundar,23IT055,B.Sc IT,harish.it@avc.edu.in,2026
+Invalid Student,23BCA01,BCA,bad-email-format,2026
+Duplicate Batch,23IT055,B.Sc IT,dup@avc.edu.in,2026`;
     parseCsvText(sample);
   };
 
@@ -187,7 +187,7 @@ Duplicate Batch,22IT044,IT,dup@cauvery.edu.in,2026`;
               Placement Cell • Roster Manager
             </span>
             <span className="text-[11px] text-slate-500 font-mono">
-              Cauvery Institute of Technology, Thanjavur (CIT-TN)
+              Annai Vailankanni Arts and Science College, Thanjavur (AVASC-TNJ)
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mt-1">
@@ -358,7 +358,7 @@ Duplicate Batch,22IT044,IT,dup@cauvery.edu.in,2026`;
               Active Enrolled Candidates ({students.length})
             </h2>
             <p className="text-xs text-slate-500 font-sans mt-0.5">
-              Cauvery Institute of Technology, Thanjavur • 2026 Placement Batch
+              Annai Vailankanni Arts and Science College, Thanjavur • 2026 Placement Batch
             </p>
           </div>
 
@@ -380,11 +380,11 @@ Duplicate Batch,22IT044,IT,dup@cauvery.edu.in,2026`;
               className="py-1.5 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono shadow-sm"
             >
               <option value="ALL">All Departments</option>
-              <option value="CSE">CSE</option>
-              <option value="IT">IT</option>
-              <option value="ECE">ECE</option>
-              <option value="EEE">EEE</option>
-              <option value="Mech">Mech</option>
+              {Array.from(new Set(students.map((s) => s.department).filter(Boolean))).map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept}
+                </option>
+              ))}
             </select>
           </div>
         </div>
