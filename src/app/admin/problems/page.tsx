@@ -1,232 +1,245 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
 import { DataService } from "@/lib/supabase/db";
-import { Problem, ProblemDifficulty, SupportedLanguage } from "@/types";
+import { Problem, ProblemDifficulty } from "@/types";
 import {
-  Code2,
   Plus,
-  Trash2,
-  CheckCircle2,
-  AlertTriangle,
-  ArrowLeft,
-  Terminal,
-  Sparkles,
+  Search,
   Eye,
-  EyeOff,
-  Send,
+  Edit2,
+  MoreVertical,
+  CheckCircle2,
   X,
+  Code2,
 } from "lucide-react";
 
-export default function QuestionBankManagerPage() {
+interface ProblemRow {
+  id: number;
+  title: string;
+  topic: string;
+  difficulty: "Easy" | "Medium" | "Hard";
+  status: "Published" | "Draft";
+}
+
+const INITIAL_PROBLEMS: ProblemRow[] = [
+  { id: 1, title: "Two Sum", topic: "Arrays", difficulty: "Easy", status: "Published" },
+  { id: 2, title: "Longest Subarray", topic: "Arrays", difficulty: "Medium", status: "Published" },
+  { id: 3, title: "Valid Parentheses", topic: "Stack", difficulty: "Easy", status: "Published" },
+  { id: 4, title: "Merge Two Lists", topic: "Linked List", difficulty: "Medium", status: "Draft" },
+  { id: 5, title: "LRU Cache", topic: "Design", difficulty: "Hard", status: "Published" },
+];
+
+export default function AdminProblemManagementPage() {
   const router = useRouter();
-  const [problems, setProblems] = useState<Problem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [problems, setProblems] = useState<ProblemRow[]>(INITIAL_PROBLEMS);
+  const [activeTab, setActiveTab] = useState<"all" | "published" | "drafts">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [difficultyFilter, setDifficultyFilter] = useState("All");
+  const [topicFilter, setTopicFilter] = useState("All");
   const [showAddModal, setShowAddModal] = useState(false);
 
-  // New Problem Form State
-  const [title, setTitle] = useState("");
-  const [slug, setSlug] = useState("");
-  const [difficulty, setDifficulty] = useState<ProblemDifficulty>("Easy");
-  const [companyTagsInput, setCompanyTagsInput] = useState("TCS NQT, Zoho");
-  const [descriptionMd, setDescriptionMd] = useState("");
+  // New problem form
+  const [newTitle, setNewTitle] = useState("");
+  const [newTopic, setNewTopic] = useState("Arrays");
+  const [newDifficulty, setNewDifficulty] = useState<"Easy" | "Medium" | "Hard">("Easy");
 
-  // Starter Code Tabs
-  const [selectedLangTab, setSelectedLangTab] = useState<SupportedLanguage>("python");
-  const [starterCodes, setStarterCodes] = useState<Record<SupportedLanguage, string>>({
-    python: 'import sys\n\ndef solve():\n    # Read input from standard input\n    pass\n\nif __name__ == "__main__":\n    solve()\n',
-    java: 'import java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n    }\n}\n',
-    cpp: '#include <iostream>\nusing namespace std;\n\nint main() {\n    // Code here\n    return 0;\n}\n',
-    c: '#include <stdio.h>\n\nint main() {\n    // Code here\n    return 0;\n}\n',
+  const filteredProblems = problems.filter((p) => {
+    if (activeTab === "published" && p.status !== "Published") return false;
+    if (activeTab === "drafts" && p.status !== "Draft") return false;
+    if (difficultyFilter !== "All" && p.difficulty !== difficultyFilter) return false;
+    if (topicFilter !== "All" && p.topic !== topicFilter) return false;
+    if (searchQuery && !p.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    return true;
   });
 
-  // Test Cases
-  const [testCases, setTestCases] = useState<
-    Array<{ input: string; expected_output: string; is_hidden: boolean }>
-  >([
-    { input: "1 2 3", expected_output: "6", is_hidden: false },
-    { input: "10 20", expected_output: "30", is_hidden: true },
-  ]);
-
-  const [saving, setSaving] = useState(false);
-  const [feedback, setFeedback] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      const data = await DataService.getProblems();
-      setProblems(data);
-      setLoading(false);
-    }
-    load();
-  }, []);
-
-  const handleTitleChange = (val: string) => {
-    setTitle(val);
-    const generatedSlug = val
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-");
-    setSlug(generatedSlug);
-  };
-
-  const handleAddTestCase = () => {
-    setTestCases([...testCases, { input: "", expected_output: "", is_hidden: false }]);
-  };
-
-  const handleRemoveTestCase = (idx: number) => {
-    setTestCases(testCases.filter((_, i) => i !== idx));
-  };
-
-  const handleSaveProblem = async (e: React.FormEvent) => {
+  const handleAddProblem = (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
-    setFeedback(null);
-
-    const tags = companyTagsInput
-      .split(",")
-      .map((t) => t.trim())
-      .filter((t) => t.length > 0);
-
-    const res = await DataService.createProblem(
-      {
-        title,
-        slug,
-        difficulty,
-        company_tags: tags,
-        type: "coding",
-        description_md: descriptionMd,
-        starter_code_json: starterCodes,
-        is_public: true,
-      },
-      testCases
-    );
-
-    setSaving(false);
-
-    if (res.success) {
-      setFeedback("Success! New coding challenge added to the Question Bank.");
-      setShowAddModal(false);
-      // reload
-      const updated = await DataService.getProblems();
-      setProblems(updated);
-      setTimeout(() => setFeedback(null), 4000);
-    } else {
-      setFeedback(`Error: ${res.error}`);
-    }
+    if (!newTitle) return;
+    const added: ProblemRow = {
+      id: problems.length + 1,
+      title: newTitle,
+      topic: newTopic,
+      difficulty: newDifficulty,
+      status: "Published",
+    };
+    setProblems([added, ...problems]);
+    setShowAddModal(false);
+    setNewTitle("");
   };
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-8 font-sans text-slate-900">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/90 pb-6">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => router.push("/admin/dashboard")}
-            className="p-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-900 shadow-sm transition-all active:scale-[0.98]"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold">
-                Question Bank Manager
-              </span>
-              <span className="text-[11px] text-slate-500 font-mono">
-                Curriculum Store
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
-              Campus Coding Repository & Test Case Builder
-            </h1>
-          </div>
+    <div className="flex-1 p-8 sm:p-10 max-w-7xl mx-auto space-y-7 font-sans">
+      {/* Top Header matching Screen 08 */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+            Problem Management
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Create, edit and organize coding problems.
+          </p>
         </div>
 
+        {/* Lime Green Add Problem Button matching Screen 08 */}
         <button
+          type="button"
           onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-md shadow-indigo-500/20 transition-all flex items-center gap-2 active:scale-[0.98]"
+          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold text-xs transition-all shadow-xs active:scale-[0.98]"
         >
-          <Plus className="w-4 h-4" />
-          <span>Add New Problem</span>
+          <Plus className="w-4 h-4 text-black stroke-[3]" />
+          <span>Add Problem</span>
         </button>
       </div>
 
-      {feedback && (
-        <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs font-mono text-emerald-800 flex items-center gap-2.5 shadow-sm">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-          <span>{feedback}</span>
-        </div>
-      )}
+      {/* Filter Tabs matching Screen 08 */}
+      <div className="flex flex-wrap items-center gap-2">
+        {[
+          { id: "all", label: "All Problems (512)" },
+          { id: "published", label: "Published (486)" },
+          { id: "drafts", label: "Drafts (26)" },
+        ].map((tab) => {
+          const isSelected = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all shadow-2xs ${
+                isSelected
+                  ? "bg-[#C4F82A] text-black"
+                  : "bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:text-black"
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
 
-      {/* Existing Problem List */}
-      <div className="card-luxury rounded-2xl p-6 space-y-4 shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div>
-            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Terminal className="w-4 h-4 text-indigo-600" />
-              Active Question Bank ({problems.length})
-            </h2>
-            <p className="text-xs text-slate-500 font-sans mt-0.5">
-              Live coding problems available across all college practice labs.
-            </p>
+      {/* Search & Dropdown Filters Row matching Screen 08 */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* Search */}
+        <div className="relative flex-1 max-w-md">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search problems..."
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#C4F82A] shadow-2xs"
+          />
+        </div>
+
+        {/* Dropdowns */}
+        <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-1.5 bg-white border border-slate-200 px-3 py-2 rounded-xl text-slate-700 shadow-2xs">
+            <span className="text-slate-400">Difficulty:</span>
+            <select
+              value={difficultyFilter}
+              onChange={(e) => setDifficultyFilter(e.target.value)}
+              className="bg-transparent font-semibold text-slate-800 focus:outline-none cursor-pointer"
+            >
+              <option value="All">All</option>
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-1.5 bg-white border border-slate-200 px-3 py-2 rounded-xl text-slate-700 shadow-2xs">
+            <span className="text-slate-400">Topic:</span>
+            <select
+              value={topicFilter}
+              onChange={(e) => setTopicFilter(e.target.value)}
+              className="bg-transparent font-semibold text-slate-800 focus:outline-none cursor-pointer"
+            >
+              <option value="All">All</option>
+              <option value="Arrays">Arrays</option>
+              <option value="Stack">Stack</option>
+              <option value="Linked List">Linked List</option>
+              <option value="Design">Design</option>
+            </select>
           </div>
         </div>
+      </div>
 
+      {/* Problems Table matching Screen 08 */}
+      <div className="rounded-2xl bg-white border border-slate-200/90 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
-            <thead className="text-[11px] font-mono uppercase text-slate-500 bg-slate-50/80 border-b border-slate-200">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[11px] uppercase tracking-wider">
               <tr>
-                <th className="py-3 px-3">Title</th>
-                <th className="py-3 px-3">Slug</th>
-                <th className="py-3 px-3">Difficulty</th>
-                <th className="py-3 px-3">Company Tags</th>
-                <th className="py-3 px-3">Test Cases</th>
-                <th className="py-3 px-3 text-right">Preview</th>
+                <th className="p-4 w-12 text-center">#</th>
+                <th className="p-4">Title</th>
+                <th className="p-4">Topic</th>
+                <th className="p-4">Difficulty</th>
+                <th className="p-4">Status</th>
+                <th className="p-4 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {problems.map((p) => (
-                <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-3.5 px-3 font-semibold text-slate-900">{p.title}</td>
-                  <td className="py-3.5 px-3 font-mono text-slate-500">{p.slug}</td>
-                  <td className="py-3.5 px-3">
+            <tbody className="divide-y divide-slate-100 text-slate-800">
+              {filteredProblems.map((problem) => (
+                <tr key={problem.id} className="hover:bg-slate-50/70 transition-colors">
+                  <td className="p-4 font-mono text-slate-400 text-center">
+                    {problem.id}
+                  </td>
+                  <td className="p-4 font-semibold text-slate-900">
+                    {problem.title}
+                  </td>
+                  <td className="p-4 font-medium text-slate-600 font-mono">
+                    {problem.topic}
+                  </td>
+                  <td className="p-4">
                     <span
-                      className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border shadow-sm ${
-                        p.difficulty === "Easy"
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                          : p.difficulty === "Medium"
-                          ? "bg-amber-50 text-amber-700 border-amber-200"
-                          : "bg-rose-50 text-rose-700 border-rose-200"
+                      className={`inline-block px-2.5 py-0.5 rounded-md font-mono font-bold text-[11px] ${
+                        problem.difficulty === "Easy"
+                          ? "bg-[#C4F82A]/20 text-[#2D5A12] border border-[#C4F82A]/40"
+                          : problem.difficulty === "Medium"
+                          ? "bg-amber-500/15 text-amber-800 border border-amber-300"
+                          : "bg-rose-500/15 text-rose-800 border border-rose-300"
                       }`}
                     >
-                      {p.difficulty}
+                      {problem.difficulty}
                     </span>
                   </td>
-                  <td className="py-3.5 px-3">
-                    <div className="flex flex-wrap gap-1">
-                      {p.company_tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="py-3.5 px-3 font-mono text-slate-600">
-                    {(p.test_cases || []).length} Cases
-                  </td>
-                  <td className="py-3.5 px-3 text-right">
-                    <button
-                      onClick={() => router.push(`/student/lab/${p.slug}`)}
-                      className="text-indigo-600 hover:text-indigo-700 font-mono text-[11px] font-bold"
+                  <td className="p-4">
+                    <span
+                      className={`inline-block px-2.5 py-0.5 rounded-md font-sans font-semibold text-[11px] ${
+                        problem.status === "Published"
+                          ? "bg-[#C4F82A]/20 text-[#2D5A12] border border-[#C4F82A]/40"
+                          : "bg-slate-100 text-slate-600 border border-slate-200"
+                      }`}
                     >
-                      Open IDE &rarr;
-                    </button>
+                      {problem.status}
+                    </span>
+                  </td>
+                  <td className="p-4 text-center">
+                    <div className="inline-flex items-center gap-2 text-slate-400">
+                      <button
+                        type="button"
+                        onClick={() => router.push(`/practice/two-sum`)}
+                        title="Preview Problem"
+                        className="p-1 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        title="Edit Problem"
+                        className="p-1 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        title="Options"
+                        className="p-1 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+                      >
+                        <MoreVertical className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -236,241 +249,80 @@ export default function QuestionBankManagerPage() {
       </div>
 
       {/* Add Problem Modal */}
-      <AnimatePresence>
-        {showAddModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowAddModal(false)}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-3xl max-h-[90vh] bg-white border border-slate-200/90 rounded-3xl shadow-2xl overflow-y-auto p-7 space-y-6 text-slate-900"
-            >
-              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">Create New Coding Problem</h3>
-                  <p className="text-xs text-slate-500 font-sans mt-0.5">
-                    Publish directly to the open Supabase problem repository.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowAddModal(false)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-200 space-y-5 animate-in fade-in">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-bold text-slate-900">Create New Problem</h3>
+              <button
+                type="button"
+                onClick={() => setShowAddModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddProblem} className="space-y-4 text-xs font-sans">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Problem Title</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Subarray Sum Equals K"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#C4F82A]"
+                />
               </div>
 
-              <form onSubmit={handleSaveProblem} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-mono uppercase font-bold text-slate-600">
-                      Problem Title
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Reverse Linked List"
-                      value={title}
-                      onChange={(e) => handleTitleChange(e.target.value)}
-                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-sm"
-                    />
-                  </div>
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Topic</label>
+                <select
+                  value={newTopic}
+                  onChange={(e) => setNewTopic(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#C4F82A]"
+                >
+                  <option value="Arrays">Arrays</option>
+                  <option value="Stack">Stack</option>
+                  <option value="Linked List">Linked List</option>
+                  <option value="Design">Design</option>
+                  <option value="Trees">Trees</option>
+                </select>
+              </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-mono uppercase font-bold text-slate-600">
-                      Slug (URL Identifier)
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. reverse-linked-list"
-                      value={slug}
-                      onChange={(e) => setSlug(e.target.value)}
-                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono shadow-sm"
-                    />
-                  </div>
-                </div>
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Difficulty</label>
+                <select
+                  value={newDifficulty}
+                  onChange={(e) => setNewDifficulty(e.target.value as any)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#C4F82A]"
+                >
+                  <option value="Easy">Easy</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Hard">Hard</option>
+                </select>
+              </div>
 
-                <div className="grid grid-cols-2 gap-3.5">
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-mono uppercase font-bold text-slate-600">
-                      Difficulty Level
-                    </label>
-                    <select
-                      value={difficulty}
-                      onChange={(e) => setDifficulty(e.target.value as ProblemDifficulty)}
-                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono shadow-sm"
-                    >
-                      <option value="Easy">Easy</option>
-                      <option value="Medium">Medium</option>
-                      <option value="Hard">Hard</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-mono uppercase font-bold text-slate-600">
-                      Company Tags (Comma separated)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. TCS NQT, Zoho, Infosys"
-                      value={companyTagsInput}
-                      onChange={(e) => setCompanyTagsInput(e.target.value)}
-                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono shadow-sm"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-mono uppercase font-bold text-slate-600">
-                    Markdown Description & Specifications
-                  </label>
-                  <textarea
-                    rows={4}
-                    required
-                    placeholder="Describe the problem, input format, constraints..."
-                    value={descriptionMd}
-                    onChange={(e) => setDescriptionMd(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono shadow-sm leading-relaxed"
-                  />
-                </div>
-
-                {/* Starter Code Tabs */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-mono uppercase font-bold text-slate-600">
-                      Starter Code Templates
-                    </label>
-                    <div className="flex items-center gap-1 font-mono text-[11px]">
-                      {(["python", "java", "cpp", "c"] as SupportedLanguage[]).map((lang) => (
-                        <button
-                          key={lang}
-                          type="button"
-                          onClick={() => setSelectedLangTab(lang)}
-                          className={`px-2.5 py-0.5 rounded-lg capitalize transition-all ${
-                            selectedLangTab === lang
-                              ? "bg-indigo-600 text-white font-bold shadow-sm"
-                              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                          }`}
-                        >
-                          {lang}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <textarea
-                    rows={4}
-                    value={starterCodes[selectedLangTab]}
-                    onChange={(e) =>
-                      setStarterCodes({
-                        ...starterCodes,
-                        [selectedLangTab]: e.target.value,
-                      })
-                    }
-                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-emerald-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-mono shadow-inner"
-                  />
-                </div>
-
-                {/* Test Cases Builder */}
-                <div className="space-y-2.5 pt-3 border-t border-slate-100">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono uppercase font-bold text-slate-600">
-                      Assertion Test Cases ({testCases.length})
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleAddTestCase}
-                      className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Add Case
-                    </button>
-                  </div>
-
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {testCases.map((tc, idx) => (
-                      <div
-                        key={idx}
-                        className="grid grid-cols-12 gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl items-center text-xs font-mono shadow-sm"
-                      >
-                        <div className="col-span-5">
-                          <input
-                            type="text"
-                            placeholder="Stdin input"
-                            value={tc.input}
-                            onChange={(e) => {
-                              const updated = [...testCases];
-                              updated[idx].input = e.target.value;
-                              setTestCases(updated);
-                            }}
-                            className="w-full px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-slate-800 text-[11px] focus:outline-none focus:border-indigo-500"
-                          />
-                        </div>
-
-                        <div className="col-span-4">
-                          <input
-                            type="text"
-                            placeholder="Expected stdout"
-                            value={tc.expected_output}
-                            onChange={(e) => {
-                              const updated = [...testCases];
-                              updated[idx].expected_output = e.target.value;
-                              setTestCases(updated);
-                            }}
-                            className="w-full px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-emerald-700 font-bold text-[11px] focus:outline-none focus:border-indigo-500"
-                          />
-                        </div>
-
-                        <div className="col-span-2 flex items-center gap-1.5">
-                          <label className="flex items-center gap-1 text-[11px] text-slate-600 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={tc.is_hidden}
-                              onChange={(e) => {
-                                const updated = [...testCases];
-                                updated[idx].is_hidden = e.target.checked;
-                                setTestCases(updated);
-                              }}
-                              className="rounded text-indigo-600 focus:ring-indigo-500"
-                            />
-                            <span>Hidden</span>
-                          </label>
-                        </div>
-
-                        <div className="col-span-1 text-right">
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveTestCase(idx)}
-                            className="text-slate-400 hover:text-rose-600 transition-colors"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
+              <div className="pt-2 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
+                >
+                  Cancel
+                </button>
                 <button
                   type="submit"
-                  disabled={saving}
-                  className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+                  className="px-5 py-2 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold shadow-xs"
                 >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>{saving ? "Inserting into Database..." : "Commit Problem to Database"}</span>
+                  Create Problem
                 </button>
-              </form>
-            </motion.div>
+              </div>
+            </form>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 }

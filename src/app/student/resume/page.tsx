@@ -1,261 +1,218 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import { DataService } from "@/lib/supabase/db";
-import { UserProfile, Submission } from "@/types";
+import { UserProfile } from "@/types";
 import {
-  Printer,
   Download,
-  ArrowLeft,
   CheckCircle2,
-  Award,
-  Code2,
-  GraduationCap,
   Mail,
-  Building2,
-  Calendar,
-  Globe,
+  Phone,
+  MapPin,
   QrCode,
   ShieldCheck,
-  Sparkles,
+  Award,
 } from "lucide-react";
 
 export default function StudentResumePage() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
-      setLoading(true);
-      const [user, subs] = await Promise.all([
-        DataService.getCurrentUser(),
-        DataService.getSubmissions(),
-      ]);
+      const user = await DataService.getCurrentUser();
       setCurrentUser(user);
-      setSubmissions(subs.filter((s) => s.user_id === user.id));
-      setLoading(false);
     }
     load();
   }, []);
 
-  const handlePrint = () => {
+  const handleDownload = () => {
     window.print();
   };
 
-  if (loading || !currentUser) {
-    return (
-      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-mono text-xs text-slate-500">
-        Generating Verified ATS Placement Resume...
-      </div>
-    );
-  }
-
-  const readiness = Number(currentUser.readiness_score) || 88;
+  const name = currentUser?.full_name || "Karthik S.";
+  const department = currentUser?.department || "BCA";
+  const college = currentUser?.college_name || "Annai Vailankanni Arts and Science College";
+  const email = currentUser?.email || "karthik.bca@avc.edu.in";
+  const readiness = 78;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 py-8 px-4 font-sans">
-      {/* Top Floating Control Bar (Hidden during print) */}
-      <div className="max-w-4xl mx-auto flex items-center justify-between pb-6 print:hidden">
-        <button
-          onClick={() => router.push("/student/dashboard")}
-          className="flex items-center gap-1.5 text-xs font-mono font-medium text-slate-600 hover:text-slate-900 transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to Student Hub</span>
-        </button>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => router.push("/student/drives")}
-            className="px-4 py-2 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-xs font-mono font-semibold text-slate-700 transition-colors shadow-xs"
-          >
-            Apply to Drives
-          </button>
-
-          <button
-            onClick={handlePrint}
-            className="flex items-center gap-2 px-5 py-2 rounded-2xl btn-luxury-primary text-white font-mono text-xs font-bold transition-all shadow-md active:scale-95"
-          >
-            <Printer className="w-4 h-4" />
-            <span>Print / Save as PDF</span>
-          </button>
+    <div className="flex-1 p-8 sm:p-10 max-w-7xl mx-auto space-y-8 font-sans">
+      {/* Top Header matching Screen 06 */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+            My Placement Resume
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            A verified, ATS-friendly resume with your DotCoder credentials.
+          </p>
         </div>
+
+        {/* Lime Green Download PDF CTA button matching Screen 06 */}
+        <button
+          type="button"
+          onClick={handleDownload}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold text-xs transition-all shadow-xs active:scale-[0.98]"
+        >
+          <Download className="w-4 h-4 text-black" />
+          <span>Download PDF</span>
+        </button>
       </div>
 
-      {/* The Printable 1-Page ATS Resume Card */}
-      <div className="max-w-4xl mx-auto bg-white text-slate-900 rounded-2xl shadow-2xl p-8 sm:p-12 print:p-0 print:shadow-none print:rounded-none space-y-6">
-        {/* Resume Header */}
-        <div className="border-b-2 border-slate-900 pb-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-              {currentUser.full_name}
-            </h1>
-            <p className="text-sm font-semibold text-indigo-700 font-mono">
-              Software Development Engineer • Campus Candidate (Batch {currentUser.batch_year || 2026})
-            </p>
-            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 font-mono pt-1">
-              <span>{currentUser.email || "karthik.bca@avc.edu.in"}</span>
-              <span>•</span>
-              <span>Roll: {currentUser.roll_no || "23BCA01"}</span>
-              <span>•</span>
-              <span>{currentUser.department || "BCA"} Department</span>
+      {/* Main White Resume Document Card matching Screen 06 */}
+      <div className="rounded-3xl bg-white border border-slate-200/90 p-8 sm:p-10 shadow-xs space-y-8 print:p-0 print:border-none print:shadow-none">
+        {/* Top Header Row: Avatar, Student Info, QR Code, Verified Credential Badge */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-8 border-b border-slate-100">
+          {/* Left: Avatar & Candidate Info */}
+          <div className="flex items-center gap-5">
+            {/* Student Avatar Photo */}
+            <div className="w-20 h-20 rounded-full overflow-hidden bg-slate-100 border-2 border-slate-200 flex-shrink-0">
+              <img
+                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80"
+                alt={name}
+                className="w-full h-full object-cover"
+              />
             </div>
-            <div className="text-xs text-slate-600 font-medium">
-              {currentUser.college_name || "Annai Vailankanni Arts and Science College, Thanjavur"}
+
+            {/* Name, Title, Contact */}
+            <div className="space-y-1">
+              <h2 className="text-2xl font-bold text-slate-900">
+                {name}
+              </h2>
+              <p className="text-xs font-semibold text-slate-600">
+                {department} Student
+              </p>
+              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 pt-1 font-sans">
+                <span className="flex items-center gap-1">
+                  <Mail className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{email}</span>
+                </span>
+                <span>•</span>
+                <span className="flex items-center gap-1">
+                  <Phone className="w-3.5 h-3.5 text-slate-400" />
+                  <span>+91 98765 43210</span>
+                </span>
+                <span>•</span>
+                <span className="flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Thanjavur, TN</span>
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* QR Code Credential Stamp */}
-          <div className="flex flex-col items-center p-2 rounded-xl border border-slate-200 bg-slate-50 flex-shrink-0 text-center">
-            <svg
-              className="w-16 h-16"
-              viewBox="0 0 100 100"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <rect width="100" height="100" fill="white" />
-              <rect x="10" y="10" width="25" height="25" fill="#0F172A" />
-              <rect x="15" y="15" width="15" height="15" fill="white" />
-              <rect x="18" y="18" width="9" height="9" fill="#0F172A" />
+          {/* Right: QR Code & Verified Credential Box matching Screen 06 */}
+          <div className="flex items-center gap-4 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-100">
+            {/* QR Code Container */}
+            <div className="w-16 h-16 bg-white p-1 rounded-xl border border-slate-200 flex items-center justify-center flex-shrink-0">
+              <QrCode className="w-14 h-14 text-slate-800" />
+            </div>
 
-              <rect x="65" y="10" width="25" height="25" fill="#0F172A" />
-              <rect x="70" y="15" width="15" height="15" fill="white" />
-              <rect x="73" y="18" width="9" height="9" fill="#0F172A" />
+            {/* Verified Credential Text */}
+            <div className="space-y-1 max-w-[190px]">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 fill-emerald-100" />
+                <span>Verified Credential</span>
+              </div>
+              <p className="text-[10px] text-slate-500 leading-tight">
+                This resume is verified by DotCoder. Scan the QR code to validate the credentials.
+              </p>
+            </div>
+          </div>
+        </div>
 
-              <rect x="10" y="65" width="25" height="25" fill="#0F172A" />
-              <rect x="15" y="70" width="15" height="15" fill="white" />
-              <rect x="18" y="73" width="9" height="9" fill="#0F172A" />
+        {/* Middle Body Grid: Left Information (Education, Skills, Achievements) & Right Gauge */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left 8 Columns */}
+          <div className="lg:col-span-8 space-y-7">
+            {/* Education Section */}
+            <div className="space-y-2">
+              <h3 className="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold">
+                Education
+              </h3>
+              <div className="text-sm font-semibold text-slate-800">
+                {department} — {college} <span className="text-xs font-normal text-slate-500 font-mono">(2023 - 2026)</span>
+              </div>
+            </div>
 
-              <rect x="42" y="12" width="6" height="6" fill="#0F172A" />
-              <rect x="52" y="12" width="6" height="6" fill="#0F172A" />
-              <rect x="36" y="44" width="8" height="8" fill="#0F172A" />
-              <rect x="66" y="44" width="8" height="8" fill="#0F172A" />
-              <rect x="44" y="64" width="6" height="6" fill="#0F172A" />
-              <rect x="66" y="76" width="8" height="8" fill="#0F172A" />
-            </svg>
-            <span className="text-[9px] font-mono text-slate-500 mt-1 uppercase font-bold tracking-tight">
-              Verified Credential
+            {/* Technical Skills Section */}
+            <div className="space-y-2.5">
+              <h3 className="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold">
+                Technical Skills
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {["Python", "Java", "C++", "SQL", "DSA", "Web Dev"].map((skill) => (
+                  <span
+                    key={skill}
+                    className="px-3 py-1 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 text-xs font-mono font-medium shadow-2xs"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Achievements Section */}
+            <div className="space-y-2.5">
+              <h3 className="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold">
+                Achievements
+              </h3>
+              <div className="space-y-2 text-xs text-slate-700 font-medium">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <span>Solved 500+ coding problems on DotCoder</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <span>Completed Data Structures & Algorithms (80%)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right 4 Columns: Placement Readiness Radial Gauge matching Screen 06 */}
+          <div className="lg:col-span-4 flex flex-col items-center justify-center p-6 bg-slate-50/60 rounded-3xl border border-slate-100 space-y-4">
+            <span className="text-xs font-bold text-slate-700 font-sans">
+              Placement Readiness
             </span>
-          </div>
-        </div>
 
-        {/* Section 1: Verified Placement Readiness & Competitive Benchmarks */}
-        <div className="space-y-2">
-          <h2 className="text-xs font-mono uppercase font-bold tracking-wider text-slate-900 border-b border-slate-200 pb-1">
-            Verified Placement Index & Assessment Scores
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
-            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-              <div className="text-[10px] font-mono uppercase text-slate-500">Readiness Score</div>
-              <div className="text-lg font-extrabold text-emerald-600 font-mono">{readiness}%</div>
-              <div className="text-[10px] text-slate-600">State Top 5% Percentile</div>
-            </div>
+            {/* Circular Gauge Graphic matching Screen 06 */}
+            <div className="relative w-36 h-36 flex items-center justify-center">
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  stroke="#E2E8F0"
+                  strokeWidth="8"
+                  fill="none"
+                />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  stroke="#C4F82A"
+                  strokeWidth="8"
+                  fill="none"
+                  strokeDasharray="251.2"
+                  strokeDashoffset={251.2 * (1 - readiness / 100)}
+                  strokeLinecap="round"
+                />
+              </svg>
 
-            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-              <div className="text-[10px] font-mono uppercase text-slate-500">TCS NQT Simulator</div>
-              <div className="text-lg font-extrabold text-indigo-700 font-mono">Digital Tier</div>
-              <div className="text-[10px] text-slate-600">7.5+ LPA Profile Match</div>
-            </div>
-
-            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-              <div className="text-[10px] font-mono uppercase text-slate-500">Problems Solved</div>
-              <div className="text-lg font-extrabold text-slate-900 font-mono">10+ Verified</div>
-              <div className="text-[10px] text-slate-600">Zero In-Exam Violations</div>
-            </div>
-
-            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-              <div className="text-[10px] font-mono uppercase text-slate-500">Integrity Index</div>
-              <div className="text-lg font-extrabold text-emerald-600 font-mono">100% Clean</div>
-              <div className="text-[10px] text-slate-600">Proctored Lockdown Certified</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Section 2: Technical Skills & Core Competencies */}
-        <div className="space-y-2">
-          <h2 className="text-xs font-mono uppercase font-bold tracking-wider text-slate-900 border-b border-slate-200 pb-1">
-            Technical Skills & Tooling
-          </h2>
-          <div className="space-y-1.5 text-xs text-slate-800 leading-relaxed font-mono">
-            <div>
-              <strong className="text-slate-900 font-sans">Languages: </strong>
-              Python (Algorithms & Data Structures), Java (OOP & Collections), C++, C, SQL (PostgreSQL).
-            </div>
-            <div>
-              <strong className="text-slate-900 font-sans">Web & Frameworks: </strong>
-              Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS, Supabase SSR, Node.js.
-            </div>
-            <div>
-              <strong className="text-slate-900 font-sans">Computer Science Fundamentals: </strong>
-              Data Structures & Algorithms, Object-Oriented System Design, Database Management Systems (DBMS), Operating Systems (OS), Computer Networks.
-            </div>
-            <div>
-              <strong className="text-slate-900 font-sans">Developer Tools: </strong>
-              Git, GitHub Actions, Docker, Linux Shell, Monaco Code Engine, WebAssembly (Pyodide).
-            </div>
-          </div>
-        </div>
-
-        {/* Section 3: Verified Problem Solving Projects & Highlights */}
-        <div className="space-y-2">
-          <h2 className="text-xs font-mono uppercase font-bold tracking-wider text-slate-900 border-b border-slate-200 pb-1">
-            Verified Coding Challenges & Problem Highlights
-          </h2>
-          <div className="space-y-2 text-xs text-slate-700">
-            <div className="space-y-0.5">
-              <div className="flex justify-between font-bold text-slate-900">
-                <span>Trapping Rain Water & Dynamic Programming Algorithms</span>
-                <span className="font-mono text-indigo-700">Zoho / Infosys Track</span>
-              </div>
-              <p className="leading-relaxed">
-                Implemented two-pointer linear scan algorithm solving elevation water trapping with $O(N)$ time complexity and $O(1)$ auxiliary space complexity, passing 100% of hidden unit test vectors.
-              </p>
-            </div>
-
-            <div className="space-y-0.5">
-              <div className="flex justify-between font-bold text-slate-900">
-                <span>Two-Sum Target Pair & Sliding Window Maximum</span>
-                <span className="font-mono text-indigo-700">TCS NQT National Mock</span>
-              </div>
-              <p className="leading-relaxed">
-                Constructed hash-map associative lookup achieving zero-collision target index resolution, verified via automated WASM execution sandbox.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Section 4: Education */}
-        <div className="space-y-2">
-          <h2 className="text-xs font-mono uppercase font-bold tracking-wider text-slate-900 border-b border-slate-200 pb-1">
-            Academic Background
-          </h2>
-          <div className="flex justify-between items-start text-xs">
-            <div>
-              <div className="font-bold text-slate-900">
-                Bachelor of Computer Applications (BCA) / Computer Science
-              </div>
-              <div className="text-slate-600">
-                {currentUser.college_name || "Annai Vailankanni Arts and Science College, Thanjavur"}
+              {/* Inside Text */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <span className="text-2xl font-extrabold text-slate-900 font-mono tracking-tight">
+                  {readiness}%
+                </span>
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  Ready
+                </span>
               </div>
             </div>
-            <div className="text-right font-mono">
-              <div className="font-bold text-slate-900">2022 – 2026</div>
-              <div className="text-emerald-700 font-semibold">CGPA: 8.74 / 10.0</div>
-            </div>
           </div>
-        </div>
-
-        {/* Footer Audit Verification Note */}
-        <div className="pt-4 border-t border-slate-200 flex items-center justify-between text-[10px] text-slate-500 font-mono">
-          <span className="flex items-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Verified by DotCoder Institutional Placement Platform</span>
-          </span>
-          <span>Authentication Hash: #{currentUser.id.slice(0, 12)}</span>
         </div>
       </div>
     </div>

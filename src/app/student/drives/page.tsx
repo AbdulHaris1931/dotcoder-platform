@@ -1,245 +1,238 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 import { DataService } from "@/lib/supabase/db";
-import { CampusDrive, DriveApplication, UserProfile } from "@/types";
-import { DriveCard } from "@/components/drives/drive-card";
-import { BlurFade } from "@/components/magicui/blur-fade";
-import {
-  Briefcase,
-  Building2,
-  CheckCircle2,
-  Clock,
-  Sparkles,
-  TrendingUp,
-  Award,
-  Filter,
-  ArrowRight,
-  ShieldCheck,
-} from "lucide-react";
+import { CampusDrive, UserProfile } from "@/types";
+import { ArrowRight, ArrowUpRight, Calendar, Building2, CheckCircle2 } from "lucide-react";
 
 export default function StudentDrivesPage() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
-  const [drives, setDrives] = useState<CampusDrive[]>([]);
-  const [applications, setApplications] = useState<DriveApplication[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filterTab, setFilterTab] = useState<"all" | "eligible" | "applied">("all");
-  const [applyingDriveId, setApplyingDriveId] = useState<string | null>(null);
-  const [applySuccessNotice, setApplySuccessNotice] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"all" | "upcoming" | "ongoing" | "completed">("all");
+  const [appliedDrives, setAppliedDrives] = useState<Set<string>>(new Set());
+  const [applyMessage, setApplyMessage] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
-      setLoading(true);
-      const [user, drivesData, appsData] = await Promise.all([
-        DataService.getCurrentUser(),
-        DataService.getCampusDrives(),
-        DataService.getDriveApplications(),
-      ]);
+      const user = await DataService.getCurrentUser();
       setCurrentUser(user);
-      setDrives(drivesData);
-      setApplications(appsData);
-      setLoading(false);
     }
     load();
   }, []);
 
-  const handleApply = async (driveId: string) => {
-    if (!currentUser) return;
-    setApplyingDriveId(driveId);
+  const drivesList = [
+    {
+      id: "zoho-corp",
+      name: "Zoho Corporation",
+      role: "Software Developer Intern",
+      eligibility: "Eligible: BCA, B.Sc CS, B.Sc IT, MCA",
+      date: "Mar 25, 2025",
+      status: "ongoing",
+      actionText: "Apply Now",
+      logoColor: "text-red-600 font-extrabold",
+      logoText: "zoho",
+    },
+    {
+      id: "tcs-nqt",
+      name: "TCS - NQT Hiring",
+      role: "Entry Level - Multiple Roles",
+      eligibility: "Eligible: All Departments",
+      date: "Apr 02, 2025",
+      status: "upcoming",
+      actionText: "Register",
+      logoColor: "text-red-700 font-bold",
+      logoText: "tcs",
+    },
+    {
+      id: "cognizant-genc",
+      name: "Cognizant GenC",
+      role: "Graduate Engineer Trainee",
+      eligibility: "Eligible: BCA, B.Sc CS, MCA",
+      date: "Apr 10, 2025",
+      status: "upcoming",
+      actionText: "Register",
+      logoColor: "text-blue-700 font-bold",
+      logoText: "Cognizant",
+    },
+  ];
 
-    const res = await DataService.applyToCampusDrive(driveId, currentUser.id);
-    if (res.success) {
-      const targetDrive = drives.find((d) => d.id === driveId);
-      setApplySuccessNotice(`Successfully applied to ${targetDrive?.company_name || "Campus Drive"}!`);
-      const updatedApps = await DataService.getDriveApplications();
-      setApplications(updatedApps);
-      setTimeout(() => setApplySuccessNotice(null), 4000);
-    }
-    setApplyingDriveId(null);
-  };
-
-  const readiness = Number(currentUser?.readiness_score) || 0;
-  const userDept = currentUser?.department || "CSE";
-
-  const appliedDriveIds = new Set(
-    applications.filter((a) => a.student_id === currentUser?.id).map((a) => a.drive_id)
-  );
-
-  const eligibleDrives = drives.filter(
-    (d) => readiness >= d.min_readiness_score && d.allowed_departments.includes(userDept)
-  );
-
-  const displayedDrives = drives.filter((d) => {
-    if (filterTab === "eligible") {
-      return readiness >= d.min_readiness_score && d.allowed_departments.includes(userDept);
-    }
-    if (filterTab === "applied") {
-      return appliedDriveIds.has(d.id);
-    }
+  const filteredDrives = drivesList.filter((d) => {
+    if (activeTab === "upcoming") return d.status === "upcoming";
+    if (activeTab === "ongoing") return d.status === "ongoing";
+    if (activeTab === "completed") return d.status === "completed";
     return true;
   });
 
+  const handleApply = (driveId: string, companyName: string) => {
+    setAppliedDrives((prev) => {
+      const next = new Set(prev);
+      next.add(driveId);
+      return next;
+    });
+    setApplyMessage(`Successfully registered for ${companyName}!`);
+    setTimeout(() => setApplyMessage(null), 3500);
+  };
+
   return (
-    <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-8 font-sans">
-      {/* Top Header */}
-      <BlurFade delay={0.05}>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/80 pb-6">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold border border-indigo-200/80">
-                Campus Placement Recruitment
-              </span>
-              <span className="text-[11px] text-slate-500 font-medium">
-                {currentUser?.college_name || "Annai Vailankanni Arts and Science College, Thanjavur"}
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mt-1">
-              Active Campus Placement Drives
-            </h1>
-            <p className="text-xs text-slate-600 font-medium mt-1">
-              Apply to visiting corporate hiring partners with 1-click verified campus readiness credentials.
-            </p>
-          </div>
-
-          <button
-            onClick={() => router.push("/student/resume")}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-xs font-semibold text-slate-800 transition-all shadow-sm hover:shadow group"
-          >
-            <Award className="w-4 h-4 text-indigo-600" />
-            <span>View Verified Placement Resume</span>
-            <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-          </button>
+    <div className="flex-1 p-8 sm:p-10 max-w-7xl mx-auto space-y-8 font-sans">
+      {/* Top Header matching Screen 05 */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+            Campus Drives
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Upcoming and ongoing recruitment drives for your college.
+          </p>
         </div>
-      </BlurFade>
 
-      {/* Success Notification */}
-      <AnimatePresence>
-        {applySuccessNotice && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs font-mono text-emerald-800 flex items-center gap-3 shadow-sm"
-          >
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-            <span className="font-bold">{applySuccessNotice}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        {/* Link to Recruitment Simulator (Screen 04) */}
+        <Link
+          href="/student/simulator"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-black transition-colors bg-white border border-slate-200 px-4 py-2 rounded-xl shadow-2xs"
+        >
+          <span>Recruitment Simulator</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
+      </div>
 
-      {/* Summary Bento Row */}
-      <BlurFade delay={0.1}>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-luxury space-y-2">
-            <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500 font-bold">
-              Total Active Drives
-            </div>
-            <div className="text-3xl font-extrabold font-mono text-slate-900 tabular-nums">
-              {drives.length}
-            </div>
-            <div className="text-[11px] font-medium text-slate-500">
-              Zoho, TCS, Cognizant, Infosys
-            </div>
-          </div>
+      {/* Filter Pills matching Screen 05 */}
+      <div className="flex flex-wrap items-center gap-2">
+        {[
+          { id: "all", label: "All Drives" },
+          { id: "upcoming", label: "Upcoming" },
+          { id: "ongoing", label: "Ongoing" },
+          { id: "completed", label: "Completed" },
+        ].map((tab) => {
+          const isSelected = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all shadow-2xs ${
+                isSelected
+                  ? "bg-[#C4F82A] text-black"
+                  : "bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:text-black"
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
 
-          <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-luxury space-y-2">
-            <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500 font-bold">
-              Eligible For Your Profile
-            </div>
-            <div className="text-3xl font-extrabold font-mono text-emerald-600 tabular-nums">
-              {eligibleDrives.length} <span className="text-sm font-normal text-slate-400">/ {drives.length}</span>
-            </div>
-            <div className="text-[11px] font-medium text-slate-500">
-              Based on {readiness}% readiness & {userDept}
-            </div>
-          </div>
+      {/* Toast Notification */}
+      {applyMessage && (
+        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+          <span>{applyMessage}</span>
+        </div>
+      )}
 
-          <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-luxury space-y-2">
-            <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500 font-bold">
-              Highest Package On Campus
-            </div>
-            <div className="text-3xl font-extrabold font-mono text-indigo-600 tabular-nums">
-              ₹11.0 LPA
-            </div>
-            <div className="text-[11px] font-medium text-slate-500">
-              Infosys Specialist Programmer
+      {/* Main Content Split (65% Drive List / 35% Hero Card) matching Screen 05 */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Drive List (approx 65% / col-span-7 or 8) */}
+        <div className="lg:col-span-8 space-y-4">
+          {filteredDrives.map((drive) => {
+            const isApplied = appliedDrives.has(drive.id);
+            return (
+              <div
+                key={drive.id}
+                className="rounded-2xl bg-white border border-slate-200/90 p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-md transition-shadow"
+              >
+                {/* Left: Brand Logo & Details */}
+                <div className="flex items-center gap-4">
+                  {/* Logo Container */}
+                  <div className="w-16 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0">
+                    <span className={`text-base ${drive.logoColor}`}>
+                      {drive.logoText}
+                    </span>
+                  </div>
+
+                  {/* Title, Role, Eligibility */}
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">
+                      {drive.name}
+                    </h3>
+                    <p className="text-xs text-slate-600 font-medium mt-0.5">
+                      {drive.role}
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-0.5 font-sans">
+                      {drive.eligibility}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Right: Date & Action CTA */}
+                <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                  <span className="text-[11px] font-mono font-medium text-slate-500 whitespace-nowrap">
+                    {drive.date}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => handleApply(drive.id, drive.name)}
+                    disabled={isApplied}
+                    className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs whitespace-nowrap ${
+                      isApplied
+                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default"
+                        : "bg-[#C4F82A] hover:bg-[#B5EA20] text-black active:scale-95"
+                    }`}
+                  >
+                    <span>{isApplied ? "Applied ✓" : `${drive.actionText} →`}</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Right Column: Hero Card "Placement Drive 2025" matching Screen 05 */}
+        <div className="lg:col-span-4">
+          <div className="relative rounded-3xl overflow-hidden bg-[#0F1412] text-white shadow-xl min-h-[380px] flex flex-col justify-end p-7 border border-[#1B241F]">
+            {/* Background Graphic with Campus/Building silhouette */}
+            <div
+              className="absolute inset-0 opacity-40 bg-cover bg-center"
+              style={{
+                backgroundImage:
+                  "url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80')",
+              }}
+            />
+            {/* Glowing Lime Wave Gradient Overlay matching Screen 05 */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0A0E0C] via-[#0F1412]/80 to-transparent" />
+            <div className="absolute -bottom-10 -left-10 w-60 h-60 bg-[#C4F82A]/20 rounded-full blur-3xl pointer-events-none" />
+
+            {/* Content matching Screen 05 */}
+            <div className="relative z-10 space-y-4">
+              <div>
+                <h2 className="text-3xl font-extrabold tracking-tight text-white leading-tight">
+                  Placement
+                  <br />
+                  <span className="text-[#C4F82A]">Drive 2025</span>
+                </h2>
+                <p className="text-xs text-slate-300 mt-2 leading-relaxed max-w-xs">
+                  Get hired by top companies on campus.
+                </p>
+              </div>
+
+              {/* Bottom Lime Green Circular Button */}
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => router.push("/student/resume")}
+                  aria-label="View placement credentials"
+                  className="w-12 h-12 rounded-full bg-[#C4F82A] hover:bg-[#B5EA20] text-black flex items-center justify-center font-bold shadow-lg transition-transform active:scale-95 group"
+                >
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </BlurFade>
-
-      {/* Filter Tabs */}
-      <BlurFade delay={0.15}>
-        <div className="flex items-center gap-2 border-b border-slate-200/80 pb-4 text-xs font-mono">
-          <button
-            onClick={() => setFilterTab("all")}
-            className={`px-4 py-2 rounded-xl transition-all ${
-              filterTab === "all"
-                ? "bg-indigo-600 text-white font-bold shadow-md shadow-indigo-100"
-                : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200/80 shadow-xs"
-            }`}
-          >
-            All Drives ({drives.length})
-          </button>
-
-          <button
-            onClick={() => setFilterTab("eligible")}
-            className={`px-4 py-2 rounded-xl transition-all ${
-              filterTab === "eligible"
-                ? "bg-indigo-600 text-white font-bold shadow-md shadow-indigo-100"
-                : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200/80 shadow-xs"
-            }`}
-          >
-            Eligible For Me ({eligibleDrives.length})
-          </button>
-
-          <button
-            onClick={() => setFilterTab("applied")}
-            className={`px-4 py-2 rounded-xl transition-all ${
-              filterTab === "applied"
-                ? "bg-indigo-600 text-white font-bold shadow-md shadow-indigo-100"
-                : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200/80 shadow-xs"
-            }`}
-          >
-            My Applications ({appliedDriveIds.size})
-          </button>
-        </div>
-      </BlurFade>
-
-      {/* Drives Grid */}
-      <BlurFade delay={0.2}>
-        {loading ? (
-          <div className="p-16 text-center text-xs font-mono text-slate-500">
-            Loading campus placement opportunities from Supabase PostgreSQL...
-          </div>
-        ) : displayedDrives.length === 0 ? (
-          <div className="p-16 text-center text-xs font-mono text-slate-500 border border-slate-200/80 rounded-3xl bg-white shadow-luxury">
-            No recruitment drives found in this category.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {displayedDrives.map((d) => {
-              const userApp = applications.find(
-                (a) => a.drive_id === d.id && a.student_id === currentUser?.id
-              );
-              return (
-                <DriveCard
-                  key={d.id}
-                  drive={d}
-                  userProfile={currentUser}
-                  hasApplied={Boolean(userApp)}
-                  applicationStage={userApp?.stage}
-                  onApply={handleApply}
-                  applying={applyingDriveId === d.id}
-                />
-              );
-            })}
-          </div>
-        )}
-      </BlurFade>
+      </div>
     </div>
   );
 }

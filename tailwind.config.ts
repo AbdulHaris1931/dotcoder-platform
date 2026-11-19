@@ -10,15 +10,33 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        canvas: "#F8FAFC",
+        canvas: "#F4F7F4",
         "canvas-pure": "#FFFFFF",
+        lime: {
+          50: "#F7FEE7",
+          100: "#ECFCCB",
+          200: "#D9F99D",
+          300: "#BEF264",
+          400: "#A3E635",
+          500: "#84CC16",
+          primary: "#C4F82A",
+          hover: "#B5EA20",
+          dark: "#141C10",
+        },
+        obsidian: {
+          950: "#0A0E0C",
+          900: "#0F1412",
+          800: "#161D19",
+          700: "#1E2722",
+          600: "#2B3630",
+        },
         surface: {
-          sidebar: "#FFFFFF",
+          sidebar: "#0F1412",
           elevated: "#FFFFFF",
-          interactive: "#F8FAFC",
-          active: "#EEF2F6",
-          border: "#E2E8F0",
-          "border-strong": "#CBD5E1",
+          interactive: "#F4F7F4",
+          active: "#E8F0E6",
+          border: "#E5EAE3",
+          "border-strong": "#CBD5CB",
         },
         brand: {
           50: "#EEF2FF",

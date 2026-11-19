@@ -3,288 +3,304 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CurriculumSidebar } from "@/components/curriculum/curriculum-sidebar";
 import { CurriculumStore } from "@/lib/curriculum-store";
 import {
   CurriculumLesson,
   CurriculumModule,
   CurriculumTopic,
   CurriculumProblem,
-  BranchTag,
 } from "@/types/curriculum";
-import { DotCoderLogo } from "@/components/shared/dotcoder-logo";
 import {
-  BookOpen,
-  Code2,
-  Sparkles,
-  ArrowRight,
   CheckCircle2,
-  Clock,
-  ShieldCheck,
-  TrendingUp,
-  Award,
-  Layers,
+  Circle,
+  ArrowRight,
   ChevronRight,
-  Play,
-  Terminal,
+  Code2,
+  BookOpen,
+  Box,
+  Layers,
+  Sparkles,
+  Lock,
 } from "lucide-react";
 
-function CurriculumContent() {
+function CurriculumPageContent() {
   const router = useRouter();
 
-  // Branch Filter State
-  const [branchFilter, setBranchFilter] = useState<BranchTag | "ALL">("ALL");
+  const [activeTab, setActiveTab] = useState<"Word Class" | "Modules" | "Topics" | "Problems">("Word Class");
+  const [selectedModuleNumber, setSelectedModuleNumber] = useState<number>(3);
 
-  // Lessons list
-  const [lessons, setLessons] = useState<CurriculumLesson[]>([]);
+  // Default modules matching Screen 01
+  const modulesList = [
+    {
+      number: 1,
+      title: "Programming Foundations",
+      completed: true,
+      topicsCount: 10,
+      solvedCount: 10,
+      description: "Syntax, loops, conditionals, complexity analysis and memory basics.",
+      slug: "programming-foundations",
+    },
+    {
+      number: 2,
+      title: "Data Structures Basics",
+      completed: true,
+      topicsCount: 10,
+      solvedCount: 10,
+      description: "Single and double pointers, static & dynamic arrays, basic strings.",
+      slug: "data-structures-basics",
+    },
+    {
+      number: 3,
+      title: "Data Structures (In-depth)",
+      completed: false,
+      active: true,
+      topicsCount: 10,
+      solvedCount: 6,
+      progress: 60,
+      description: "Master arrays, strings, linked lists, stacks, queues and more.",
+      slug: "data-structures-in-depth",
+    },
+    {
+      number: 4,
+      title: "Algorithms",
+      completed: false,
+      topicsCount: 10,
+      solvedCount: 0,
+      description: "Searching, sorting, recursion, backtracking, and divide-and-conquer.",
+      slug: "algorithms",
+    },
+    {
+      number: 5,
+      title: "Problem Solving",
+      completed: false,
+      topicsCount: 10,
+      solvedCount: 0,
+      description: "Dynamic programming, graph theory, trees, and greedy strategies.",
+      slug: "problem-solving",
+    },
+  ];
 
-  // Selection Hierarchy
-  const [activeLessonId, setActiveLessonId] = useState<string>("lesson-1");
-  const [activeModuleId, setActiveModuleId] = useState<string>("mod-1-1");
-  const [activeTopicId, setActiveTopicId] = useState<string>("topic-1-1-1");
+  const currentModule = modulesList.find((m) => m.number === selectedModuleNumber) || modulesList[2];
 
-  // Selected Topic Data
-  const [activeTopic, setActiveTopic] = useState<CurriculumTopic | null>(null);
-
-  // Active View Tab inside Topic Overview: 'concept' | 'problems'
-  const [topicTab, setTopicTab] = useState<"problems" | "concept">("problems");
-
-  // Load Lessons & Default Topic
-  useEffect(() => {
-    const list = CurriculumStore.getLessons(branchFilter);
-    setLessons(list);
-
-    const initialLesson = list[0];
-    const initialModules = initialLesson ? CurriculumStore.getModulesForLesson(initialLesson.id) : [];
-    const initialMod = initialModules[0];
-    const initialTopics = initialMod ? CurriculumStore.getTopicsForModule(initialMod.id) : [];
-    const initialTop = initialTopics[0];
-
-    if (initialLesson) setActiveLessonId(initialLesson.id);
-    if (initialMod) setActiveModuleId(initialMod.id);
-    if (initialTop) {
-      setActiveTopicId(initialTop.id);
-      setActiveTopic(initialTop);
-    }
-  }, [branchFilter]);
-
-  // When selection changes
-  const handleSelectTopic = (lessonId: string, moduleId: string, topicId: string) => {
-    setActiveLessonId(lessonId);
-    setActiveModuleId(moduleId);
-    setActiveTopicId(topicId);
-    const top = CurriculumStore.getTopicById(topicId);
-    setActiveTopic(top);
-  };
-
-  const activeLesson = lessons.find((l) => l.id === activeLessonId) || lessons[0];
-  const activeModule = (activeLesson?.modules || []).find((m) => m.id === activeModuleId) || activeLesson?.modules?.[0];
+  // Topics for the active module
+  const topicsForCurrentModule = [
+    { id: "t1", title: "Two Sum & Hash Maps", difficulty: "Easy", solved: true, problemId: "two-sum" },
+    { id: "t2", title: "Valid Parentheses (Stack)", difficulty: "Easy", solved: true, problemId: "valid-parentheses" },
+    { id: "t3", title: "Longest Subarray (Sliding Window)", difficulty: "Medium", solved: true, problemId: "longest-subarray" },
+    { id: "t4", title: "Reverse Linked List", difficulty: "Easy", solved: true, problemId: "reverse-linked-list" },
+    { id: "t5", title: "Binary Search Tree Validation", difficulty: "Medium", solved: true, problemId: "validate-bst" },
+    { id: "t6", title: "LRU Cache Design", difficulty: "Hard", solved: true, problemId: "lru-cache" },
+    { id: "t7", title: "Merge K Sorted Lists", difficulty: "Hard", solved: false, problemId: "merge-k-sorted-lists" },
+    { id: "t8", title: "Queue via Two Stacks", difficulty: "Medium", solved: false, problemId: "queue-using-stacks" },
+    { id: "t9", title: "Min Stack Implementation", difficulty: "Medium", solved: false, problemId: "min-stack" },
+    { id: "t10", title: "Sliding Window Maximum", difficulty: "Hard", solved: false, problemId: "sliding-window-max" },
+  ];
 
   return (
-    <div className="h-screen w-full bg-[#0B0F17] text-white flex flex-col font-sans overflow-hidden">
-      {/* Top Global Bar */}
-      <header className="h-14 border-b border-[#1E293B] bg-[#0E131F]/90 px-6 flex items-center justify-between flex-shrink-0 backdrop-blur-md">
-        <div className="flex items-center gap-6">
-          <DotCoderLogo theme="dark" size="sm" href="/" />
-          <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-slate-400">
-            <span>/</span>
-            <span className="text-white font-semibold">Curriculum</span>
+    <div className="min-h-full bg-[#F4F7F4] text-slate-900 p-6 sm:p-10 space-y-8 font-sans">
+      {/* Top Header matching Screen 01 */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="text-xs text-slate-500 font-medium mb-1">
+            Learn / Curriculum
           </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+            Learning Curriculum
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            A structured, placement-focused learning path.
+          </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Link
-            href="/student/dashboard"
-            className="text-xs font-mono text-slate-400 hover:text-white transition-colors"
-          >
-            ← Dashboard
-          </Link>
-          <Link
-            href={`/assessment/${activeModuleId}`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-md shadow-purple-600/30 transition-all active:scale-95"
-          >
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Assessment (90m)</span>
-          </Link>
-        </div>
-      </header>
-
-      {/* Main Workspace: Collapsible Sidebar (Left) + Topic Overview & Problems (Center/Right) */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Collapsible Curriculum Accordion Sidebar */}
-        <CurriculumSidebar
-          lessons={lessons}
-          activeLessonId={activeLessonId}
-          activeModuleId={activeModuleId}
-          activeTopicId={activeTopicId}
-          onSelectTopic={handleSelectTopic}
-          branchFilter={branchFilter}
-          onBranchFilterChange={setBranchFilter}
-        />
-
-        {/* Center / Right Main Content Area */}
-        <main className="flex-1 overflow-y-auto bg-[#0B0F17] p-6 lg:p-8 space-y-8">
-          {/* Header Banner: Lesson & Module Context */}
-          <div className="space-y-2 pb-6 border-b border-[#1E293B]">
-            <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
-              <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bold uppercase">
-                Lesson {activeLesson?.lesson_number || 1} · {activeLesson?.track_type === "shared_core" ? "Core" : "Track"}
-              </span>
-              <span className="text-slate-600">›</span>
-              <span className="text-slate-400 font-semibold">
-                Module {activeModule?.module_number || 1}: {activeModule?.title || "Foundations"}
-              </span>
-            </div>
-
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-              {activeTopic?.title || "Time & Space Big-O Analysis"}
-            </h1>
-
-            {/* View Switcher Tabs: Problems vs Concept Guide */}
-            <div className="flex items-center gap-2 pt-3">
-              <button
-                type="button"
-                onClick={() => setTopicTab("problems")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all ${
-                  topicTab === "problems"
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                    : "bg-[#141B2D] text-slate-400 hover:text-white border border-[#1E293B]"
-                }`}
-              >
-                <Code2 className="w-3.5 h-3.5" />
-                <span>Practice</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setTopicTab("concept")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all ${
-                  topicTab === "concept"
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                    : "bg-[#141B2D] text-slate-400 hover:text-white border border-[#1E293B]"
-                }`}
-              >
-                <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Concept Guide</span>
-              </button>
-            </div>
+        {/* Circular Progress Gauge (56% Complete) matching Screen 01 */}
+        <div className="flex items-center gap-3 bg-white p-3.5 px-5 rounded-2xl border border-slate-200/80 shadow-xs">
+          <div className="relative w-12 h-12 flex items-center justify-center">
+            <svg className="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
+              <path
+                className="text-slate-100"
+                strokeWidth="3.5"
+                stroke="currentColor"
+                fill="none"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+              <path
+                className="text-[#C4F82A]"
+                strokeDasharray="56, 100"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+                stroke="currentColor"
+                fill="none"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+            </svg>
+            <span className="absolute font-mono font-bold text-xs text-slate-900">
+              56%
+            </span>
           </div>
+          <div>
+            <div className="text-xs font-bold text-slate-900">56% Complete</div>
+            <div className="text-[11px] text-slate-500">28/50 Topics Solved</div>
+          </div>
+        </div>
+      </div>
 
-          {/* TAB 1: 5 Sequential Practice Problems */}
-          {topicTab === "problems" && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
-                  Problems
-                </span>
-                <span className="text-xs font-mono text-indigo-400">
-                  {activeTopic?.problems?.filter((p) => p.is_solved).length || 0}/{activeTopic?.problems?.length || 5} Done
-                </span>
-              </div>
+      {/* Pill Tabs matching Screen 01 */}
+      <div className="flex flex-wrap items-center gap-2">
+        {(["Word Class", "Modules", "Topics", "Problems"] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+              activeTab === tab
+                ? "bg-[#0F1412] text-white shadow-xs font-bold"
+                : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200/80"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
 
-              {/* 5 Problem Cards Deck */}
-              <div className="space-y-3">
-                {(activeTopic?.problems || []).map((prob) => {
-                  return (
-                    <div
-                      key={prob.id}
-                      className="p-5 rounded-2xl bg-[#0E131F]/90 border border-[#1E293B] hover:border-indigo-500/50 hover:bg-[#121929] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
-                    >
-                      {/* Left: Stage Number, Title, Difficulty, Tags */}
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-bold uppercase">
-                            Stage {prob.order_index} · {prob.practice_stage_name}
-                          </span>
-                          <span
-                            className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
-                              prob.difficulty === "Easy"
-                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                                : prob.difficulty === "Medium"
-                                ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                                : "bg-rose-500/10 text-rose-400 border-rose-500/20"
-                            }`}
-                          >
-                            {prob.difficulty}
-                          </span>
+      {/* Main Grid matching Screen 01 */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Modules List (5 Modules) */}
+        <div className="lg:col-span-6 space-y-3">
+          {modulesList.map((mod) => {
+            const isSelected = selectedModuleNumber === mod.number;
+            return (
+              <div
+                key={mod.number}
+                onClick={() => setSelectedModuleNumber(mod.number)}
+                className={`p-4 rounded-2xl cursor-pointer transition-all border ${
+                  isSelected
+                    ? "bg-white border-[#C4F82A] ring-2 ring-[#C4F82A]/30 shadow-sm"
+                    : "bg-white border-slate-200/80 hover:border-slate-300"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="text-slate-400">
+                      {mod.completed ? (
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500 fill-emerald-100" />
+                      ) : isSelected ? (
+                        <div className="w-5 h-5 rounded-full border-2 border-[#C4F82A] flex items-center justify-center">
+                          <div className="w-2 h-2 rounded-full bg-[#0F1412]" />
                         </div>
-
-                        <h3 className="text-base font-bold text-white group-hover:text-indigo-300 transition-colors">
-                          {prob.title}
-                        </h3>
-
-                        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                          {prob.company_tags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#182035] text-slate-300 border border-[#273352]"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
+                      ) : (
+                        <Circle className="w-5 h-5 text-slate-300" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-mono text-slate-400 font-medium">
+                        Module {mod.number}
                       </div>
-
-                      {/* Right: Solved Checkmark & Solve in IDE Button */}
-                      <div className="flex items-center gap-3 shrink-0">
-                        {prob.is_solved ? (
-                          <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-mono font-bold">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Solved</span>
-                          </div>
-                        ) : null}
-
-                        <button
-                          type="button"
-                          onClick={() => router.push(`/practice/${prob.slug || prob.id}`)}
-                          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all shadow-md active:scale-95 group-hover:shadow-indigo-500/25"
-                        >
-                          <span>Solve</span>
-                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                        </button>
+                      <div className="text-sm font-bold text-slate-900">
+                        {mod.title}
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+
+                  <div className="text-xs text-slate-400 font-mono">
+                    {mod.completed ? "10/10" : mod.number === 3 ? "6/10" : "0/10"}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Right Column: Featured Dark Card matching Screen 01 */}
+        <div className="lg:col-span-6">
+          <div className="bg-[#0F1412] text-white p-7 sm:p-8 rounded-3xl border border-[#1B241F] shadow-lg relative overflow-hidden space-y-6">
+            {/* Top row with 3D Cube Icon */}
+            <div className="flex items-start justify-between">
+              <div>
+                <span className="inline-block px-3 py-1 rounded-full bg-[#1A231C] text-[#C4F82A] text-xs font-mono font-bold border border-[#2B3B2E]">
+                  Module {currentModule.number}
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mt-3">
+                  {currentModule.title}
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-400 mt-2 max-w-sm">
+                  {currentModule.description}
+                </p>
+              </div>
+
+              {/* 3D Isometric Lime Green Cube graphic */}
+              <div className="w-20 h-20 rounded-2xl bg-[#162016] border border-[#2B3B2E] flex items-center justify-center text-[#C4F82A] shadow-inner shrink-0">
+                <Box className="w-10 h-10 stroke-[1.5]" />
               </div>
             </div>
-          )}
 
-          {/* TAB 2: 3-Minute Quick Study Guide & Big-O Cheat Sheet */}
-          {topicTab === "concept" && (
-            <div className="p-6 rounded-2xl bg-[#0E131F]/90 border border-[#1E293B] space-y-6">
-              <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono">
-                <Sparkles className="w-4 h-4" />
-                <span className="font-bold">CONCEPT GUIDE & TARGETS</span>
+            {/* Progress Info */}
+            <div className="space-y-2 pt-2 border-t border-[#1C271E]">
+              <div className="flex items-center justify-between text-xs font-mono">
+                <span className="text-[#C4F82A] font-bold">
+                  {currentModule.number === 3 ? "60% Complete" : currentModule.completed ? "100% Complete" : "0% Complete"}
+                </span>
+                <span className="text-slate-400">
+                  {currentModule.number === 3 ? "6/10 Topics" : currentModule.completed ? "10/10 Topics" : "0/10 Topics"}
+                </span>
               </div>
-
-              <div className="prose prose-invert prose-sm max-w-none text-slate-300 whitespace-pre-line text-xs font-sans leading-relaxed">
-                {activeTopic?.concept_markdown || "Review the algorithmic invariants and complexity targets."}
+              <div className="w-full h-2 bg-[#1C271E] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#C4F82A] rounded-full transition-all duration-500"
+                  style={{
+                    width: currentModule.number === 3 ? "60%" : currentModule.completed ? "100%" : "0%",
+                  }}
+                />
               </div>
             </div>
-          )}
 
-          {/* Bottom Module Assessment Banner */}
-          <div className="p-6 rounded-2xl bg-gradient-to-r from-purple-950/40 via-indigo-950/40 to-[#0E131F] border border-purple-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-purple-400" />
-                <span className="font-bold text-sm text-white">Module Assessment</span>
-              </div>
-              <p className="text-xs text-slate-400">
-                90 mins · 10 MCQs · 5 Code · 80% pass
-              </p>
-            </div>
-
-            <Link
-              href={`/assessment/${activeModuleId}`}
-              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs shadow-lg shadow-purple-600/30 transition-all shrink-0 active:scale-95"
+            {/* Lime CTA Button */}
+            <button
+              onClick={() => router.push("/practice/two-sum")}
+              className="w-full py-3.5 px-4 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold text-xs sm:text-sm transition-all shadow-sm flex items-center justify-center gap-2 active:scale-[0.99]"
             >
-              <span>Start Assessment</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+              <span>Continue Learning</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
           </div>
-        </main>
+
+          {/* Quick Problem List below the featured card */}
+          <div className="mt-6 bg-white rounded-2xl border border-slate-200/80 p-5 space-y-3">
+            <div className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono">
+              Module {currentModule.number} Problem Pool (10)
+            </div>
+            <div className="divide-y divide-slate-100">
+              {topicsForCurrentModule.slice(0, 5).map((t, idx) => (
+                <div
+                  key={t.id}
+                  onClick={() => router.push(`/practice/${t.problemId}`)}
+                  className="py-2.5 flex items-center justify-between hover:bg-slate-50 px-2 rounded-lg cursor-pointer transition-colors"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xs font-mono text-slate-400">0{idx + 1}</span>
+                    <span className="text-xs font-semibold text-slate-800">{t.title}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold ${
+                        t.difficulty === "Easy"
+                          ? "bg-emerald-50 text-emerald-700"
+                          : t.difficulty === "Medium"
+                          ? "bg-amber-50 text-amber-700"
+                          : "bg-rose-50 text-rose-700"
+                      }`}
+                    >
+                      {t.difficulty}
+                    </span>
+                    {t.solved ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    ) : (
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -292,17 +308,8 @@ function CurriculumContent() {
 
 export default function CurriculumPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="h-screen w-full bg-[#0B0F17] text-white flex items-center justify-center font-mono text-xs">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-            <span>Loading Curriculum Engine...</span>
-          </div>
-        </div>
-      }
-    >
-      <CurriculumContent />
+    <Suspense fallback={<div className="p-8 text-xs text-slate-500">Loading Curriculum Explorer...</div>}>
+      <CurriculumPageContent />
     </Suspense>
   );
 }

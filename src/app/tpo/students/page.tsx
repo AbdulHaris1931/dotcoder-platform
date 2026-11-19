@@ -1,459 +1,419 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { DemoStore, subscribeToDemoStore } from "@/lib/demo-store";
-import { UserProfile } from "@/types";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
-  UploadCloud,
-  FileSpreadsheet,
-  CheckCircle2,
-  AlertTriangle,
-  XCircle,
   Users,
   Search,
-  Filter,
-  Download,
-  Trash2,
-  ArrowRight,
-  Sparkles,
+  Plus,
+  Eye,
+  Edit2,
+  MoreVertical,
+  ChevronLeft,
+  ChevronRight,
+  TrendingUp,
+  Target,
+  GraduationCap,
+  X,
+  UploadCloud,
+  CheckCircle2,
 } from "lucide-react";
 
-interface ParsedStudentRow {
-  full_name: string;
-  roll_no: string;
+interface StudentRecord {
+  rollNo: string;
+  name: string;
   department: string;
-  email: string;
-  batch_year: number;
-  isValid: boolean;
-  errors: string[];
+  progress: number;
+  readiness: number;
 }
 
-export default function BulkStudentOnboardingPage() {
-  const [students, setStudents] = useState<UserProfile[]>([]);
-  const [parsedRows, setParsedRows] = useState<ParsedStudentRow[]>([]);
-  const [dragActive, setDragActive] = useState(false);
+const INITIAL_STUDENTS: StudentRecord[] = [
+  {
+    rollNo: "23BCA001",
+    name: "Karthik S.",
+    department: "BCA",
+    progress: 78,
+    readiness: 78,
+  },
+  {
+    rollNo: "23BCS014",
+    name: "Priya Dharshini M.",
+    department: "B.Sc CS",
+    progress: 72,
+    readiness: 72,
+  },
+  {
+    rollNo: "23BIT008",
+    name: "Saravanan V.",
+    department: "B.Sc IT",
+    progress: 76,
+    readiness: 76,
+  },
+  {
+    rollNo: "24MCA005",
+    name: "Divya Bharathi K.",
+    department: "MCA",
+    progress: 88,
+    readiness: 88,
+  },
+];
+
+export default function StudentManagementPage() {
+  const router = useRouter();
+  const [students, setStudents] = useState<StudentRecord[]>(INITIAL_STUDENTS);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDept, setSelectedDept] = useState("ALL");
-  const [importStatus, setImportStatus] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [departmentFilter, setDepartmentFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<StudentRecord | null>(null);
 
-  useEffect(() => {
-    setStudents(DemoStore.getStudents());
-    const unsub = subscribeToDemoStore(() => {
-      setStudents(DemoStore.getStudents());
-    });
-    return unsub;
-  }, []);
-
-  const validateEmail = (email: string): boolean => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-
-  const parseCsvText = (text: string) => {
-    const lines = text
-      .split(/\r?\n/)
-      .map((l) => l.trim())
-      .filter((l) => l.length > 0);
-
-    if (lines.length < 2) {
-      setImportStatus("Error: CSV must contain a header and at least one data row.");
-      return;
-    }
-
-    const header = lines[0].toLowerCase().split(",").map((h) => h.trim().replace(/^"|"$/g, ""));
-    const requiredCols = ["full_name", "roll_no", "department", "email", "batch_year"];
-    const missing = requiredCols.filter((col) => !header.includes(col));
-
-    if (missing.length > 0) {
-      setImportStatus(`Error: Missing required column headers: ${missing.join(", ")}`);
-      return;
-    }
-
-    const colIdx = {
-      full_name: header.indexOf("full_name"),
-      roll_no: header.indexOf("roll_no"),
-      department: header.indexOf("department"),
-      email: header.indexOf("email"),
-      batch_year: header.indexOf("batch_year"),
-    };
-
-    const existingRolls = new Set(students.map((s) => (s.roll_no || "").toUpperCase()));
-    const seenRollsInFile = new Set<string>();
-
-    const rows: ParsedStudentRow[] = [];
-
-    for (let i = 1; i < lines.length; i++) {
-      const parts = lines[i].split(",").map((p) => p.trim().replace(/^"|"$/g, ""));
-      if (parts.length < 5) continue;
-
-      const full_name = parts[colIdx.full_name] || "";
-      const roll_no = parts[colIdx.roll_no] || "";
-      const department = parts[colIdx.department] || "";
-      const email = parts[colIdx.email] || "";
-      const batch_year = parseInt(parts[colIdx.batch_year], 10) || 2026;
-
-      const errors: string[] = [];
-
-      if (!full_name) errors.push("Missing name");
-      if (!roll_no) errors.push("Missing roll number");
-      else if (existingRolls.has(roll_no.toUpperCase())) {
-        errors.push(`Duplicate roll no (already in campus db)`);
-      } else if (seenRollsInFile.has(roll_no.toUpperCase())) {
-        errors.push(`Duplicate roll no (repeated in file)`);
-      } else {
-        seenRollsInFile.add(roll_no.toUpperCase());
-      }
-
-      if (!email || !validateEmail(email)) {
-        errors.push(`Invalid email format`);
-      }
-
-      if (!department) errors.push("Missing department");
-
-      rows.push({
-        full_name,
-        roll_no,
-        department,
-        email,
-        batch_year,
-        isValid: errors.length === 0,
-        errors,
-      });
-    }
-
-    setParsedRows(rows);
-    setImportStatus(null);
-  };
-
-  const handleFile = (file: File) => {
-    if (!file.name.endsWith(".csv") && file.type !== "text/csv") {
-      setImportStatus("Please upload a valid .csv file.");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target?.result as string;
-      if (content) parseCsvText(content);
-    };
-    reader.readAsText(file);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleUploadValid = () => {
-    const valid = parsedRows.filter((r) => r.isValid);
-    if (valid.length === 0) return;
-
-    const res = DemoStore.addStudents(valid);
-    setImportStatus(`Success! Successfully enrolled ${res.added} candidate(s) into Annai Vailankanni Arts and Science College.`);
-    setParsedRows([]);
-  };
-
-  const handleLoadSampleCsv = () => {
-    const sample = `full_name,roll_no,department,email,batch_year
-Sanjay Venkat,23BCA088,BCA,sanjay.bca@avc.edu.in,2026
-Meena Krishnan,23CS044,B.Sc CS,meena.cs@avc.edu.in,2026
-Harish Sundar,23IT055,B.Sc IT,harish.it@avc.edu.in,2026
-Invalid Student,23BCA01,BCA,bad-email-format,2026
-Duplicate Batch,23IT055,B.Sc IT,dup@avc.edu.in,2026`;
-    parseCsvText(sample);
-  };
+  // New Student Form State
+  const [newRollNo, setNewRollNo] = useState("");
+  const [newName, setNewName] = useState("");
+  const [newDept, setNewDept] = useState("BCA");
 
   const filteredStudents = students.filter((s) => {
     const matchesSearch =
-      s.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (s.roll_no || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (s.email && s.email.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesDept = selectedDept === "ALL" || s.department === selectedDept;
+      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.rollNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.department.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesDept = departmentFilter === "All" || s.department === departmentFilter;
     return matchesSearch && matchesDept;
   });
 
-  const validRowCount = parsedRows.filter((r) => r.isValid).length;
-  const invalidRowCount = parsedRows.filter((r) => !r.isValid).length;
+  const handleAddStudent = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRollNo || !newName) return;
+    const added: StudentRecord = {
+      rollNo: newRollNo,
+      name: newName,
+      department: newDept,
+      progress: 60,
+      readiness: 65,
+    };
+    setStudents((prev) => [added, ...prev]);
+    setShowAddModal(false);
+    setNewRollNo("");
+    setNewName("");
+  };
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-8 font-sans text-slate-900">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/90 pb-6">
+    <div className="flex-1 p-8 sm:p-10 max-w-7xl mx-auto space-y-7 font-sans">
+      {/* Top Header matching Screen 07 */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold">
-              Placement Cell • Roster Manager
-            </span>
-            <span className="text-[11px] text-slate-500 font-mono">
-              Annai Vailankanni Arts and Science College, Thanjavur (AVASC-TNJ)
-            </span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mt-1">
-            Bulk Student Onboarding & CSV Validator
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+            Student Management
           </h1>
-          <p className="text-xs text-slate-500 font-sans mt-0.5">
-            Import engineering candidate batches via CSV with client-side schema validation and duplicate checks.
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Manage, monitor and track all student records.
           </p>
         </div>
 
+        {/* Lime Green Add Student Button matching Screen 07 */}
         <button
-          onClick={handleLoadSampleCsv}
-          className="px-4 py-2 text-xs font-semibold text-indigo-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-all flex items-center gap-2 shadow-sm hover:border-slate-300 active:scale-[0.98]"
+          type="button"
+          onClick={() => setShowAddModal(true)}
+          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold text-xs transition-all shadow-xs active:scale-[0.98]"
         >
-          <FileSpreadsheet className="w-4 h-4 text-indigo-600" />
-          <span>Load Test CSV with Validation Errors</span>
+          <Plus className="w-4 h-4 text-black stroke-[3]" />
+          <span>Add Student</span>
         </button>
       </div>
 
-      {/* Drag & Drop Area & Live Validation Inspector */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Upload Zone */}
-        <div className="lg:col-span-1 space-y-4">
-          <div
-            onDragEnter={(e) => { e.preventDefault(); setDragActive(true); }}
-            onDragLeave={(e) => { e.preventDefault(); setDragActive(false); }}
-            onDragOver={(e) => { e.preventDefault(); }}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-3xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[240px] shadow-sm ${
-              dragActive
-                ? "border-indigo-500 bg-indigo-50 scale-[1.01]"
-                : "border-slate-300 hover:border-slate-400 bg-slate-50/60 hover:bg-slate-50"
-            }`}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv"
-              className="hidden"
-              onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-            />
-            <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3 border border-indigo-200 shadow-sm">
-              <UploadCloud className="w-6 h-6" />
-            </div>
-            <div className="font-bold text-slate-900 text-sm">
-              Click to browse or drop CSV
-            </div>
-            <p className="text-[11px] text-slate-500 font-mono mt-1">
-              Required: <code className="text-indigo-600 font-bold">full_name, roll_no, department, email, batch_year</code>
-            </p>
+      {/* 3 KPI Cards matching Screen 07 */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        {/* Total Students */}
+        <div className="rounded-2xl bg-white border border-slate-200/90 p-5 shadow-xs flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-[#C4F82A]/20 flex items-center justify-center flex-shrink-0 text-[#2D5A12]">
+            <Users className="w-6 h-6 text-[#2D5A12]" />
           </div>
-
-          {importStatus && (
-            <div
-              className={`p-3.5 rounded-2xl text-xs font-mono flex items-center gap-2.5 shadow-sm ${
-                importStatus.startsWith("Success")
-                  ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                  : "bg-rose-50 text-rose-800 border border-rose-200"
-              }`}
-            >
-              {importStatus.startsWith("Success") ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-              ) : (
-                <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0" />
-              )}
-              <span>{importStatus}</span>
+          <div>
+            <div className="text-2xl font-extrabold text-slate-900 font-mono tracking-tight">
+              1,248
             </div>
-          )}
+            <div className="text-xs text-slate-500 font-medium">
+              Total Students
+            </div>
+          </div>
         </div>
 
-        {/* Validation Inspector Table */}
-        <div className="lg:col-span-2 card-luxury rounded-2xl p-6 space-y-4 shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">
-                Live CSV Inspector & Validation Previews
-              </h3>
-              <p className="text-xs text-slate-500 font-sans mt-0.5">
-                Verify invalid entries before writing to institutional profiles.
-              </p>
-            </div>
-
-            {parsedRows.length > 0 && (
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  {validRowCount} Valid
-                </span>
-                {invalidRowCount > 0 && (
-                  <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
-                    {invalidRowCount} Errors
-                  </span>
-                )}
-                <button
-                  onClick={handleUploadValid}
-                  disabled={validRowCount === 0}
-                  className="ml-2 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-500/20 transition-all active:scale-[0.98]"
-                >
-                  Commit {validRowCount} Valid Rows
-                </button>
-              </div>
-            )}
+        {/* Active Learners */}
+        <div className="rounded-2xl bg-white border border-slate-200/90 p-5 shadow-xs flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0 text-blue-600">
+            <GraduationCap className="w-6 h-6 text-blue-600" />
           </div>
+          <div>
+            <div className="text-2xl font-extrabold text-slate-900 font-mono tracking-tight">
+              982
+            </div>
+            <div className="text-xs text-slate-500 font-medium">
+              Active Learners
+            </div>
+          </div>
+        </div>
 
-          {parsedRows.length === 0 ? (
-            <div className="py-12 text-center text-slate-400 text-xs font-mono">
-              <FileSpreadsheet className="w-8 h-8 mx-auto mb-2 opacity-30 text-indigo-600" />
-              No CSV staged. Drag a file or click <strong>Load Test CSV with Validation Errors</strong> above.
+        {/* Placement Ready */}
+        <div className="rounded-2xl bg-white border border-slate-200/90 p-5 shadow-xs flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0 text-emerald-600">
+            <Target className="w-6 h-6 text-emerald-600" />
+          </div>
+          <div>
+            <div className="text-2xl font-extrabold text-slate-900 font-mono tracking-tight">
+              817
             </div>
-          ) : (
-            <div className="overflow-x-auto max-h-[280px]">
-              <table className="w-full text-xs text-left">
-                <thead className="text-[10px] font-mono uppercase text-slate-500 border-b border-slate-200 sticky top-0 bg-white">
-                  <tr>
-                    <th className="p-2.5">Status</th>
-                    <th className="p-2.5">Roll No</th>
-                    <th className="p-2.5">Name</th>
-                    <th className="p-2.5">Dept</th>
-                    <th className="p-2.5">Email</th>
-                    <th className="p-2.5">Validation Output</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {parsedRows.map((row, idx) => (
-                    <tr
-                      key={idx}
-                      className={
-                        row.isValid
-                          ? "hover:bg-slate-50/80"
-                          : "bg-rose-50/70 text-rose-900 border-l-4 border-rose-500"
-                      }
-                    >
-                      <td className="p-2.5">
-                        {row.isValid ? (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                        ) : (
-                          <XCircle className="w-4 h-4 text-rose-600" />
-                        )}
-                      </td>
-                      <td className="p-2.5 font-mono font-bold text-slate-900">{row.roll_no}</td>
-                      <td className="p-2.5 font-semibold text-slate-800">{row.full_name}</td>
-                      <td className="p-2.5 font-mono text-slate-600">{row.department}</td>
-                      <td className="p-2.5 font-mono text-slate-600">{row.email}</td>
-                      <td className="p-2.5 font-mono">
-                        {row.isValid ? (
-                          <span className="text-emerald-700 font-semibold">Ready for database</span>
-                        ) : (
-                          <span className="text-rose-700 font-bold">
-                            {row.errors.join(", ")}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="text-xs text-slate-500 font-medium">
+              Placement Ready
             </div>
-          )}
+          </div>
         </div>
       </div>
 
-      {/* Currently Enrolled Students Roster */}
-      <div className="card-luxury rounded-2xl p-6 space-y-4 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-          <div>
-            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Users className="w-4 h-4 text-indigo-600" />
-              Active Enrolled Candidates ({students.length})
-            </h2>
-            <p className="text-xs text-slate-500 font-sans mt-0.5">
-              Annai Vailankanni Arts and Science College, Thanjavur • 2026 Placement Batch
-            </p>
+      {/* Filter and Search Bar matching Screen 07 */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* Search Input */}
+        <div className="relative flex-1 max-w-md">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name, roll no, or department..."
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#C4F82A] shadow-2xs"
+          />
+        </div>
+
+        {/* Dropdowns */}
+        <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-1.5 bg-white border border-slate-200 px-3 py-2 rounded-xl text-slate-700 shadow-2xs">
+            <span className="text-slate-400">Department:</span>
+            <select
+              value={departmentFilter}
+              onChange={(e) => setDepartmentFilter(e.target.value)}
+              className="bg-transparent font-semibold text-slate-800 focus:outline-none cursor-pointer"
+            >
+              <option value="All">All</option>
+              <option value="BCA">BCA</option>
+              <option value="B.Sc CS">B.Sc CS</option>
+              <option value="B.Sc IT">B.Sc IT</option>
+              <option value="MCA">MCA</option>
+            </select>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Search candidate or roll..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 w-48 sm:w-56 shadow-sm"
-              />
-            </div>
-
+          <div className="flex items-center gap-1.5 bg-white border border-slate-200 px-3 py-2 rounded-xl text-slate-700 shadow-2xs">
+            <span className="text-slate-400">Status:</span>
             <select
-              value={selectedDept}
-              onChange={(e) => setSelectedDept(e.target.value)}
-              className="py-1.5 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono shadow-sm"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-transparent font-semibold text-slate-800 focus:outline-none cursor-pointer"
             >
-              <option value="ALL">All Departments</option>
-              {Array.from(new Set(students.map((s) => s.department).filter(Boolean))).map((dept) => (
-                <option key={dept} value={dept}>
-                  {dept}
-                </option>
-              ))}
+              <option value="All">All</option>
+              <option value="Ready">Ready</option>
+              <option value="In Progress">In Progress</option>
             </select>
           </div>
         </div>
+      </div>
 
+      {/* Student Records Table matching Screen 07 */}
+      <div className="rounded-2xl bg-white border border-slate-200/90 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
-            <thead className="text-[11px] font-mono uppercase text-slate-500 bg-slate-50/80 border-b border-slate-200">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[11px] uppercase tracking-wider">
               <tr>
-                <th className="py-3 px-3">Roll No</th>
-                <th className="py-3 px-3">Candidate Name</th>
-                <th className="py-3 px-3">Department</th>
-                <th className="py-3 px-3">Batch</th>
-                <th className="py-3 px-3">Campus Email</th>
-                <th className="py-3 px-3">Readiness</th>
-                <th className="py-3 px-3">Tier</th>
+                <th className="p-4 w-10">
+                  <input type="checkbox" className="rounded border-slate-300 cursor-pointer" />
+                </th>
+                <th className="p-4">Roll No.</th>
+                <th className="p-4">Name</th>
+                <th className="p-4">Department</th>
+                <th className="p-4">Progress</th>
+                <th className="p-4">Readiness</th>
+                <th className="p-4 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredStudents.map((s) => (
-                <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-3.5 px-3 font-mono font-bold text-slate-900">{s.roll_no}</td>
-                  <td className="py-3.5 px-3 font-semibold text-slate-900">{s.full_name}</td>
-                  <td className="py-3.5 px-3">
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
-                      {s.department}
-                    </span>
+            <tbody className="divide-y divide-slate-100 text-slate-800">
+              {filteredStudents.map((student) => (
+                <tr key={student.rollNo} className="hover:bg-slate-50/70 transition-colors">
+                  <td className="p-4">
+                    <input type="checkbox" className="rounded border-slate-300 cursor-pointer" />
                   </td>
-                  <td className="py-3.5 px-3 font-mono text-slate-600">{s.batch_year}</td>
-                  <td className="py-3.5 px-3 font-mono text-slate-600">{s.email || "-"}</td>
-                  <td className="py-3.5 px-3">
-                    <div className="flex items-center gap-2 font-mono">
-                      <div className="w-16 bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
-                        <div
-                          className={`h-full rounded-full ${
-                            s.readiness_score >= 75
-                              ? "bg-emerald-500"
-                              : s.readiness_score >= 60
-                              ? "bg-amber-500"
-                              : "bg-rose-500"
-                          }`}
-                          style={{ width: `${s.readiness_score}%` }}
-                        />
-                      </div>
-                      <span className="text-slate-900 tabular-nums font-bold">{s.readiness_score}%</span>
+                  <td className="p-4 font-mono font-bold text-slate-900">
+                    {student.rollNo}
+                  </td>
+                  <td className="p-4 font-semibold text-slate-900">
+                    {student.name}
+                  </td>
+                  <td className="p-4 font-medium text-slate-600">
+                    {student.department}
+                  </td>
+                  <td className="p-4 w-44">
+                    <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                      <div
+                        className="bg-[#C4F82A] h-2 rounded-full"
+                        style={{ width: `${student.progress}%` }}
+                      />
                     </div>
                   </td>
-                  <td className="py-3.5 px-3">
-                    <span
-                      className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border shadow-sm ${
-                        s.readiness_score >= 75
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                          : s.readiness_score >= 60
-                          ? "bg-amber-50 text-amber-700 border-amber-200"
-                          : "bg-rose-50 text-rose-700 border-rose-200"
-                      }`}
-                    >
-                      {s.readiness_score >= 75
-                        ? "Ready"
-                        : s.readiness_score >= 60
-                        ? "Needs Practice"
-                        : "At-Risk"}
+                  <td className="p-4 font-mono font-bold text-emerald-700">
+                    <span className="inline-block px-2.5 py-0.5 rounded-md bg-[#C4F82A]/20 text-[#2D5A12] border border-[#C4F82A]/40 font-bold">
+                      {student.readiness}%
                     </span>
+                  </td>
+                  <td className="p-4 text-center">
+                    <div className="inline-flex items-center gap-2 text-slate-400">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedStudent(student)}
+                        title="View profile"
+                        className="p-1 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        title="Edit student"
+                        className="p-1 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        title="More options"
+                        className="p-1 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+                      >
+                        <MoreVertical className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+
+        {/* Table Pagination Footer matching Screen 07 */}
+        <div className="p-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500 font-sans">
+          <span>
+            Showing 1–{filteredStudents.length} of 1,248
+          </span>
+
+          {/* Numbered Pill Pagination */}
+          <div className="flex items-center gap-1.5 font-mono text-xs">
+            <button
+              type="button"
+              className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50"
+            >
+              &lt;
+            </button>
+            <button
+              type="button"
+              className="w-7 h-7 rounded-lg bg-[#C4F82A] text-black font-bold flex items-center justify-center shadow-2xs"
+            >
+              1
+            </button>
+            <button
+              type="button"
+              className="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-600 flex items-center justify-center"
+            >
+              2
+            </button>
+            <button
+              type="button"
+              className="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-600 flex items-center justify-center"
+            >
+              3
+            </button>
+            <span className="px-1 text-slate-400">...</span>
+            <button
+              type="button"
+              className="w-8 h-7 rounded-lg hover:bg-slate-100 text-slate-600 flex items-center justify-center"
+            >
+              312
+            </button>
+            <button
+              type="button"
+              className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50"
+            >
+              &gt;
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* Add Student Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-200 space-y-5 animate-in fade-in">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-bold text-slate-900">Add New Student</h3>
+              <button
+                type="button"
+                onClick={() => setShowAddModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddStudent} className="space-y-4 text-xs font-sans">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Roll Number</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 23BCA025"
+                  value={newRollNo}
+                  onChange={(e) => setNewRollNo(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-[#C4F82A]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Full Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Ananya R."
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#C4F82A]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Department</label>
+                <select
+                  value={newDept}
+                  onChange={(e) => setNewDept(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#C4F82A]"
+                >
+                  <option value="BCA">BCA</option>
+                  <option value="B.Sc CS">B.Sc CS</option>
+                  <option value="B.Sc IT">B.Sc IT</option>
+                  <option value="MCA">MCA</option>
+                </select>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold shadow-xs"
+                >
+                  Save Student
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

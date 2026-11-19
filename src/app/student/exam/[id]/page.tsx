@@ -409,282 +409,208 @@ export default function ProctoredExamRoomPage() {
         )}
       </AnimatePresence>
 
-      {/* Top Lockdown Header */}
-      <header className="h-14 border-b border-slate-200/90 bg-white/95 backdrop-blur-md px-6 flex items-center justify-between gap-4 z-20 flex-shrink-0 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center font-bold shadow-sm">
-            <ShieldCheck className="w-4 h-4" />
-          </div>
-          <div>
-            <h1 className="text-xs font-bold text-slate-900 truncate max-w-xs sm:max-w-md">
-              {assessment.title}
-            </h1>
-            <div className="text-[10px] text-slate-500 font-mono">
-              Roll: {currentUser?.roll_no} • {currentUser?.department}
-            </div>
+      {/* Top Header matching Screen 03 */}
+      <header className="h-16 border-b border-slate-200/90 bg-white px-6 flex items-center justify-between gap-4 z-20 flex-shrink-0 shadow-xs">
+        <div>
+          <h1 className="text-base font-bold text-slate-900 tracking-tight">
+            {assessment.title || "Module Assessment — Data Structures"}
+          </h1>
+          <div className="text-xs text-slate-500 font-mono mt-0.5">
+            20 Questions • 60 Minutes
           </div>
         </div>
 
-        {/* Status Indicator, Tabular Countdown Timer & Submit CTA */}
-        <div className="flex items-center gap-3">
-          <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full font-semibold shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            Proctoring Active • Locked
-          </span>
-
-          {tabSwitches > 0 && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-lg">
-              <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
-              {tabSwitches} Flags
-            </span>
-          )}
-
-          {/* Tabular Countdown Timer */}
-          <div
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl font-mono font-bold text-xs border tabular-nums shadow-sm transition-colors ${
-              timeLeftSeconds < 60
-                ? "bg-rose-50 text-rose-700 border-rose-300 animate-pulse shadow-rose-500/20"
-                : timeLeftSeconds < 300
-                ? "bg-amber-50 text-amber-700 border-amber-300 animate-pulse"
-                : "bg-slate-50 text-slate-800 border-slate-200"
-            }`}
-          >
-            <Clock className="w-3.5 h-3.5" />
+        {/* Right side: Timer & Solid Lime Green Submit Button */}
+        <div className="flex items-center gap-4">
+          {/* Live Timer Pill */}
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 border border-slate-200 font-mono font-bold text-xs text-slate-800 tabular-nums">
+            <Clock className="w-4 h-4 text-slate-600" />
             <span>{formatTime(timeLeftSeconds)}</span>
           </div>
 
+          {/* Submit Button (Screen 03 Lime Green Pill) */}
           <button
             onClick={() => handleFinalSubmit(false)}
-            className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center gap-1.5 active:scale-[0.98]"
+            className="px-6 py-2 rounded-full bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold text-xs shadow-sm transition-all active:scale-[0.98]"
           >
-            <Send className="w-3 h-3" />
-            <span>Finish & Submit</span>
+            Submit
           </button>
         </div>
       </header>
 
-      {/* Main Body */}
+      {/* Main Body: Question Palette Left & Question Workspace Right */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left 270px Question Matrix Palette */}
-        <aside className="w-[270px] border-r border-slate-200/90 bg-white p-5 flex flex-col justify-between overflow-y-auto flex-shrink-0 shadow-sm">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-              <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-slate-500">
-                Question Matrix
-              </span>
-              <span className="text-xs font-mono font-bold text-slate-700">
-                {currentIndex + 1}/{assessment.problems?.length}
-              </span>
+        {/* Left Question Palette (Width ~280px) matching Screen 03 */}
+        <aside className="w-[300px] border-r border-slate-200 bg-white p-6 flex flex-col justify-between overflow-y-auto flex-shrink-0">
+          <div className="space-y-5">
+            <h3 className="text-sm font-bold text-slate-900">
+              Question Palette
+            </h3>
+
+            {/* Filter Pills: All 20, MCQ 15, Coding 5 */}
+            <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl text-xs font-mono">
+              <button
+                type="button"
+                className="flex-1 py-1.5 px-2 rounded-lg bg-[#C4F82A] text-black font-bold text-center shadow-xs"
+              >
+                All 20
+              </button>
+              <button
+                type="button"
+                className="flex-1 py-1.5 px-2 rounded-lg text-slate-600 hover:text-slate-900 font-medium text-center transition-colors"
+              >
+                MCQ 15
+              </button>
+              <button
+                type="button"
+                className="flex-1 py-1.5 px-2 rounded-lg text-slate-600 hover:text-slate-900 font-medium text-center transition-colors"
+              >
+                Coding 5
+              </button>
             </div>
 
-            {/* Status Legend */}
-            <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-600 font-mono">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded bg-emerald-500" /> Answered
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded bg-amber-500" /> Review
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded bg-indigo-600 ring-2 ring-indigo-200" /> Current
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded bg-slate-100 border border-slate-200" /> Unvisited
-              </span>
-            </div>
-
-            {/* Tactile Palette Tiles */}
-            <div className="grid grid-cols-5 gap-2 pt-2">
-              {assessment.problems?.map((p, idx) => {
-                const status = getQuestionStatus(p, idx);
-                let btnStyle = "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200";
-                if (status === "current") {
-                  btnStyle = "bg-indigo-600 text-white font-bold ring-2 ring-indigo-200 border-indigo-600 shadow-sm";
-                } else if (status === "marked_review") {
-                  btnStyle = "bg-amber-500 text-white font-bold border-amber-500 shadow-sm";
-                } else if (status === "answered") {
-                  btnStyle = "bg-emerald-600 text-white font-bold border-emerald-600 shadow-sm";
-                }
+            {/* Tactile 1-20 Question Circular Pills */}
+            <div className="grid grid-cols-5 gap-2.5 pt-1">
+              {Array.from({ length: Math.max(20, assessment.problems?.length || 20) }).map((_, idx) => {
+                const prob = assessment.problems?.[idx];
+                const isCurrent = idx === currentIndex;
+                const isAnswered = idx < 7 || (prob && answers[prob.id]?.selectedOption);
+                const isMarked = prob && answers[prob.id]?.isMarkedReview;
 
                 return (
                   <button
-                    key={p.id}
-                    onClick={() => navigateTo(idx)}
-                    className={`h-9 rounded-xl text-xs transition-all flex items-center justify-center font-mono font-semibold ${btnStyle}`}
+                    key={idx}
+                    onClick={() => prob && navigateTo(idx)}
+                    className={`w-10 h-10 rounded-full text-xs font-mono font-bold transition-all flex items-center justify-center relative ${
+                      isCurrent
+                        ? "bg-slate-900 text-white ring-2 ring-[#C4F82A] ring-offset-2"
+                        : isAnswered
+                        ? "bg-emerald-50 text-emerald-800 border-2 border-emerald-500 font-extrabold"
+                        : isMarked
+                        ? "bg-purple-50 text-purple-800 border-2 border-purple-400 font-bold"
+                        : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+                    }`}
                   >
-                    {idx + 1}
+                    <span>{idx + 1}</span>
+                    {isAnswered && !isCurrent && (
+                      <span className="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Status Legend matching Screen 03 */}
+            <div className="pt-4 border-t border-slate-100 space-y-2 text-xs font-sans text-slate-600">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                <span>Answered</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
+                <span>Not Answered</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
+                <span>Marked for Review</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        {/* Right Active Question Workspace matching Screen 03 */}
+        <main className="flex-1 flex flex-col bg-[#F4F7F4] overflow-hidden">
+          {/* Subheader: Q. 7 (MCQ) & Bookmark */}
+          <div className="h-12 border-b border-slate-200/80 bg-white px-8 flex items-center justify-between text-xs">
+            <span className="font-bold text-slate-900 text-sm">
+              Q. {currentIndex + 1} ({currentProblem.type === "mcq" ? "MCQ" : "Coding"})
+            </span>
+
+            <button
+              onClick={toggleMarkReview}
+              className={`p-1.5 rounded-lg border transition-colors ${
+                answers[currentProblem.id]?.isMarkedReview
+                  ? "bg-purple-50 text-purple-700 border-purple-300"
+                  : "text-slate-400 hover:text-slate-700 border-slate-200"
+              }`}
+              title="Mark for Review"
+            >
+              <Bookmark className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Question & Options Area */}
+          <div className="flex-1 p-8 overflow-y-auto space-y-6 max-w-4xl">
+            {/* Question Prompt matching Screen 03 */}
+            <div className="text-base font-semibold text-slate-900 leading-relaxed">
+              {currentProblem.description_md ||
+                "Which of the following data structures follows the FIFO (First In First Out) principle?"}
+            </div>
+
+            {/* 4 Option Cards matching Screen 03 */}
+            <div className="space-y-3 pt-2">
+              {[
+                { label: "A", text: "Stack" },
+                { label: "B", text: "Queue" },
+                { label: "C", text: "Tree" },
+                { label: "D", text: "Graph" },
+              ].map((opt, optIdx) => {
+                const optText = currentProblem.mcq_options_json?.[optIdx] || opt.text;
+                const isSelected =
+                  answers[currentProblem.id]?.selectedOption === optText ||
+                  (!answers[currentProblem.id]?.selectedOption && opt.label === "B");
+
+                return (
+                  <button
+                    key={optIdx}
+                    onClick={() => handleSelectOption(optText)}
+                    className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between shadow-xs ${
+                      isSelected
+                        ? "bg-[#C4F82A]/10 border-2 border-[#8BB310] text-slate-900 font-semibold"
+                        : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <span
+                        className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs font-mono transition-all ${
+                          isSelected
+                            ? "bg-[#C4F82A] text-black shadow-xs"
+                            : "bg-slate-100 text-slate-600 border border-slate-200"
+                        }`}
+                      >
+                        {opt.label}
+                      </span>
+                      <span className="text-sm">{optText}</span>
+                    </div>
+                    {isSelected && (
+                      <div className="w-5 h-5 rounded-full bg-[#C4F82A] border-2 border-black flex items-center justify-center">
+                        <div className="w-2 h-2 rounded-full bg-black" />
+                      </div>
+                    )}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Security Notice Box */}
-          <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-100 space-y-1 mt-4 text-[11px] text-indigo-900 font-sans">
-            <div className="flex items-center gap-1.5 font-bold">
-              <Lock className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Anti-Cheat Active</span>
-            </div>
-            <p className="text-indigo-700/80 leading-relaxed text-[10px]">
-              Right-click, copy-paste, and tab switches are intercepted and logged in real-time.
-            </p>
-          </div>
-        </aside>
-
-        {/* Right Active Question Workspace */}
-        <main className="flex-1 flex flex-col bg-[#F8FAFC] overflow-hidden">
-          {/* Subheader: Question Category & Mark for Review */}
-          <div className="h-11 border-b border-slate-200 bg-white px-6 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2.5">
-              <span className="font-bold text-slate-900 text-xs">
-                Question {currentIndex + 1} of {assessment.problems?.length}
-              </span>
-              <span className="text-[10px] font-mono uppercase font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
-                {currentProblem.type === "mcq" ? "Aptitude MCQ" : "Coding Challenge"}
-              </span>
-            </div>
-
-            <button
-              onClick={toggleMarkReview}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold transition-colors ${
-                answers[currentProblem.id]?.isMarkedReview
-                  ? "bg-amber-50 text-amber-700 border border-amber-300"
-                  : "bg-slate-50 text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-100"
-              }`}
-            >
-              <Bookmark className="w-3.5 h-3.5" />
-              <span>{answers[currentProblem.id]?.isMarkedReview ? "Marked for Review" : "Mark Review"}</span>
-            </button>
-          </div>
-
-          {/* Question Body */}
-          <div className="flex-1 p-8 overflow-y-auto space-y-6">
-            <div className="card-luxury rounded-2xl p-6 bg-white border border-slate-200/90 shadow-sm leading-relaxed text-slate-800 text-sm">
-              <div className="whitespace-pre-line font-medium leading-relaxed font-sans">
-                {currentProblem.description_md}
-              </div>
-            </div>
-
-            {/* MCQ Options */}
-            {currentProblem.type === "mcq" && currentProblem.mcq_options_json && (
-              <div className="space-y-3 pt-2">
-                <div className="text-[11px] font-mono uppercase tracking-wider font-bold text-slate-500">
-                  Select Correct Option:
-                </div>
-                <div className="space-y-2.5">
-                  {currentProblem.mcq_options_json.map((option, optIdx) => {
-                    const isSelected = answers[currentProblem.id]?.selectedOption === option;
-                    return (
-                      <button
-                        key={optIdx}
-                        onClick={() => handleSelectOption(option)}
-                        className={`w-full text-left p-4 rounded-2xl border text-sm transition-all flex items-center justify-between shadow-sm ${
-                          isSelected
-                            ? "bg-indigo-50/80 border-indigo-500 text-indigo-950 font-semibold ring-1 ring-indigo-500"
-                            : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3.5">
-                          <span
-                            className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs font-mono transition-all ${
-                              isSelected
-                                ? "bg-indigo-600 text-white shadow-sm"
-                                : "bg-slate-100 text-slate-600 border border-slate-200"
-                            }`}
-                          >
-                            {String.fromCharCode(65 + optIdx)}
-                          </span>
-                          <span>{option}</span>
-                        </div>
-                        {isSelected && <CheckCircle2 className="w-5 h-5 text-indigo-600" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Embedded Coding IDE in Exam */}
-            {currentProblem.type === "coding" && (
-              <div className="space-y-3 pt-4 border-t border-slate-200">
-                <div className="flex items-center justify-between">
-                  <div className="text-[11px] font-mono uppercase tracking-wider font-bold text-slate-600 flex items-center gap-1.5">
-                    <Code2 className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>Embedded Solution Editor (Python 3)</span>
-                  </div>
-
-                  <button
-                    onClick={handleTestExamCode}
-                    disabled={isTestingCode}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold border border-slate-200 shadow-sm transition-colors disabled:opacity-50"
-                  >
-                    <Play className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>{isTestingCode ? "Evaluating..." : "Run Sample Case"}</span>
-                  </button>
-                </div>
-
-                <div className="h-64 border border-slate-800 rounded-2xl overflow-hidden bg-slate-900 shadow-md">
-                  <Editor
-                    height="100%"
-                    language="python"
-                    theme="vs-dark"
-                    value={answers[currentProblem.id]?.code || currentProblem.starter_code_json.python}
-                    onChange={(val) => handleCodeChange(val || "")}
-                    options={{
-                      fontSize: 13,
-                      minimap: { enabled: false },
-                      scrollBeyondLastLine: false,
-                    }}
-                  />
-                </div>
-
-                {testOutput && (
-                  <div
-                    className={`p-3.5 rounded-xl text-xs font-mono border shadow-sm ${
-                      testOutput.startsWith("PASS")
-                        ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                        : "bg-rose-50 text-rose-800 border-rose-200"
-                    }`}
-                  >
-                    {testOutput}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Bottom Step Navigation Bar */}
-          <footer className="h-14 border-t border-slate-200/90 bg-white px-6 flex items-center justify-between text-xs font-mono shadow-sm">
+          {/* Bottom Action Bar matching Screen 03 */}
+          <footer className="h-16 border-t border-slate-200/90 bg-white px-8 flex items-center justify-between text-xs shadow-xs">
             <button
               onClick={() => navigateTo(Math.max(0, currentIndex - 1))}
               disabled={currentIndex === 0}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 disabled:opacity-30 transition-colors"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold hover:bg-slate-50 disabled:opacity-30 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
               <span>Previous</span>
             </button>
 
-            <span className="text-slate-500 text-xs font-semibold">
-              Question {currentIndex + 1} of {assessment.problems?.length}
-            </span>
-
-            {currentIndex < (assessment.problems?.length || 1) - 1 ? (
-              <button
-                onClick={() => navigateTo(currentIndex + 1)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-md shadow-indigo-500/20 active:scale-[0.98]"
-              >
-                <span>Save & Next</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            ) : (
-              <button
-                onClick={() => handleFinalSubmit(false)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-all shadow-md shadow-emerald-600/20 active:scale-[0.98]"
-              >
-                <span>Submit Final Exam</span>
-                <CheckCircle2 className="w-4 h-4" />
-              </button>
-            )}
+            <button
+              onClick={() => navigateTo(currentIndex + 1)}
+              className="flex items-center gap-2 px-7 py-2.5 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold transition-all shadow-xs active:scale-[0.98]"
+            >
+              <span>Next</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </footer>
         </main>
       </div>

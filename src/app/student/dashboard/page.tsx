@@ -246,19 +246,19 @@ export default function StudentDashboardPage() {
       {nextProblem && (
         <BlurFade delay={0.12}>
           <button
-            onClick={() => router.push(`/student/lab/${nextProblem.slug}`)}
-            className="w-full text-left p-5 sm:p-6 rounded-2xl border border-slate-200 bg-white hover:border-indigo-400 hover:shadow-md transition-all group"
+            onClick={() => router.push(`/practice/two-sum`)}
+            className="w-full text-left p-5 sm:p-6 rounded-2xl border border-slate-200/90 bg-white hover:border-[#C4F82A] hover:shadow-md transition-all group shadow-xs"
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-100 transition-colors">
-                  <Zap className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-xl bg-[#C4F82A]/20 text-[#2D5A12] flex items-center justify-center flex-shrink-0 group-hover:bg-[#C4F82A] group-hover:text-black transition-colors">
+                  <Zap className="w-5 h-5 fill-current" />
                 </div>
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-medium text-indigo-600">Up Next</span>
+                    <span className="text-[11px] font-bold text-[#2D5A12] uppercase tracking-wide">Up Next</span>
                   </div>
-                  <h3 className="text-base font-semibold text-slate-900 group-hover:text-indigo-700 transition-colors">
+                  <h3 className="text-base font-bold text-slate-900 group-hover:text-black transition-colors">
                     {nextProblem.title}
                   </h3>
                   <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
@@ -269,14 +269,14 @@ export default function StudentDashboardPage() {
                     }`}>{nextProblem.difficulty}</span>
                     <span className="text-slate-300">·</span>
                     {nextProblem.company_tags.slice(0, 2).map((t) => (
-                      <span key={t} className="text-slate-500">{t}</span>
+                      <span key={t} className="text-slate-500 font-mono">{t}</span>
                     ))}
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 group-hover:text-indigo-700 transition-colors pl-14 sm:pl-0">
+              <div className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black transition-all shadow-2xs group-hover:scale-105">
                 <span>Continue</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
               </div>
             </div>
           </button>
@@ -297,10 +297,10 @@ export default function StudentDashboardPage() {
                   <button
                     key={tag}
                     onClick={() => setTrackFilter(tag)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
                       trackFilter === tag
-                        ? "bg-slate-900 text-white shadow-sm"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        ? "bg-[#C4F82A] text-black shadow-2xs"
+                        : "bg-white border border-slate-200 text-slate-600 hover:text-black"
                     }`}
                   >
                     {tag}

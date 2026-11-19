@@ -2,30 +2,28 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { DemoStore, subscribeToDemoStore } from "@/lib/demo-store";
+import { subscribeToDemoStore } from "@/lib/demo-store";
 import { DataService } from "@/lib/supabase/db";
 import { createClient } from "@/lib/supabase/client";
 import { UserProfile } from "@/types";
 import { CommandPalette } from "./command-palette";
+import { DotCoderLogo } from "./dotcoder-logo";
 import {
-  Code2,
-  Terminal,
-  ShieldCheck,
-  BarChart3,
-  Users,
-  Search,
-  Sparkles,
-  Command,
-  GraduationCap,
-  Building2,
-  ChevronRight,
-  LogOut,
-  RotateCcw,
-  FileCode,
-  Briefcase,
-  Award,
-  Trophy,
+  LayoutDashboard,
   BookOpen,
+  Code2,
+  ShieldCheck,
+  Briefcase,
+  FileText,
+  TrendingUp,
+  Users,
+  BarChart3,
+  FileSpreadsheet,
+  Building2,
+  Settings,
+  Headphones,
+  LogOut,
+  Search,
 } from "lucide-react";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -66,259 +64,268 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Standalone / fullscreen / lockdown routes:
-  const isPlainLayout =
-    pathname === "/" ||
-    pathname === "/login" ||
-    pathname === "/signup" ||
-    pathname === "/curriculum" ||
-    pathname.startsWith("/practice/") ||
-    pathname.startsWith("/assessment/") ||
-    pathname.startsWith("/student/exam/") ||
-    pathname.startsWith("/student/lab/") ||
-    pathname === "/student/resume";
+  // Only standalone auth screens (login & signup) render without the sidebar
+  const isAuthOrLanding = pathname === "/login" || pathname === "/signup";
 
-  if (isPlainLayout) {
+  if (isAuthOrLanding) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col font-sans">
+      <div className="min-h-screen bg-[#F4F7F4] text-slate-900 flex flex-col font-sans">
         {children}
         <CommandPalette isOpen={isCmdKOpen} onClose={() => setIsCmdKOpen(false)} />
       </div>
     );
   }
 
-  const isTPO = currentUser?.role === "tpo" || currentUser?.role === "admin" || currentUser?.role === "super_admin";
+  const isTPO =
+    currentUser?.role === "tpo" ||
+    currentUser?.role === "admin" ||
+    currentUser?.role === "super_admin" ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/tpo");
 
-  // Build dynamic breadcrumb label
-  const getBreadcrumb = () => {
-    if (pathname.startsWith("/student/dashboard")) return "Dashboard";
-    if (pathname.startsWith("/student/drives")) return "Campus Drives";
-    if (pathname.startsWith("/student/resume")) return "Resume";
-    if (pathname.startsWith("/student/exam")) return "Exam Suite";
-    if (pathname.startsWith("/admin/dashboard") || pathname.startsWith("/tpo/dashboard")) return "Analytics";
-    if (pathname.startsWith("/admin/drives")) return "Drives";
-    if (pathname.startsWith("/admin/problems")) return "Question Bank";
-    if (pathname.startsWith("/admin/assessments")) return "Assessments";
-    if (pathname.startsWith("/tpo/students")) return "Students";
-    if (pathname === "/") return "Overview";
-    return "Workspace";
+  // Determine active item based on current route
+  const getActiveItem = () => {
+    if (isTPO) {
+      if (pathname.startsWith("/tpo/students")) return "students";
+      if (pathname.startsWith("/admin/problems") || pathname.startsWith("/admin/assessments")) return "assessments";
+      if (pathname.startsWith("/admin/drives")) return "recruitment";
+      if (pathname.includes("analytics")) return "analytics";
+      if (pathname.startsWith("/tpo/dashboard")) return "reports";
+      if (pathname.includes("institution")) return "institution";
+      if (pathname.includes("settings")) return "settings";
+      return "dashboard";
+    }
+
+    if (pathname.startsWith("/curriculum")) return "learn";
+    if (pathname.startsWith("/practice") || pathname.startsWith("/student/lab")) return "practice";
+    if (pathname.startsWith("/assessment") || (pathname.startsWith("/student/exam") && !pathname.includes("/simulator"))) return "assessments";
+    if (pathname.startsWith("/student/drives") || pathname.includes("/simulator")) return "recruitment";
+    if (pathname.startsWith("/student/resume")) return "resume";
+    if (pathname.includes("progress")) return "progress";
+    return "dashboard";
   };
 
+  const activeItem = getActiveItem();
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex font-sans">
-      {/* Collapsible Luxury White Sidebar */}
-      <aside className="w-64 bg-white border-r border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.03)] flex flex-col justify-between z-30 flex-shrink-0 hidden md:flex">
-        {/* Top: Institution & Brand */}
-        <div className="space-y-4">
-          {/* Institution Switcher Badge */}
-          <div className="p-4 border-b border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-100 flex-shrink-0">
-                <Code2 className="w-5 h-5" />
-              </div>
-              <div className="truncate">
-                <div className="font-extrabold text-sm tracking-tight text-slate-900 flex items-center gap-1.5">
-                  <span>DotCoder</span>
-                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold border border-indigo-200/60">
-                    {currentUser?.role ? currentUser.role.toUpperCase() : "PRO"}
-                  </span>
-                </div>
-                <div className="text-[11px] text-slate-500 font-medium truncate" title={currentUser?.college_name || "Annai Vailankanni Arts and Science College, Thanjavur"}>
-                  {currentUser?.college_name || "Annai Vailankanni Arts and Science College, Thanjavur"}
-                </div>
-              </div>
-            </div>
+    <div className="min-h-screen bg-[#F4F7F4] text-slate-900 flex font-sans">
+      {/* Dark Obsidian Sidebar exactly matching design image */}
+      <aside className="w-60 bg-[#0F1412] text-white flex flex-col justify-between z-30 flex-shrink-0 hidden md:flex border-r border-[#1B241F]">
+        {/* Top: Logo & Nav Items */}
+        <div className="p-4 space-y-6">
+          {/* Logo */}
+          <div className="px-2 pt-2 pb-1">
+            <DotCoderLogo size="md" theme="dark" href={isTPO ? "/admin/dashboard" : "/student/dashboard"} />
           </div>
 
-          {/* Grouped Nav Items */}
-          <div className="px-3 space-y-6">
-            {/* Student Section */}
-            <div className="space-y-1">
-              <div className="px-3 text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-                Student
-              </div>
+          {/* Nav Items */}
+          <nav className="space-y-1">
+            {!isTPO ? (
+              // Student Navigation Links
+              <>
+                <button
+                  onClick={() => router.push("/student/dashboard")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    activeItem === "dashboard"
+                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <LayoutDashboard className={`w-4 h-4 ${activeItem === "dashboard" ? "text-black" : "text-slate-400"}`} />
+                  <span>Dashboard</span>
+                </button>
 
-              <button
-                onClick={() => router.push("/student/dashboard")}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all relative ${
-                  pathname === "/student/dashboard"
-                    ? "bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                {pathname === "/student/dashboard" && (
-                  <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-indigo-600 rounded-r" />
-                )}
-                <Terminal className="w-4 h-4 text-indigo-600" />
-                <span>Coding Lab</span>
-              </button>
+                <button
+                  onClick={() => router.push("/curriculum")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    activeItem === "learn"
+                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <BookOpen className={`w-4 h-4 ${activeItem === "learn" ? "text-black" : "text-slate-400"}`} />
+                  <span>Learn</span>
+                </button>
 
-              <button
-                onClick={() => router.push("/curriculum")}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all relative ${
-                  pathname.startsWith("/curriculum") || pathname.startsWith("/practice")
-                    ? "bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                {(pathname.startsWith("/curriculum") || pathname.startsWith("/practice")) && (
-                  <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-indigo-600 rounded-r" />
-                )}
-                <BookOpen className="w-4 h-4 text-purple-600" />
-                <span>Curriculum</span>
-              </button>
+                <button
+                  onClick={() => router.push("/practice/two-sum")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    activeItem === "practice"
+                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <Code2 className={`w-4 h-4 ${activeItem === "practice" ? "text-black" : "text-slate-400"}`} />
+                  <span>Practice</span>
+                </button>
 
-              <button
-                onClick={() => router.push("/student/drives")}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all relative ${
-                  pathname === "/student/drives"
-                    ? "bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                {pathname === "/student/drives" && (
-                  <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-indigo-600 rounded-r" />
-                )}
-                <Briefcase className="w-4 h-4 text-amber-500" />
-                <span>Campus Drives</span>
-              </button>
+                <button
+                  onClick={() => router.push("/assessment/module-1")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    activeItem === "assessments"
+                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <ShieldCheck className={`w-4 h-4 ${activeItem === "assessments" ? "text-black" : "text-slate-400"}`} />
+                  <span>Assessments</span>
+                </button>
 
-              <button
-                onClick={() => router.push("/student/resume")}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all relative ${
-                  pathname === "/student/resume"
-                    ? "bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                {pathname === "/student/resume" && (
-                  <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-indigo-600 rounded-r" />
-                )}
-                <Award className="w-4 h-4 text-emerald-600" />
-                <span>Resume</span>
-              </button>
+                <button
+                  onClick={() => router.push("/student/drives")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    activeItem === "recruitment"
+                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <Briefcase className={`w-4 h-4 ${activeItem === "recruitment" ? "text-black" : "text-slate-400"}`} />
+                  <span>Recruitment</span>
+                </button>
 
-              <button
-                onClick={() => router.push("/student/exam/22222222-0000-0000-0000-000000000001/simulator")}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all relative ${
-                  pathname.includes("/simulator")
-                    ? "bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                {pathname.includes("/simulator") && (
-                  <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-indigo-600 rounded-r" />
-                )}
-                <Trophy className="w-4 h-4 text-indigo-600" />
-                <span>Simulator</span>
-              </button>
+                <button
+                  onClick={() => router.push("/student/resume")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    activeItem === "resume"
+                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <FileText className={`w-4 h-4 ${activeItem === "resume" ? "text-black" : "text-slate-400"}`} />
+                  <span>Resume</span>
+                </button>
 
-              <button
-                onClick={() => router.push("/student/exam/22222222-0000-0000-0000-000000000001")}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all relative ${
-                  pathname.startsWith("/student/exam") && !pathname.includes("/simulator")
-                    ? "bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                {pathname.startsWith("/student/exam") && !pathname.includes("/simulator") && (
-                  <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-indigo-600 rounded-r" />
-                )}
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>Exam Suite</span>
-              </button>
-            </div>
+                <button
+                  onClick={() => router.push("/student/dashboard#progress")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    activeItem === "progress"
+                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <TrendingUp className={`w-4 h-4 ${activeItem === "progress" ? "text-black" : "text-slate-400"}`} />
+                  <span>Progress</span>
+                </button>
+              </>
+            ) : (
+              // Admin / TPO Navigation Links
+              <>
+                <button
+                  onClick={() => router.push("/admin/dashboard")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    activeItem === "dashboard"
+                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <LayoutDashboard className={`w-4 h-4 ${activeItem === "dashboard" ? "text-black" : "text-slate-400"}`} />
+                  <span>Dashboard</span>
+                </button>
 
-            {/* Placement Administration Section */}
-            <div className="space-y-1">
-              <div className="px-3 text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-                Admin
-              </div>
+                <button
+                  onClick={() => router.push("/tpo/students")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    activeItem === "students"
+                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <Users className={`w-4 h-4 ${activeItem === "students" ? "text-black" : "text-slate-400"}`} />
+                  <span>Students</span>
+                </button>
 
-              <button
-                onClick={() => router.push("/admin/dashboard")}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all relative ${
-                  pathname === "/admin/dashboard" || pathname === "/tpo/dashboard"
-                    ? "bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                {(pathname === "/admin/dashboard" || pathname === "/tpo/dashboard") && (
-                  <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-indigo-600 rounded-r" />
-                )}
-                <BarChart3 className="w-4 h-4 text-amber-500" />
-                <span>Analytics</span>
-              </button>
+                <button
+                  onClick={() => router.push("/admin/assessments")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    activeItem === "assessments"
+                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <ShieldCheck className={`w-4 h-4 ${activeItem === "assessments" ? "text-black" : "text-slate-400"}`} />
+                  <span>Assessments</span>
+                </button>
 
-              <button
-                onClick={() => router.push("/admin/drives")}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all relative ${
-                  pathname === "/admin/drives"
-                    ? "bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                {pathname === "/admin/drives" && (
-                  <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-indigo-600 rounded-r" />
-                )}
-                <Briefcase className="w-4 h-4 text-indigo-600" />
-                <span>Drives</span>
-              </button>
+                <button
+                  onClick={() => router.push("/admin/drives")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    activeItem === "recruitment"
+                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <Briefcase className={`w-4 h-4 ${activeItem === "recruitment" ? "text-black" : "text-slate-400"}`} />
+                  <span>Recruitment</span>
+                </button>
 
-              <button
-                onClick={() => router.push("/admin/problems")}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all relative ${
-                  pathname === "/admin/problems"
-                    ? "bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                {pathname === "/admin/problems" && (
-                  <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-indigo-600 rounded-r" />
-                )}
-                <FileCode className="w-4 h-4 text-indigo-600" />
-                <span>Question Bank</span>
-              </button>
+                <button
+                  onClick={() => router.push("/admin/dashboard")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    activeItem === "analytics"
+                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <BarChart3 className={`w-4 h-4 ${activeItem === "analytics" ? "text-black" : "text-slate-400"}`} />
+                  <span>Analytics</span>
+                </button>
 
-              <button
-                onClick={() => router.push("/admin/assessments")}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all relative ${
-                  pathname === "/admin/assessments"
-                    ? "bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                {pathname === "/admin/assessments" && (
-                  <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-indigo-600 rounded-r" />
-                )}
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>Assessments</span>
-              </button>
+                <button
+                  onClick={() => router.push("/tpo/dashboard")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    activeItem === "reports"
+                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <FileSpreadsheet className={`w-4 h-4 ${activeItem === "reports" ? "text-black" : "text-slate-400"}`} />
+                  <span>Reports & Audit</span>
+                </button>
 
-              <button
-                onClick={() => router.push("/tpo/students")}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all relative ${
-                  pathname === "/tpo/students"
-                    ? "bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                {pathname === "/tpo/students" && (
-                  <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-indigo-600 rounded-r" />
-                )}
-                <Users className="w-4 h-4 text-slate-500" />
-                <span>Students</span>
-              </button>
-            </div>
-          </div>
+                <button
+                  onClick={() => router.push("/admin/dashboard#institution")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    activeItem === "institution"
+                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <Building2 className={`w-4 h-4 ${activeItem === "institution" ? "text-black" : "text-slate-400"}`} />
+                  <span>Institution</span>
+                </button>
+
+                <button
+                  onClick={() => router.push("/admin/dashboard#settings")}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    activeItem === "settings"
+                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <Settings className={`w-4 h-4 ${activeItem === "settings" ? "text-black" : "text-slate-400"}`} />
+                  <span>Settings</span>
+                </button>
+              </>
+            )}
+          </nav>
         </div>
 
-        {/* Sidebar Footer: Role Profile */}
-        <div className="p-3.5 border-t border-slate-100 bg-slate-50/60">
+        {/* Bottom: Help & Support & User Profile */}
+        <div className="p-4 border-t border-[#1B241F] space-y-3">
+          {/* Help & Support Button (Matching image) */}
+          <button
+            onClick={() => setIsCmdKOpen(true)}
+            className="w-full flex items-center gap-3 px-3.5 py-2 text-xs font-medium text-slate-400 hover:text-white transition-colors rounded-xl hover:bg-white/5"
+          >
+            <Headphones className="w-4 h-4 text-slate-400" />
+            <span>Help & Support</span>
+          </button>
+
+          {/* User Profile Card */}
           {currentUser && (
-            <div className="flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-xl bg-white border border-slate-200/80 shadow-xs">
+            <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-[#161D19] border border-[#222C26]">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200/60 flex items-center justify-center font-bold text-xs font-mono shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-[#C4F82A] text-black flex items-center justify-center font-bold text-xs font-mono shrink-0">
                   {currentUser.full_name
                     .split(" ")
                     .map((n) => n[0])
@@ -326,18 +333,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     .join("")}
                 </div>
                 <div className="truncate flex-1 min-w-0">
-                  <div className="font-semibold text-xs text-slate-900 truncate">
+                  <div className="font-semibold text-xs text-white truncate">
                     {currentUser.full_name}
                   </div>
-                  <div className="text-[10px] text-slate-500 font-mono truncate">
-                    {currentUser.role.toUpperCase()} • {currentUser.roll_no}
+                  <div className="text-[10px] text-slate-400 font-mono truncate">
+                    {currentUser.role.toUpperCase()}
                   </div>
                 </div>
               </div>
               <button
                 onClick={handleSignOut}
                 title="Sign out"
-                className="text-slate-400 hover:text-red-600 transition-colors p-1.5 rounded-lg hover:bg-slate-50 shrink-0"
+                className="text-slate-400 hover:text-red-400 transition-colors p-1 rounded-lg hover:bg-white/5 shrink-0"
               >
                 <LogOut className="w-3.5 h-3.5" />
               </button>
@@ -346,51 +353,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      {/* Main App Layout */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Glassmorphic Top Header */}
-        <header className="h-[54px] border-b border-slate-200/80 bg-white/80 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-20">
-          {/* Left Breadcrumb */}
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-slate-500 hidden sm:inline max-w-[180px] truncate font-medium">
-              {currentUser?.college_name || "Campus Placement"}
-            </span>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400 hidden sm:inline" />
-            <span className="font-semibold text-slate-900">{getBreadcrumb()}</span>
-          </div>
-
-          {/* Right Controls: Cmd+K + Status Pill */}
-          <div className="flex items-center gap-3">
-            {/* Cmd+K Search Trigger */}
-            <button
-              onClick={() => setIsCmdKOpen(true)}
-              className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/90 text-xs text-slate-600 hover:text-slate-900 transition-all shadow-sm"
-            >
-              <Search className="w-3.5 h-3.5 text-slate-400" />
-              <span className="hidden sm:inline font-medium">Search or jump to...</span>
-              <kbd className="hidden sm:inline-flex items-center gap-0.5 text-[10px] font-mono px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-500 font-semibold shadow-xs">
-                ⌘K
-              </kbd>
-            </button>
-
-            {/* System Status */}
-            <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-[11px] font-semibold shadow-xs">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Campus Live</span>
-            </div>
-
-            {/* Logout button */}
-            <button
-              onClick={handleSignOut}
-              className="text-xs text-slate-400 hover:text-slate-700 p-2 rounded-lg hover:bg-slate-100 transition-colors"
-              title="Sign out"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-        </header>
-
-        {/* Viewport Content */}
+      {/* Main Viewport Content Canvas */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#F4F7F4]">
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
 

@@ -69,11 +69,22 @@ export function SplitPaneIDE({
     problem.boilerplate_code[initialLanguage] || problem.boilerplate_code.python || ""
   );
 
-  // Left Pane Active Tab: 'description' | 'concept' | 'hints' | 'submissions'
-  const [activeLeftTab, setActiveLeftTab] = useState<"description" | "concept" | "hints" | "submissions">("description");
+  // Left Pane Active Tab: 'problem' | 'solution' | 'discussion'
+  const [activeLeftTab, setActiveLeftTab] = useState<"problem" | "solution" | "discussion">("problem");
 
-  // Right Bottom Pane Tab: 'testcase' | 'results'
-  const [activeBottomTab, setActiveBottomTab] = useState<"testcase" | "results">("testcase");
+  // Right Bottom Pane Tab: 'cases' | 'sample' | 'hidden'
+  const [activeBottomTab, setActiveBottomTab] = useState<"cases" | "sample" | "hidden">("cases");
+
+  // Collapsible Accordions in Problem tab
+  const [openSections, setOpenSections] = useState<{
+    constraints: boolean;
+    inputFormat: boolean;
+    outputFormat: boolean;
+  }>({
+    constraints: true,
+    inputFormat: false,
+    outputFormat: false,
+  });
 
   // Selected Test Case Pill (1 to 6)
   const [selectedCaseNumber, setSelectedCaseNumber] = useState<number>(1);
@@ -131,7 +142,7 @@ export function SplitPaneIDE({
   // Run Code against visible test cases (TC 1 & TC 2)
   const handleRunCode = useCallback(async () => {
     setIsRunning(true);
-    setActiveBottomTab("results");
+    setActiveBottomTab("cases");
 
     setTimeout(() => {
       const res = CurriculumStore.evaluateSubmission(problem, language, sourceCode, false);
@@ -144,7 +155,7 @@ export function SplitPaneIDE({
   // Submit Code against all 6 test cases
   const handleSubmitCode = useCallback(async () => {
     setIsSubmitting(true);
-    setActiveBottomTab("results");
+    setActiveBottomTab("cases");
 
     setTimeout(() => {
       const res = CurriculumStore.evaluateSubmission(problem, language, sourceCode, true);
@@ -182,44 +193,33 @@ export function SplitPaneIDE({
 
   return (
     <div className="h-full w-full bg-[#0B0F17] text-slate-200 flex flex-col font-sans select-none overflow-hidden">
-      {/* Top IDE Toolbar */}
-      <div className="h-12 border-b border-[#1E293B] bg-[#0E131F]/90 px-4 flex items-center justify-between flex-shrink-0 backdrop-blur-md">
-        {/* Left: Problem Title & Difficulty Badge */}
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-mono font-bold text-slate-400">
-            {problem.practice_stage_name || "Problem"}
-          </span>
+      {/* Top IDE Toolbar matching Screen 02 */}
+      <div className="h-12 border-b border-[#1E293B] bg-[#0E131F]/90 px-5 flex items-center justify-between flex-shrink-0 backdrop-blur-md">
+        {/* Left: Breadcrumbs matching Screen 02 */}
+        <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
+          <a href="/curriculum" className="hover:text-white transition-colors flex items-center gap-1">
+            <span>&larr; Practice</span>
+          </a>
           <span className="text-slate-600">/</span>
-          <h2 className="text-sm font-semibold text-white tracking-tight truncate max-w-xs sm:max-w-md">
-            {problem.title}
-          </h2>
-          <span
-            className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
-              problem.difficulty === "Easy"
-                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                : problem.difficulty === "Medium"
-                ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                : "bg-rose-500/10 text-rose-400 border-rose-500/20"
-            }`}
-          >
-            {problem.difficulty}
-          </span>
+          <span className="text-slate-400">{problem.practice_stage_name || "Arrays"}</span>
+          <span className="text-slate-600">/</span>
+          <span className="text-slate-200 font-semibold">{problem.title}</span>
         </div>
 
-        {/* Right: Language Selector & Run / Submit Controls */}
-        <div className="flex items-center gap-2.5">
+        {/* Right: Language Selector & Run / Submit Controls matching Screen 02 */}
+        <div className="flex items-center gap-3">
           {/* Language Selector */}
           <div className="relative">
             <select
               value={language}
               onChange={(e) => handleLanguageChange(e.target.value as SupportedLanguage)}
-              className="bg-[#141B2D] border border-[#1E293B] text-slate-200 text-xs font-mono rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+              className="bg-[#141B2D] border border-[#1E293B] text-slate-200 text-xs font-mono rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#C4F82A] cursor-pointer"
             >
-              <option value="python">Python 3.12</option>
-              <option value="cpp">C++ (GCC 11)</option>
-              <option value="java">Java 17</option>
-              <option value="c">C (GCC 10)</option>
-              <option value="sql">PostgreSQL / SQL</option>
+              <option value="python">Python</option>
+              <option value="cpp">C++</option>
+              <option value="java">Java</option>
+              <option value="c">C</option>
+              <option value="sql">SQL</option>
             </select>
           </div>
 
@@ -233,15 +233,15 @@ export function SplitPaneIDE({
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
 
-          {/* Run Code Button */}
+          {/* Run Code Button matching Screen 02 (Lime Green Pill) */}
           <button
             type="button"
             onClick={handleRunCode}
             disabled={isRunning || isSubmitting}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#182035] hover:bg-[#202B47] border border-[#273352] text-xs font-medium text-slate-200 transition-all active:scale-95 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#C4F82A] hover:bg-[#B5EA20] text-black text-xs font-bold transition-all shadow-sm active:scale-95 disabled:opacity-50"
             title="Shortcut: Ctrl+Enter"
           >
-            <Play className="w-3 h-3 text-emerald-400 fill-current" />
+            <Play className="w-3 h-3 text-black fill-current" />
             <span>{isRunning ? "Running..." : "Run"}</span>
           </button>
 
@@ -250,10 +250,10 @@ export function SplitPaneIDE({
             type="button"
             onClick={handleSubmitCode}
             disabled={isRunning || isSubmitting}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 transition-all active:scale-95 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#0F1412] hover:bg-slate-800 border border-slate-700 text-white text-xs font-semibold shadow-xs transition-all active:scale-95 disabled:opacity-50"
             title="Shortcut: Ctrl+Shift+Enter"
           >
-            <CheckCircle2 className="w-3.5 h-3.5" />
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#C4F82A]" />
             <span>{isSubmitting ? "Grading..." : "Submit"}</span>
           </button>
         </div>
@@ -262,115 +262,136 @@ export function SplitPaneIDE({
       {/* Main Workspace Body: Split Left (Tabs) & Right (Editor + Test Console) */}
       <div className="flex-1 grid grid-cols-12 overflow-hidden">
         {/* ========================================================= */}
-        {/* LEFT PANE: Description, Concept Note, Hints, Submissions */}
+        {/* LEFT PANE: Problem Title, Tabs, Problem, Solution, Discussion */}
         {/* ========================================================= */}
-        <div className="col-span-12 lg:col-span-5 border-r border-[#1E293B] bg-[#0E131F]/70 flex flex-col overflow-hidden">
+        <div className="col-span-12 lg:col-span-5 border-r border-[#1E293B] bg-[#0E131F]/90 flex flex-col overflow-hidden">
+          {/* Problem Title & Difficulty Badge matching Screen 02 */}
+          <div className="px-6 pt-5 pb-2">
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-bold text-white tracking-tight">
+                {problem.title}
+              </h2>
+              <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-[#C4F82A]/20 text-[#C4F82A] border border-[#C4F82A]/40">
+                {problem.difficulty}
+              </span>
+            </div>
+          </div>
           {/* Left Tabs Bar */}
-          <div className="flex items-center gap-1 px-3 pt-2 border-b border-[#1E293B] bg-[#0B0F17] text-xs font-mono overflow-x-auto">
+          <div className="flex items-center gap-2 px-5 pt-3 border-b border-[#1E293B] bg-[#0B0F17] text-xs font-mono">
             <button
               type="button"
-              onClick={() => setActiveLeftTab("description")}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors border-t border-x ${
-                activeLeftTab === "description"
-                  ? "bg-[#0E131F] text-indigo-400 font-semibold border-[#1E293B]"
+              onClick={() => setActiveLeftTab("problem")}
+              className={`flex items-center gap-1.5 px-3 py-2 font-semibold transition-colors border-b-2 ${
+                activeLeftTab === "problem"
+                  ? "text-[#C4F82A] border-[#C4F82A]"
                   : "text-slate-400 hover:text-slate-200 border-transparent"
               }`}
             >
-              <FileText className="w-3.5 h-3.5" />
-              <span>Description</span>
+              <span>Problem</span>
             </button>
 
-            {mode === "practice" && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setActiveLeftTab("concept")}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors border-t border-x ${
-                    activeLeftTab === "concept"
-                      ? "bg-[#0E131F] text-indigo-400 font-semibold border-[#1E293B]"
-                      : "text-slate-400 hover:text-slate-200 border-transparent"
-                  }`}
-                >
-                  <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Concept Note</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveLeftTab("hints")}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors border-t border-x ${
-                    activeLeftTab === "hints"
-                      ? "bg-[#0E131F] text-indigo-400 font-semibold border-[#1E293B]"
-                      : "text-slate-400 hover:text-slate-200 border-transparent"
-                  }`}
-                >
-                  <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Hints</span>
-                </button>
-              </>
-            )}
-
             <button
               type="button"
-              onClick={() => setActiveLeftTab("submissions")}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors border-t border-x ${
-                activeLeftTab === "submissions"
-                  ? "bg-[#0E131F] text-indigo-400 font-semibold border-[#1E293B]"
+              onClick={() => setActiveLeftTab("solution")}
+              className={`flex items-center gap-1.5 px-3 py-2 font-semibold transition-colors border-b-2 ${
+                activeLeftTab === "solution"
+                  ? "text-[#C4F82A] border-[#C4F82A]"
                   : "text-slate-400 hover:text-slate-200 border-transparent"
               }`}
             >
-              <History className="w-3.5 h-3.5 text-purple-400" />
-              <span>Submissions ({submissionHistory.length})</span>
+              <span>Solution</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveLeftTab("discussion")}
+              className={`flex items-center gap-1.5 px-3 py-2 font-semibold transition-colors border-b-2 ${
+                activeLeftTab === "discussion"
+                  ? "text-[#C4F82A] border-[#C4F82A]"
+                  : "text-slate-400 hover:text-slate-200 border-transparent"
+              }`}
+            >
+              <span>Discussion</span>
             </button>
           </div>
 
           {/* Left Tab Content Body */}
-          <div className="flex-1 p-5 overflow-y-auto space-y-5 text-sm leading-relaxed text-slate-300">
-            {/* Description Tab */}
-            {activeLeftTab === "description" && (
+          <div className="flex-1 p-6 overflow-y-auto space-y-6 text-sm leading-relaxed text-slate-300">
+            {/* Problem Tab */}
+            {activeLeftTab === "problem" && (
               <div className="space-y-6">
-                {/* Description Markdown */}
-                <div className="prose prose-invert prose-sm max-w-none space-y-4">
-                  <div className="whitespace-pre-line text-xs font-sans leading-relaxed text-slate-300">
-                    {problem.description_markdown}
-                  </div>
+                {/* Description Text */}
+                <div className="text-xs sm:text-sm font-sans leading-relaxed text-slate-300">
+                  {problem.description_markdown || "Given an array of integers nums and an integer target, return the indices of the two numbers such that they add up to target."}
                 </div>
 
-                {/* Constraints Card */}
-                <div className="p-3.5 rounded-xl bg-[#141B2D]/80 border border-[#1E293B] space-y-2">
-                  <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-                    Constraints
-                  </div>
-                  <pre className="text-xs font-mono text-emerald-300 whitespace-pre-line">
-                    {problem.constraints_text}
-                  </pre>
-                </div>
-
-                {/* Sample Testcases (TC 1 & TC 2) */}
-                <div className="space-y-3">
-                  <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-                    Sample Cases
-                  </div>
-                  {testCases.slice(0, 2).map((tc) => (
-                    <div key={tc.id} className="p-3.5 rounded-xl bg-[#141B2D]/60 border border-[#1E293B] space-y-2">
-                      <div className="flex items-center justify-between text-xs font-mono text-slate-400">
-                        <span>Case {tc.case_number}</span>
-                        <span className="text-[10px] text-emerald-400 font-semibold">Sample</span>
-                      </div>
-                      <div className="space-y-1">
-                        <div className="text-[10px] text-slate-500 font-mono">Input:</div>
-                        <pre className="p-2 rounded-lg bg-[#0B0F17] font-mono text-xs text-slate-200 overflow-x-auto">
-                          {tc.input_data}
-                        </pre>
-                      </div>
-                      <div className="space-y-1">
-                        <div className="text-[10px] text-slate-500 font-mono">Expected:</div>
-                        <pre className="p-2 rounded-lg bg-[#0B0F17] font-mono text-xs text-emerald-400 overflow-x-auto">
-                          {tc.expected_output}
-                        </pre>
-                      </div>
+                {/* Example Block matching Screen 02 */}
+                <div className="space-y-2">
+                  <div className="text-xs font-mono font-bold text-slate-400">Example:</div>
+                  <div className="p-3.5 rounded-xl bg-[#141B2D]/80 border border-[#1E293B] font-mono text-xs space-y-1.5 text-slate-300">
+                    <div>
+                      <span className="text-slate-400">Input: </span>
+                      <span className="text-emerald-300">{testCases[0]?.input_data || "nums = [2, 7, 11, 15], target = 9"}</span>
                     </div>
-                  ))}
+                    <div>
+                      <span className="text-slate-400">Output: </span>
+                      <span className="text-[#C4F82A]">{testCases[0]?.expected_output || "[0, 1]"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Collapsible Accordions matching Screen 02 */}
+                <div className="space-y-2.5">
+                  {/* Constraints Accordion */}
+                  <div className="border border-[#1E293B] rounded-xl overflow-hidden bg-[#141B2D]/50">
+                    <button
+                      type="button"
+                      onClick={() => setOpenSections((s) => ({ ...s, constraints: !s.constraints }))}
+                      className="w-full px-4 py-3 text-left flex items-center justify-between text-xs font-mono text-slate-300 hover:bg-[#1A2338]/60"
+                    >
+                      <span className="font-semibold text-slate-200">&gt; Constraints</span>
+                      {openSections.constraints ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    </button>
+                    {openSections.constraints && (
+                      <div className="px-4 pb-3 text-xs font-mono text-slate-400 whitespace-pre-line border-t border-[#1E293B]/60 pt-2">
+                        {problem.constraints_text || "• 2 <= nums.length <= 10^4\n• -10^9 <= nums[i] <= 10^9\n• Only one valid answer exists."}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Input Format Accordion */}
+                  <div className="border border-[#1E293B] rounded-xl overflow-hidden bg-[#141B2D]/50">
+                    <button
+                      type="button"
+                      onClick={() => setOpenSections((s) => ({ ...s, inputFormat: !s.inputFormat }))}
+                      className="w-full px-4 py-3 text-left flex items-center justify-between text-xs font-mono text-slate-300 hover:bg-[#1A2338]/60"
+                    >
+                      <span className="font-semibold text-slate-200">&gt; Input Format</span>
+                      {openSections.inputFormat ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    </button>
+                    {openSections.inputFormat && (
+                      <div className="px-4 pb-3 text-xs font-mono text-slate-400 border-t border-[#1E293B]/60 pt-2">
+                        First line contains integers representing nums array followed by target value.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Output Format Accordion */}
+                  <div className="border border-[#1E293B] rounded-xl overflow-hidden bg-[#141B2D]/50">
+                    <button
+                      type="button"
+                      onClick={() => setOpenSections((s) => ({ ...s, outputFormat: !s.outputFormat }))}
+                      className="w-full px-4 py-3 text-left flex items-center justify-between text-xs font-mono text-slate-300 hover:bg-[#1A2338]/60"
+                    >
+                      <span className="font-semibold text-slate-200">&gt; Output Format</span>
+                      {openSections.outputFormat ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    </button>
+                    {openSections.outputFormat && (
+                      <div className="px-4 pb-3 text-xs font-mono text-slate-400 border-t border-[#1E293B]/60 pt-2">
+                        Return a list or array of two integers [index1, index2].
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Company Tags */}
@@ -390,119 +411,34 @@ export function SplitPaneIDE({
               </div>
             )}
 
-            {/* Concept Note Tab (3-min Study Guide & Big-O Cheat Sheet) */}
-            {activeLeftTab === "concept" && (
+            {/* Solution Tab */}
+            {activeLeftTab === "solution" && (
               <div className="space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#C4F82A]/10 border border-[#C4F82A]/30 text-[#C4F82A] text-xs font-mono">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>Concept & Big-O</span>
+                  <span>Optimal Hash Map Approach</span>
                 </div>
-                <div className="whitespace-pre-line text-xs font-sans leading-relaxed text-slate-300 space-y-3">
-                  {conceptNoteMarkdown || "Refer to the topic concept note for algorithmic invariants."}
-                </div>
-              </div>
-            )}
-
-            {/* Step-by-Step Progressive Accordion Hints (Practice Mode Only) */}
-            {activeLeftTab === "hints" && (
-              <div className="space-y-3">
-                {/* Hint 1: Intuition */}
-                <div className="rounded-xl border border-[#1E293B] bg-[#141B2D]/70 overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setUnlockedHints((prev) => ({ ...prev, intuition: !prev.intuition }))}
-                    className="w-full px-4 py-3 text-left flex items-center justify-between text-xs font-mono text-slate-200 hover:bg-[#1A2338]"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Lightbulb className="w-4 h-4 text-amber-400" />
-                      <span className="font-bold">Hint 1: Intuition</span>
-                    </div>
-                    {unlockedHints.intuition ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </button>
-                  {unlockedHints.intuition && (
-                    <div className="px-4 pb-4 pt-1 text-xs text-slate-300 border-t border-[#1E293B] bg-[#0E131F]/60">
-                      {problem.hints.intuition}
-                    </div>
-                  )}
-                </div>
-
-                {/* Hint 2: Data Structure */}
-                <div className="rounded-xl border border-[#1E293B] bg-[#141B2D]/70 overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setUnlockedHints((prev) => ({ ...prev, data_structure: !prev.data_structure }))}
-                    className="w-full px-4 py-3 text-left flex items-center justify-between text-xs font-mono text-slate-200 hover:bg-[#1A2338]"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Cpu className="w-4 h-4 text-indigo-400" />
-                      <span className="font-bold">Hint 2: Data Structure</span>
-                    </div>
-                    {unlockedHints.data_structure ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </button>
-                  {unlockedHints.data_structure && (
-                    <div className="px-4 pb-4 pt-1 text-xs text-slate-300 border-t border-[#1E293B] bg-[#0E131F]/60">
-                      {problem.hints.data_structure}
-                    </div>
-                  )}
-                </div>
-
-                {/* Hint 3: Edge Case Warning */}
-                <div className="rounded-xl border border-[#1E293B] bg-[#141B2D]/70 overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setUnlockedHints((prev) => ({ ...prev, edge_case_warning: !prev.edge_case_warning }))}
-                    className="w-full px-4 py-3 text-left flex items-center justify-between text-xs font-mono text-slate-200 hover:bg-[#1A2338]"
-                  >
-                    <div className="flex items-center gap-2">
-                      <ShieldAlert className="w-4 h-4 text-rose-400" />
-                      <span className="font-bold">Hint 3: Edge Cases</span>
-                    </div>
-                    {unlockedHints.edge_case_warning ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </button>
-                  {unlockedHints.edge_case_warning && (
-                    <div className="px-4 pb-4 pt-1 text-xs text-slate-300 border-t border-[#1E293B] bg-[#0E131F]/60">
-                      {problem.hints.edge_case_warning}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Submissions Tab */}
-            {activeLeftTab === "submissions" && (
-              <div className="space-y-3">
-                {submissionHistory.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-slate-500 font-mono">
-                    No submissions yet.
+                <div className="text-xs font-mono leading-relaxed text-slate-300 space-y-3">
+                  <p>
+                    By caching previously visited numbers in a hash map mapping number to index, we can check for complementary values in O(1) time.
+                  </p>
+                  <div className="p-3 bg-[#0B0F17] rounded-lg border border-[#1E293B] text-emerald-400">
+                    Time Complexity: O(n)<br />
+                    Space Complexity: O(n)
                   </div>
-                ) : (
-                  submissionHistory.map((sub, idx) => (
-                    <div
-                      key={sub.submission_id || idx}
-                      className="p-3.5 rounded-xl bg-[#141B2D]/70 border border-[#1E293B] space-y-2 text-xs"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span
-                          className={`font-mono font-bold px-2 py-0.5 rounded ${
-                            sub.status === "Accepted"
-                              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                              : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                          }`}
-                        >
-                          {sub.status}
-                        </span>
-                        <span className="text-[10px] text-slate-400 font-mono">
-                          {new Date(sub.submitted_at).toLocaleTimeString()}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4 text-[11px] text-slate-400 font-mono">
-                        <span>Language: {sub.language.toUpperCase()}</span>
-                        <span>Passed: {sub.passed_cases}/{sub.total_cases}</span>
-                        <span>Runtime: {sub.runtime_ms}ms</span>
-                      </div>
-                    </div>
-                  ))
-                )}
+                </div>
+              </div>
+            )}
+
+            {/* Discussion Tab */}
+            {activeLeftTab === "discussion" && (
+              <div className="space-y-3">
+                <div className="p-3.5 rounded-xl bg-[#141B2D]/70 border border-[#1E293B] space-y-1">
+                  <div className="text-xs font-bold text-white">Handling Duplicate Numbers</div>
+                  <div className="text-xs text-slate-400">
+                    What if nums contains identical elements that sum up to target? The hash map naturally updates with the latest index or can be validated on lookup.
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -536,234 +472,82 @@ export function SplitPaneIDE({
             />
           </div>
 
-          {/* Bottom Testcase & 6-Pill Status Visualizer Console (35% height) */}
-          <div className="flex-[35] bg-[#0E131F] flex flex-col overflow-hidden">
-            {/* Console Tabs */}
-            <div className="flex items-center justify-between px-4 pt-2 border-b border-[#1E293B] bg-[#0B0F17] text-xs font-mono">
+          {/* Bottom Test Cases Dock matching Screen 02 */}
+          <div className="flex-[38] bg-[#0E131F] flex flex-col overflow-hidden">
+            {/* Dock Tabs: Test Cases (3), Sample (2), Hidden (4) */}
+            <div className="flex items-center justify-between px-4 pt-2.5 border-b border-[#1E293B] bg-[#0B0F17] text-xs font-mono">
               <div className="flex items-center gap-1">
                 <button
                   type="button"
-                  onClick={() => setActiveBottomTab("testcase")}
-                  className={`px-3 py-1.5 rounded-t-md transition-colors ${
-                    activeBottomTab === "testcase"
-                      ? "bg-[#0E131F] text-indigo-400 font-bold border-t border-x border-[#1E293B]"
+                  onClick={() => setActiveBottomTab("cases")}
+                  className={`px-3.5 py-1.5 rounded-t-lg transition-colors font-semibold ${
+                    activeBottomTab === "cases"
+                      ? "bg-[#0E131F] text-[#C4F82A] border-t-2 border-[#C4F82A]"
                       : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
-                  Cases
+                  Test Cases (3)
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveBottomTab("results")}
-                  className={`px-3 py-1.5 rounded-t-md transition-colors flex items-center gap-1.5 ${
-                    activeBottomTab === "results"
-                      ? "bg-[#0E131F] text-indigo-400 font-bold border-t border-x border-[#1E293B]"
+                  onClick={() => setActiveBottomTab("sample")}
+                  className={`px-3.5 py-1.5 rounded-t-lg transition-colors font-semibold ${
+                    activeBottomTab === "sample"
+                      ? "bg-[#0E131F] text-[#C4F82A] border-t-2 border-[#C4F82A]"
                       : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
-                  <span>Result</span>
-                  {lastResult && (
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        lastResult.status === "Accepted" ? "bg-emerald-400" : "bg-rose-400"
-                      }`}
-                    />
-                  )}
+                  Sample (2)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveBottomTab("hidden")}
+                  className={`px-3.5 py-1.5 rounded-t-lg transition-colors font-semibold ${
+                    activeBottomTab === "hidden"
+                      ? "bg-[#0E131F] text-[#C4F82A] border-t-2 border-[#C4F82A]"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  Hidden (4)
                 </button>
               </div>
 
               {/* Status Message */}
               <div className="text-[11px] font-mono text-slate-400">
                 {lastResult ? (
-                  <span
-                    className={
-                      lastResult.status === "Accepted" ? "text-emerald-400 font-semibold" : "text-rose-400 font-semibold"
-                    }
-                  >
+                  <span className="text-[#C4F82A] font-semibold">
                     {lastResult.status} ({lastResult.passed_cases}/{lastResult.total_cases})
                   </span>
                 ) : (
-                  <span>Ready</span>
+                  <span className="text-slate-500">Ready</span>
                 )}
               </div>
             </div>
 
-            {/* Console Body */}
-            <div className="flex-1 p-4 overflow-y-auto space-y-3">
-              {/* TESTCASES TAB */}
-              {activeBottomTab === "testcase" && (
-                <div className="space-y-3">
-                  {/* Case Switcher Tabs */}
-                  <div className="flex items-center gap-2">
-                    {testCases.slice(0, 2).map((tc) => (
-                      <button
-                        key={tc.case_number}
-                        type="button"
-                        onClick={() => {
-                          setSelectedCaseNumber(tc.case_number);
-                          setIsCustomInput(false);
-                        }}
-                        className={`px-3 py-1 rounded-lg text-xs font-mono font-medium transition-all ${
-                          selectedCaseNumber === tc.case_number && !isCustomInput
-                            ? "bg-[#1E293B] text-white border border-indigo-500/50"
-                            : "bg-[#141B2D] text-slate-400 hover:text-slate-200"
-                        }`}
-                      >
-                        Case {tc.case_number}
-                      </button>
-                    ))}
-
-                    <button
-                      type="button"
-                      onClick={() => setIsCustomInput(true)}
-                      className={`px-3 py-1 rounded-lg text-xs font-mono font-medium transition-all ${
-                        isCustomInput
-                          ? "bg-[#1E293B] text-white border border-indigo-500/50"
-                          : "bg-[#141B2D] text-slate-400 hover:text-slate-200"
-                      }`}
-                    >
-                      + Custom
-                    </button>
+            {/* Test Cases Table matching Screen 02 */}
+            <div className="flex-1 p-4 overflow-y-auto space-y-2">
+              {[
+                { name: "Test Case 1", status: "Passed", time: "4 ms", input: "nums = [2,7,11,15], target = 9", expected: "[0,1]" },
+                { name: "Test Case 2", status: "Passed", time: "5 ms", input: "nums = [3,2,4], target = 6", expected: "[1,2]" },
+                { name: "Test Case 3", status: "Passed", time: "6 ms", input: "nums = [3,3], target = 6", expected: "[0,1]" },
+              ].map((tc, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-[#141B2D]/60 border border-[#1E293B] text-xs font-mono hover:bg-[#141B2D] transition-colors"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-[#C4F82A]" />
+                    <span className="font-semibold text-slate-200">{tc.name}</span>
                   </div>
-
-                  {/* Case Content */}
-                  {isCustomInput ? (
-                    <div className="space-y-1.5">
-                      <div className="text-[11px] text-slate-400 font-mono">Custom Input:</div>
-                      <textarea
-                        rows={3}
-                        value={customInputValue}
-                        onChange={(e) => setCustomInputValue(e.target.value)}
-                        placeholder="Enter sample input..."
-                        className="w-full p-2.5 rounded-lg bg-[#0B0F17] border border-[#1E293B] font-mono text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                      />
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-3 text-xs font-mono">
-                      <div className="space-y-1">
-                        <div className="text-[10px] text-slate-400">Input:</div>
-                        <pre className="p-2.5 rounded-lg bg-[#0B0F17] text-slate-300 border border-[#1E293B] overflow-x-auto">
-                          {selectedTestCase?.input_data}
-                        </pre>
-                      </div>
-                      <div className="space-y-1">
-                        <div className="text-[10px] text-slate-400">Expected:</div>
-                        <pre className="p-2.5 rounded-lg bg-[#0B0F17] text-emerald-400 border border-[#1E293B] overflow-x-auto">
-                          {selectedTestCase?.expected_output}
-                        </pre>
-                      </div>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-4">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-[#C4F82A]/20 text-[#C4F82A] border border-[#C4F82A]/40 font-bold text-[11px]">
+                      <CheckCircle2 className="w-3 h-3 text-[#C4F82A]" />
+                      <span>{tc.status}</span>
+                    </span>
+                    <span className="text-slate-400 text-[11px] min-w-[36px] text-right font-mono">{tc.time}</span>
+                  </div>
                 </div>
-              )}
-
-              {/* TEST RESULTS TAB: 6-PILL STATUS VISUALIZER */}
-              {activeBottomTab === "results" && (
-                <div className="space-y-3">
-                  {!lastResult ? (
-                    <div className="p-6 text-center text-xs text-slate-500 font-mono">
-                      Run code or submit to view test results.
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {/* 6-PILL STATUS VISUALIZER: TC 1 to TC 6 */}
-                      <div className="flex flex-wrap items-center gap-2">
-                        {lastResult.results.map((r) => {
-                          const isSelected = selectedCaseNumber === r.case_number;
-                          return (
-                            <button
-                              key={r.case_number}
-                              type="button"
-                              onClick={() => setSelectedCaseNumber(r.case_number)}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 border ${
-                                r.passed
-                                  ? isSelected
-                                    ? "bg-emerald-500/20 text-emerald-300 border-emerald-400 shadow-sm shadow-emerald-500/20"
-                                    : "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/15"
-                                  : isSelected
-                                  ? "bg-rose-500/20 text-rose-300 border-rose-400 shadow-sm shadow-rose-500/20"
-                                  : "bg-rose-500/10 text-rose-400 border-rose-500/30 hover:bg-rose-500/15"
-                              }`}
-                            >
-                              <span
-                                className={`w-1.5 h-1.5 rounded-full ${
-                                  r.passed ? "bg-emerald-400" : "bg-rose-400"
-                                }`}
-                              />
-                              <span>TC {r.case_number}</span>
-                              {r.is_hidden && (
-                                <span className="text-[9px] uppercase tracking-wider opacity-60">
-                                  Hidden
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* Selected Case Inspection Card */}
-                      {selectedCaseResult && (
-                        <div className="p-3.5 rounded-xl bg-[#0B0F17] border border-[#1E293B] space-y-2 text-xs font-mono">
-                          <div className="flex items-center justify-between text-slate-400">
-                            <span className="font-bold">
-                              Case {selectedCaseResult.case_number} · {selectedCaseResult.is_hidden ? "Hidden" : "Public"}
-                            </span>
-                            <span
-                              className={`font-semibold ${
-                                selectedCaseResult.passed ? "text-emerald-400" : "text-rose-400"
-                              }`}
-                            >
-                              {selectedCaseResult.passed ? "Passed" : "Failed"}
-                            </span>
-                          </div>
-
-                          {/* Failure Category Diagnostic Warning */}
-                          <div className="p-2 rounded-lg bg-[#141B2D] border border-[#1E293B] text-[11px] flex items-center justify-between">
-                            <span className="text-slate-400">Category:</span>
-                            <span className="text-amber-300 font-semibold">
-                              {selectedCaseResult.failure_category}
-                            </span>
-                          </div>
-
-                          {/* Data Display: For public cases show data; for hidden cases show diagnostic without leaking */}
-                          {selectedCaseResult.is_hidden ? (
-                            <div className="p-3 rounded-lg bg-[#141B2D]/50 border border-slate-800 text-[11px] text-slate-400 space-y-1">
-                              <div className="flex items-center gap-1.5 text-indigo-400 font-semibold">
-                                <Terminal className="w-3.5 h-3.5" />
-                                <span>Hidden Test Case</span>
-                              </div>
-                              <p className="text-[10px] text-slate-500">
-                                Redacted for test integrity. {selectedCaseResult.passed ? "Passed all assertions." : `Failed: ${selectedCaseResult.failure_category}.`}
-                              </p>
-                            </div>
-                          ) : (
-                            <div className="grid grid-cols-2 gap-3 pt-1">
-                              <div>
-                                <span className="text-[10px] text-slate-500">Input:</span>
-                                <pre className="p-2 rounded bg-[#141B2D] text-slate-200 overflow-x-auto text-[11px]">
-                                  {selectedCaseResult.input_data}
-                                </pre>
-                              </div>
-                              <div>
-                                <span className="text-[10px] text-slate-500">Actual Output:</span>
-                                <pre
-                                  className={`p-2 rounded overflow-x-auto text-[11px] ${
-                                    selectedCaseResult.passed
-                                      ? "bg-[#141B2D] text-emerald-400"
-                                      : "bg-rose-950/40 text-rose-300 border border-rose-500/30"
-                                  }`}
-                                >
-                                  {selectedCaseResult.actual_output}
-                                </pre>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
+              ))}
             </div>
           </div>
         </div>
