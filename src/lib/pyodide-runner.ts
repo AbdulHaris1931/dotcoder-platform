@@ -26,11 +26,23 @@ export async function getPyodide(): Promise<any> {
     // 1. Inject Pyodide script if not loaded
     if (!window.loadPyodide) {
       await new Promise<void>((resolve, reject) => {
+        // Temporarily stash Monaco's AMD loader if present so Pyodide attaches to window
+        const prevDefine = (window as any).define;
+        if (prevDefine) {
+          (window as any).define = undefined;
+        }
+
         const script = document.createElement("script");
         script.src = "https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js";
         script.async = true;
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error("Failed to load Pyodide script from CDN"));
+        script.onload = () => {
+          if (prevDefine) (window as any).define = prevDefine;
+          resolve();
+        };
+        script.onerror = () => {
+          if (prevDefine) (window as any).define = prevDefine;
+          reject(new Error("Failed to load Pyodide script from CDN"));
+        };
         document.head.appendChild(script);
       });
     }

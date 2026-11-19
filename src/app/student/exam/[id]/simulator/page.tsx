@@ -269,8 +269,11 @@ function CompanyExamSimulatorContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-mono text-xs text-slate-500">
-        Booting {company.name}...
+      <div className="min-h-screen bg-[#0D1117] flex items-center justify-center font-mono text-xs text-slate-400">
+        <div className="flex items-center gap-3">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#9DFF00] animate-pulse" />
+          <span>Booting {company.name}...</span>
+        </div>
       </div>
     );
   }
@@ -278,74 +281,73 @@ function CompanyExamSimulatorContent() {
   const activeCodingProb = codingProblems[activeCodingIndex];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#0D1117] text-slate-200 flex flex-col font-sans">
       {/* 54px Top Command Header */}
-      <header className="h-[56px] border-b border-slate-200/90 bg-white/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-30 shadow-xs">
-        {/* Left: Test Pattern Badge */}
+      <header className="h-[52px] border-b border-slate-800/80 bg-[#161B22]/95 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-30 shadow-xs">
+        {/* Left: Logo & Company Track */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-extrabold text-xs tracking-tight text-slate-900 flex items-center gap-1.5">
-              <span>{company.name}</span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold border border-indigo-200">
-                {company.badge}
-              </span>
+            <span className="font-mono font-bold text-sm text-[#9DFF00]">&lt;/&gt;</span>
+            <span className="font-bold text-sm tracking-tight text-white">DotCoder</span>
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-[#9DFF00]/15 text-[#9DFF00] border border-[#9DFF00]/30">
+              DotExam
             </span>
           </div>
 
-          <div className="hidden md:flex items-center gap-1.5 text-[11px] font-mono text-slate-500 border-l border-slate-200 pl-3">
-            <span>{currentUser?.full_name || "Karthik S."}</span>
-            <span>•</span>
-            <span>{currentUser?.roll_no || "23BCA01"}</span>
+          <div className="hidden md:flex items-center gap-2 text-xs text-slate-400 border-l border-slate-800 pl-3">
+            <span className="text-white font-medium">{company.name}</span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bold">
+              {company.badge}
+            </span>
           </div>
         </div>
 
         {/* Center: Section Breadcrumbs */}
         <div className="hidden sm:flex items-center gap-2 text-xs font-mono">
           <div
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
               currentSectionIndex === 1
-                ? "bg-indigo-600 text-white font-bold shadow-sm"
+                ? "bg-[#9DFF00] text-black font-bold shadow-xs"
                 : section1Locked
-                ? "text-slate-400 line-through bg-slate-100"
-                : "text-slate-600 bg-white border border-slate-200"
+                ? "text-slate-500 line-through bg-slate-900 border border-slate-800"
+                : "text-slate-400 bg-[#0D1117] border border-slate-800"
             }`}
           >
-            {section1Locked && <Lock className="w-3 h-3 text-slate-400" />}
+            {section1Locked && <Lock className="w-3 h-3 text-slate-500" />}
             <span>Sec 1: Quant</span>
           </div>
-          <ChevronRight className="w-3 h-3 text-slate-400" />
+          <ChevronRight className="w-3 h-3 text-slate-600" />
           <div
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
               currentSectionIndex === 2
-                ? "bg-indigo-600 text-white font-bold shadow-sm"
+                ? "bg-[#9DFF00] text-black font-bold shadow-xs"
                 : section2Locked
-                ? "text-slate-400 line-through bg-slate-100"
-                : "text-slate-600 bg-white border border-slate-200"
+                ? "text-slate-500 line-through bg-slate-900 border border-slate-800"
+                : "text-slate-400 bg-[#0D1117] border border-slate-800"
             }`}
           >
-            {section2Locked && <Lock className="w-3 h-3 text-slate-400" />}
+            {section2Locked && <Lock className="w-3 h-3 text-slate-500" />}
             <span>Sec 2: Logic</span>
           </div>
-          <ChevronRight className="w-3 h-3 text-slate-400" />
+          <ChevronRight className="w-3 h-3 text-slate-600" />
           <div
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
               currentSectionIndex === 3
-                ? "bg-indigo-600 text-white font-bold shadow-sm"
+                ? "bg-[#9DFF00] text-black font-bold shadow-xs"
                 : currentSectionIndex === 4
-                ? "text-emerald-700 bg-emerald-50 font-bold"
-                : "text-slate-600 bg-white border border-slate-200"
+                ? "text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 font-bold"
+                : "text-slate-400 bg-[#0D1117] border border-slate-800"
             }`}
           >
             <span>Sec 3: Coding</span>
           </div>
         </div>
 
-        {/* Right: Section Timer & Next Section CTA */}
+        {/* Right: Timer & Finish CTA */}
         <div className="flex items-center gap-3">
           {currentSectionIndex !== 4 && (
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 font-mono text-xs font-bold shadow-xs">
-              <Clock className="w-3.5 h-3.5 text-indigo-600" />
+            <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-[#0D1117] border border-slate-800 text-slate-200 font-mono text-xs font-bold">
+              <Clock className="w-3.5 h-3.5 text-[#9DFF00]" />
               <span className="tabular-nums">{formatTime(timeLeft)}</span>
             </div>
           )}
@@ -353,7 +355,7 @@ function CompanyExamSimulatorContent() {
           {currentSectionIndex !== 4 && (
             <button
               onClick={handleNextSectionManually}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl btn-luxury-primary text-white font-bold text-xs font-mono transition-all shadow-md active:scale-95"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs font-mono transition-all shadow-xs active:scale-95"
             >
               <span>{currentSectionIndex === 3 ? "Submit Exam" : "Finish Section"}</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -387,6 +389,7 @@ function CompanyExamSimulatorContent() {
               }}
               onNavigate={(idx) => setQuantQIndex(idx)}
               negativeMarking={true}
+              theme="dark"
             />
           </div>
         )}
@@ -414,6 +417,7 @@ function CompanyExamSimulatorContent() {
               }}
               onNavigate={(idx) => setLogicQIndex(idx)}
               negativeMarking={true}
+              theme="dark"
             />
           </div>
         )}
@@ -425,56 +429,57 @@ function CompanyExamSimulatorContent() {
             <div className="lg:col-span-5 flex flex-col justify-between space-y-4 overflow-y-auto pr-1">
               <div className="space-y-4">
                 {/* Problem Toggle Tabs */}
-                <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white border border-slate-200/90 shadow-sm">
+                <div className="flex items-center gap-2 p-1.5 rounded-xl bg-[#161B22] border border-slate-800">
                   {codingProblems.map((p, idx) => (
                     <button
                       key={p.id}
                       onClick={() => setActiveCodingIndex(idx)}
-                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-mono font-bold transition-all flex items-center justify-center gap-1.5 ${
+                      className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-mono font-bold transition-all flex items-center justify-center gap-1.5 ${
                         activeCodingIndex === idx
-                          ? "bg-indigo-600 text-white shadow-sm"
-                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                          ? "bg-[#9DFF00] text-black shadow-xs"
+                          : "text-slate-400 hover:text-white hover:bg-slate-800/60"
                       }`}
                     >
                       <Code2 className="w-3.5 h-3.5" />
                       <span>Challenge {idx + 1}</span>
                       {solvedProblemIds.includes(p.id) && (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <CheckCircle2 className={`w-3.5 h-3.5 ${activeCodingIndex === idx ? "text-black" : "text-[#9DFF00]"}`} />
                       )}
                     </button>
                   ))}
                 </div>
 
                 {/* Problem Header */}
-                <div className="p-5 rounded-3xl bg-white border border-slate-200/90 shadow-luxury space-y-2">
+                <div className="p-5 rounded-2xl bg-[#161B22] border border-slate-800 space-y-2">
                   <div className="flex items-center justify-between">
                     <span
                       className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-bold ${
                         activeCodingProb.difficulty === "Easy"
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : "bg-amber-50 text-amber-700 border border-amber-200"
+                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                          : "bg-amber-500/10 text-amber-400 border border-amber-500/30"
                       }`}
                     >
                       {activeCodingProb.difficulty}
                     </span>
-                    <span className="text-[10px] font-mono text-slate-500 font-medium">
-                      TCS NQT Hands-On
+                    <span className="text-[10px] font-mono text-slate-400 font-medium">
+                      {company.name} Hands-On
                     </span>
                   </div>
-                  <h3 className="text-base font-extrabold text-slate-900">{activeCodingProb.title}</h3>
+                  <h3 className="text-base font-extrabold text-white">{activeCodingProb.title}</h3>
                 </div>
 
                 {/* Markdown Description */}
-                <div className="p-5 rounded-3xl bg-white border border-slate-200/90 shadow-luxury text-xs text-slate-600 leading-relaxed font-sans space-y-3 whitespace-pre-line">
+                <div className="p-5 rounded-2xl bg-[#161B22] border border-slate-800 text-xs text-slate-300 leading-relaxed font-sans space-y-3 whitespace-pre-line">
                   {activeCodingProb.description_md}
                 </div>
               </div>
 
               {/* Execution Telemetry Console */}
               {codeOutput && (
-                <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 font-mono text-xs text-slate-300 space-y-1 shadow-lg">
-                  <div className="text-[10px] uppercase font-bold text-slate-400">
-                    Execution Telemetry
+                <div className="p-4 rounded-xl bg-[#0D1117] border border-slate-800 font-mono text-xs text-slate-300 space-y-1">
+                  <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#9DFF00]" />
+                    <span>Execution Telemetry</span>
                   </div>
                   <pre className="text-emerald-400 whitespace-pre-wrap leading-relaxed text-[11px]">
                     {codeOutput}
@@ -484,11 +489,11 @@ function CompanyExamSimulatorContent() {
             </div>
 
             {/* Right 7 Cols: Monaco Code Canvas */}
-            <div className="lg:col-span-7 flex flex-col rounded-3xl border border-slate-200/90 bg-white shadow-luxury overflow-hidden">
+            <div className="lg:col-span-7 flex flex-col rounded-2xl border border-slate-800 bg-[#161B22] overflow-hidden">
               {/* Editor Toolbar */}
-              <div className="h-11 border-b border-slate-100 bg-slate-50/80 px-4 flex items-center justify-between">
-                <span className="text-xs font-mono text-slate-600 font-medium flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
+              <div className="h-11 border-b border-slate-800 bg-[#161B22] px-4 flex items-center justify-between">
+                <span className="text-xs font-mono text-slate-300 font-medium flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#9DFF00] animate-pulse" />
                   <span>main.{codingLang === "python" ? "py" : codingLang}</span>
                 </span>
 
@@ -496,16 +501,16 @@ function CompanyExamSimulatorContent() {
                   <button
                     onClick={handleRunCode}
                     disabled={executing}
-                    className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-bold transition-all shadow-md disabled:opacity-50 active:scale-95"
+                    className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#9DFF00] hover:bg-[#8CE600] text-black font-mono text-xs font-bold transition-all shadow-xs disabled:opacity-50 active:scale-95"
                   >
-                    <Play className="w-3 h-3 fill-white" />
+                    <Play className="w-3 h-3 fill-black text-black" />
                     <span>{executing ? "Running..." : "Run Test Cases"}</span>
                   </button>
                 </div>
               </div>
 
               {/* Monaco Code Editor */}
-              <div className="flex-1">
+              <div className="flex-1 bg-[#0D1117]">
                 <MonacoEditor
                   height="100%"
                   language={codingLang}
@@ -537,33 +542,33 @@ function CompanyExamSimulatorContent() {
           >
             {/* Header Badge */}
             <div className="text-center space-y-2">
-              <div className="w-16 h-16 rounded-3xl bg-indigo-50 border border-indigo-200 text-indigo-700 mx-auto flex items-center justify-center shadow-md">
+              <div className="w-16 h-16 rounded-2xl bg-[#9DFF00]/10 border border-[#9DFF00]/30 text-[#9DFF00] mx-auto flex items-center justify-center shadow-lg">
                 <Trophy className="w-8 h-8" />
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
                 {company.name} Complete
               </h2>
-              <p className="text-xs text-slate-500 font-mono">
+              <p className="text-xs text-slate-400 font-mono">
                 Candidate: {finalResult.candidate_name} • Roll: {finalResult.roll_no}
               </p>
             </div>
 
             {/* Profile Qualification Bento Card */}
-            <div className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-luxury space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+            <div className="p-8 rounded-2xl bg-[#161B22] border border-slate-800 shadow-xl space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
                 <div>
-                  <div className="text-xs font-mono uppercase tracking-wider text-slate-500 font-bold">
+                  <div className="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold">
                     Recruiter Profile Qualification
                   </div>
-                  <div className="text-xl font-extrabold text-slate-900 mt-1 flex items-center gap-2">
-                    <Award className="w-5 h-5 text-indigo-600" />
+                  <div className="text-xl font-extrabold text-white mt-1 flex items-center gap-2">
+                    <Award className="w-5 h-5 text-[#9DFF00]" />
                     <span>{finalResult.qualified_profile}</span>
                   </div>
                 </div>
 
                 <div className="text-left sm:text-right">
-                  <div className="text-xs font-mono text-slate-500 font-medium">Total Score</div>
-                  <div className="text-3xl font-extrabold font-mono text-emerald-600">
+                  <div className="text-xs font-mono text-slate-400 font-medium">Total Score</div>
+                  <div className="text-3xl font-extrabold font-mono text-[#9DFF00]">
                     {finalResult.total_score} / {finalResult.max_score}
                   </div>
                 </div>
@@ -571,41 +576,41 @@ function CompanyExamSimulatorContent() {
 
               {/* 3 Sectional Breakdown Bars */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2 font-mono">
-                  <div className="text-slate-500 text-xs font-medium">Section 1: Quantitative</div>
-                  <div className="text-xl font-bold text-slate-900">{finalResult.quant_score} / 5</div>
-                  <div className="text-[11px] text-slate-400">Numerical Ability</div>
+                <div className="p-5 rounded-xl bg-[#0D1117] border border-slate-800 space-y-2 font-mono">
+                  <div className="text-slate-400 text-xs font-medium">Section 1: Quantitative</div>
+                  <div className="text-xl font-bold text-white">{finalResult.quant_score} / 5</div>
+                  <div className="text-[11px] text-slate-500">Numerical Ability</div>
                 </div>
 
-                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2 font-mono">
-                  <div className="text-slate-500 text-xs font-medium">Section 2: Logical & CS</div>
-                  <div className="text-xl font-bold text-slate-900">{finalResult.logic_score} / 5</div>
-                  <div className="text-[11px] text-slate-400">Reasoning & Tech</div>
+                <div className="p-5 rounded-xl bg-[#0D1117] border border-slate-800 space-y-2 font-mono">
+                  <div className="text-slate-400 text-xs font-medium">Section 2: Logical & CS</div>
+                  <div className="text-xl font-bold text-white">{finalResult.logic_score} / 5</div>
+                  <div className="text-[11px] text-slate-500">Reasoning & Tech</div>
                 </div>
 
-                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2 font-mono">
-                  <div className="text-slate-500 text-xs font-medium">Section 3: Hands-On Code</div>
-                  <div className="text-xl font-bold text-emerald-600">
+                <div className="p-5 rounded-xl bg-[#0D1117] border border-slate-800 space-y-2 font-mono">
+                  <div className="text-slate-400 text-xs font-medium">Section 3: Hands-On Code</div>
+                  <div className="text-xl font-bold text-[#9DFF00]">
                     {finalResult.code_score} / 10
                   </div>
-                  <div className="text-[11px] text-slate-400">
+                  <div className="text-[11px] text-slate-500">
                     {solvedProblemIds.length} of 2 Problems Solved
                   </div>
                 </div>
               </div>
 
               {/* CTAs */}
-              <div className="flex flex-wrap items-center justify-between gap-4 pt-5 border-t border-slate-100">
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-5 border-t border-slate-800">
                 <button
                   onClick={() => router.push("/student/dashboard")}
-                  className="px-5 py-2.5 rounded-2xl text-xs font-mono font-semibold text-slate-700 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors"
+                  className="px-5 py-2.5 rounded-xl text-xs font-mono font-semibold text-slate-300 hover:text-white bg-[#0D1117] hover:bg-slate-800 border border-slate-800 transition-colors"
                 >
                   Return to Student Hub
                 </button>
 
                 <button
                   onClick={() => router.push("/student/drives")}
-                  className="flex items-center gap-2 px-6 py-2.5 rounded-2xl btn-luxury-primary text-white font-bold text-xs font-mono transition-all shadow-md active:scale-95"
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs font-mono transition-all shadow-md active:scale-95"
                 >
                   <span>Apply to Campus Drives with Score</span>
                   <ArrowRight className="w-4 h-4" />

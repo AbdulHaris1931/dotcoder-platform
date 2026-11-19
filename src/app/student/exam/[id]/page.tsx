@@ -8,7 +8,6 @@ import { DemoStore } from "@/lib/demo-store";
 import { AssessmentRegistry } from "@/lib/assessment-registry";
 import { runPythonCode } from "@/lib/pyodide-runner";
 import { compareOutputs } from "@/lib/utils";
-import { MarkdownRenderer } from "@/components/shared/markdown-renderer";
 import { AssessmentService } from "@/lib/services/assessment-service";
 import {
   AssessmentAttempt,
@@ -22,6 +21,7 @@ import {
   SupportedLanguage,
   ProctorViolationLog,
 } from "@/types";
+import { MarkdownRenderer } from "@/components/shared/markdown-renderer";
 import {
   ShieldAlert,
   ShieldCheck,
@@ -31,8 +31,8 @@ import {
   Bookmark,
   ChevronLeft,
   ChevronRight,
-  ArrowRight,
   Maximize2,
+  Minimize2,
   Send,
   Code2,
   Lock,
@@ -43,16 +43,11 @@ import {
   Copy,
   ExternalLink,
   Sparkles,
-  Home,
-  BarChart3,
-  Trophy,
-  BookOpen,
-  Settings,
-  Flame,
-  Bell,
-  Check,
-  Search,
-  SlidersHorizontal,
+  Menu,
+  LayoutGrid,
+  X,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 type QuestionStatus = "not_visited" | "current" | "answered" | "marked_review";
@@ -96,8 +91,10 @@ export default function ProctoredExamRoomPage() {
 
   // Palette Filter: All, MCQ, Coding
   const [paletteFilter, setPaletteFilter] = useState<"ALL" | "MCQ" | "CODING">("ALL");
-  const [isPaletteOpen, setIsPaletteOpen] = useState<boolean>(true);
-  const [questionSearchQuery, setQuestionSearchQuery] = useState<string>("");
+  const [isPaletteOpen, setIsPaletteOpen] = useState<boolean>(false);
+  const [isEditorMaximized, setIsEditorMaximized] = useState<boolean>(false);
+  const [isBottomCollapsed, setIsBottomCollapsed] = useState<boolean>(false);
+  const [activeBottomTab, setActiveBottomTab] = useState<"cases" | "results" | "console">("cases");
 
   // 1. Initialize Exam & User State
   useEffect(() => {
@@ -521,25 +518,6 @@ export default function ProctoredExamRoomPage() {
     );
   }
 
-  const allProblems = assessment.problems || [];
-  const mcqCount = allProblems.filter((p) => p.type === "mcq").length;
-  const codingCount = allProblems.filter((p) => p.type === "coding").length;
-  const totalCount = allProblems.length;
-
-  const filteredProblems = allProblems.filter((p, idx) => {
-    if (paletteFilter === "MCQ" && p.type !== "mcq") return false;
-    if (paletteFilter === "CODING" && p.type !== "coding") return false;
-    if (questionSearchQuery.trim()) {
-      const q = questionSearchQuery.toLowerCase();
-      return (
-        p.title.toLowerCase().includes(q) ||
-        `q${idx + 1}`.includes(q) ||
-        (p.company_tags || []).some((t) => t.toLowerCase().includes(q))
-      );
-    }
-    return true;
-  });
-
   return (
     <div
       ref={examContainerRef}
@@ -547,7 +525,7 @@ export default function ProctoredExamRoomPage() {
       onCut={handleSecurityBlock}
       onPaste={handleSecurityBlock}
       onContextMenu={handleSecurityBlock}
-      className="h-screen w-screen select-none bg-[#0C1017] text-slate-100 overflow-hidden font-sans flex flex-col"
+      className="h-screen w-screen select-none bg-[#0D1117] text-slate-200 overflow-hidden font-sans flex flex-col"
     >
       {/* Red Alert Modal for Proctoring Violations */}
       <AnimatePresence>
@@ -563,7 +541,7 @@ export default function ProctoredExamRoomPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-md bg-[#121824] border-2 border-rose-500 rounded-3xl p-6 text-white space-y-4 shadow-2xl"
+              className="relative w-full max-w-md bg-[#161D2E] border-2 border-rose-500 rounded-3xl p-6 text-white space-y-4 shadow-2xl z-10"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center flex-shrink-0 border border-rose-500/30">
@@ -574,25 +552,26 @@ export default function ProctoredExamRoomPage() {
                     Proctoring Violation Flagged!
                   </h3>
                   <div className="text-[11px] text-rose-300 font-mono">
-                    Violation {tabSwitches} logged to Placement Cell
+                    Violation {tabSwitches} logged to Institutional Audit Log
                   </div>
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-rose-950/40 border border-rose-800 text-xs text-rose-200 leading-relaxed font-mono">
+              <div className="p-3.5 rounded-xl bg-rose-950/40 border border-rose-800/40 text-xs text-rose-200 leading-relaxed font-mono">
                 {currentViolationMsg}
               </div>
 
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                All tab switching, fullscreen escapes, and clipboard attempts are permanently timestamped and attached to your placement audit score.
+                All tab switching, browser escapes, and window blurs are cryptographically recorded and attached to your verified accreditation record.
               </p>
 
               <button
+                type="button"
                 onClick={() => {
                   setShowViolationModal(false);
                   triggerFullscreen();
                 }}
-                className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl shadow-md transition-all active:scale-[0.98]"
+                className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl shadow-md transition-all active:scale-[0.98] cursor-pointer"
               >
                 Return to Fullscreen Exam
               </button>
@@ -601,626 +580,652 @@ export default function ProctoredExamRoomPage() {
         )}
       </AnimatePresence>
 
-      {/* ========================================================================= */}
-      {/* 1. TOP GLOBAL NAVIGATION BAR (Exact Match to Figma & UI Reference)       */}
-      {/* ========================================================================= */}
-      <header className="h-14 border-b border-[#1A2332] bg-[#0E131F] px-4 flex items-center justify-between flex-shrink-0 z-30">
-        {/* Left: Brand & DotExam Badge */}
+      {/* ================================================================= */}
+      {/* 1. TOP GLOBAL NAVBAR (Matching DotLab Workspace Aesthetic)        */}
+      {/* ================================================================= */}
+      <header className="h-13 border-b border-[#1E293B] bg-[#0D1117] px-4 flex items-center justify-between flex-shrink-0 z-30">
+        {/* Left: Brand & DotExam Pill */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-[#9DFF00] text-black flex items-center justify-center font-mono font-black text-sm">
+            <div className="w-7 h-7 rounded-lg bg-[#9DFF00] text-black flex items-center justify-center font-mono font-black text-xs shadow-sm">
               &lt;/&gt;
             </div>
-            <span className="font-extrabold text-base tracking-tight text-white font-sans">
+            <span className="text-base font-black tracking-tight text-white">
               DotCoder
             </span>
           </div>
-
-          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-[#132B1A] text-[#9DFF00] border border-[#1F4526] shadow-xs">
-            DotExam Proctored
+          <span className="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-[#9DFF00]/15 text-[#9DFF00] border border-[#9DFF00]/30 tracking-wide">
+            DotExam
+          </span>
+          <div className="hidden sm:block text-slate-500 text-xs font-mono">&bull;</div>
+          <span className="hidden sm:inline text-xs font-semibold text-slate-300 truncate max-w-xs">
+            {assessment.title}
           </span>
         </div>
 
-        {/* Center: Exam Title & Accreditation Target */}
-        <div className="hidden md:flex items-center gap-2 text-xs font-sans">
-          <span className="font-bold text-white truncate max-w-md">
-            {assessment.title || "Campus Placement Screening Mock 2026"}
-          </span>
-          <span className="text-slate-500 font-mono">&bull;</span>
-          <span className="text-slate-400 font-mono text-[11px]">
-            AVASC-TNJ (NAAC 5.2.1 Verified)
-          </span>
-        </div>
-
-        {/* Right: Anti-Cheat Score, Timer & User Avatar */}
+        {/* Center: Live Timer & Anti-Cheat Integrity Badges */}
         <div className="flex items-center gap-3">
-          {/* Anti-Cheat Score Pill */}
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#141A26] border border-[#1F293D] text-xs font-semibold text-emerald-400">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#9DFF00]" />
-            <span className="font-mono">Anti-Cheat: 100%</span>
+          {/* Live Countdown Timer Pill */}
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#141B2D] border border-[#1E293B] font-mono font-bold text-xs text-white shadow-xs">
+            <Clock className={`w-3.5 h-3.5 ${timeLeftSeconds < 300 ? "text-rose-400 animate-pulse" : "text-amber-400"}`} />
+            <span>{formatTime(timeLeftSeconds)}</span>
           </div>
 
-          {/* Countdown Timer */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#161D27] border border-[#212C3D] font-mono font-bold text-xs text-white">
-            <Clock className="w-3.5 h-3.5 text-amber-400" />
-            <span className="tabular-nums">{formatTime(timeLeftSeconds)}</span>
+          {/* Anti-Cheat Integrity Badge */}
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold shadow-xs">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span>{Math.max(0, 100 - tabSwitches * 10)}% Integrity</span>
           </div>
+        </div>
 
-          {/* User Avatar Circle */}
-          <div
-            className="w-8 h-8 rounded-full bg-[#B5F500] text-black font-extrabold font-mono text-xs flex items-center justify-center shadow-md"
-            title={`${currentUser?.full_name || "Student"} (${currentUser?.roll_no || "23BCA01"})`}
+        {/* Right: Fullscreen Toggle & Submit Exam Button */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={triggerFullscreen}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
           >
-            K
-          </div>
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleFinalSubmit(false)}
+            disabled={isSubmitting}
+            className="inline-flex items-center gap-1.5 px-5 py-1.5 rounded-lg bg-[#9DFF00] hover:bg-[#8CE600] text-black text-xs font-bold shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+          >
+            {isSubmitting ? (
+              <>
+                <span className="w-2.5 h-2.5 rounded-full border-2 border-black border-t-transparent animate-spin" />
+                <span>Submitting...</span>
+              </>
+            ) : (
+              <span>Submit Exam</span>
+            )}
+          </button>
         </div>
       </header>
 
-      {/* ========================================================================= */}
-      {/* 2. MAIN WORKSPACE CANVAS (Slim Rail + Palette Drawer + Question Body)     */}
-      {/* ========================================================================= */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* ----------------------------------------------------------------------- */}
-        {/* 2.1 SLIM FAR-LEFT ICON RAIL (56px)                                     */}
-        {/* ----------------------------------------------------------------------- */}
-        <aside className="w-14 bg-[#0B0F17] border-r border-[#1A2332] flex flex-col justify-between items-center py-4 flex-shrink-0 z-20">
-          <div className="flex flex-col items-center gap-5">
+      {/* ================================================================= */}
+      {/* 2. MAIN BODY (Slim Icon Rail + Split Workspace Panes)              */}
+      {/* ================================================================= */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* =============================================================== */}
+        {/* 2A. SLIM FAR-LEFT ACTIVITY RAIL (Width ~48px)                   */}
+        {/* =============================================================== */}
+        <aside className="w-12 border-r border-[#1E293B] bg-[#0B0F17] flex flex-col justify-between py-3 items-center shrink-0 z-20">
+          <div className="space-y-3 flex flex-col items-center">
+            {/* Question Palette Drawer Toggle */}
             <button
               type="button"
-              onClick={() => router.push("/student/dashboard")}
-              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
-              title="Dashboard"
+              onClick={() => setIsPaletteOpen((p) => !p)}
+              className="p-2 rounded-lg text-slate-400 hover:text-[#9DFF00] hover:bg-white/5 transition-colors cursor-pointer"
+              title="Open Question Palette"
             >
-              <Home className="w-5 h-5" />
+              <LayoutGrid className="w-4 h-4" />
             </button>
 
-            {/* Active Code / Exam Icon */}
+            {/* Question Number Indicator Pill (e.g. Q. 1/7) */}
             <div
-              className="p-2 rounded-xl bg-[#B5F500] text-black shadow-md shadow-[#9DFF00]/10"
-              title="Proctored Exam"
+              onClick={() => setIsPaletteOpen((p) => !p)}
+              className="px-1 py-0.5 rounded bg-[#9DFF00]/15 text-[#9DFF00] border border-[#9DFF00]/30 font-mono text-[9px] font-bold text-center tracking-tighter cursor-pointer"
+              title="Click to toggle Question Palette"
             >
-              <Code2 className="w-5 h-5 text-black" />
+              Q.{currentIndex + 1}
             </div>
 
+            <div className="w-6 h-px bg-[#1E293B]" />
+
+            {/* Bookmark Question Icon Button */}
             <button
               type="button"
-              onClick={() => router.push("/student/dashboard#progress")}
-              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
-              title="Progress & Skills"
+              onClick={toggleMarkReview}
+              className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                answers[currentProblem.id]?.isMarkedReview
+                  ? "text-purple-400 bg-purple-500/10"
+                  : "text-slate-400 hover:text-purple-400 hover:bg-white/5"
+              }`}
+              title="Mark for Review"
             >
-              <BarChart3 className="w-5 h-5" />
+              <Bookmark className={`w-4 h-4 ${answers[currentProblem.id]?.isMarkedReview ? "fill-purple-400" : ""}`} />
             </button>
 
-            <button
-              type="button"
-              onClick={() => router.push("/student/drives")}
-              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
-              title="Placement Drives"
+            {/* Proctor Security Status */}
+            <div
+              className={`p-2 rounded-lg cursor-default ${
+                tabSwitches > 0 ? "text-amber-400" : "text-emerald-400"
+              }`}
+              title={`${tabSwitches} security violations logged`}
             >
-              <Trophy className="w-5 h-5" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => router.push("/curriculum")}
-              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
-              title="Curriculum"
-            >
-              <BookOpen className="w-5 h-5" />
-            </button>
+              <ShieldCheck className="w-4 h-4" />
+            </div>
           </div>
 
-          <div>
-            <button
-              type="button"
-              onClick={() => router.push("/admin/dashboard#settings")}
-              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
-              title="Settings"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-          </div>
+          {/* Bottom Fullscreen Icon */}
+          <button
+            type="button"
+            onClick={triggerFullscreen}
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+            title="Toggle Fullscreen"
+          >
+            <Maximize2 className="w-4 h-4" />
+          </button>
         </aside>
 
-        {/* ----------------------------------------------------------------------- */}
-        {/* 2.2 COLLAPSIBLE QUESTION DRAWER (300px matching Reference Image)        */}
-        {/* ----------------------------------------------------------------------- */}
+        {/* Slide-over Question Palette Drawer when isPaletteOpen is true */}
         {isPaletteOpen && (
-          <aside className="w-[300px] bg-[#0E131E] border-r border-[#1A2332] flex flex-col justify-between flex-shrink-0 animate-in slide-in-from-left duration-200 z-10">
-            <div className="flex-1 flex flex-col min-h-0">
-              {/* Header: < Question Palette */}
-              <div className="p-3.5 border-b border-[#1A2332] flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => setIsPaletteOpen(false)}
-                  className="flex items-center gap-1.5 text-xs font-bold text-white hover:text-[#9DFF00] transition-colors"
-                  title="Collapse Palette"
-                >
-                  <ChevronLeft className="w-4 h-4 text-slate-400" />
-                  <span>Question Palette</span>
-                </button>
-                <span className="text-[10px] font-mono text-slate-500">
-                  {totalCount} Questions
-                </span>
-              </div>
-
-              {/* Search & Filter Controls */}
-              <div className="p-3 space-y-2.5 border-b border-[#1A2332]">
-                <div className="relative flex items-center gap-2">
-                  <div className="relative flex-1">
-                    <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      placeholder="Search questions..."
-                      value={questionSearchQuery}
-                      onChange={(e) => setQuestionSearchQuery(e.target.value)}
-                      className="w-full pl-8 pr-3 py-1.5 bg-[#141A26] border border-[#1F293D] rounded-xl text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-[#9DFF00] transition-colors"
-                    />
+          <>
+            <div
+              onClick={() => setIsPaletteOpen(false)}
+              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in"
+            />
+            <aside className="fixed inset-y-0 left-12 z-50 w-72 bg-[#121824] border-r border-[#1E293B] shadow-2xl p-5 flex flex-col justify-between animate-in slide-in-from-left">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-[#1E293B] pb-3">
+                  <div className="flex items-center gap-2 font-bold text-white text-sm">
+                    <LayoutGrid className="w-4 h-4 text-[#9DFF00]" />
+                    <span>Question Palette</span>
                   </div>
                   <button
-                    type="button"
-                    onClick={() => setPaletteFilter("ALL")}
-                    className="p-1.5 rounded-xl border border-[#1F293D] bg-[#141A26] text-slate-400 hover:text-white"
-                    title="Reset Filter"
+                    onClick={() => setIsPaletteOpen(false)}
+                    className="p-1 rounded text-slate-400 hover:text-white"
                   >
-                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
 
-                {/* Filter Pills: All, MCQ, Coding */}
-                <div className="grid grid-cols-3 gap-1 text-[11px] font-mono">
-                  {(["ALL", "MCQ", "CODING"] as const).map((filter) => {
-                    const count =
-                      filter === "ALL" ? totalCount : filter === "MCQ" ? mcqCount : codingCount;
-                    const isSelected = paletteFilter === filter;
+                {/* Filter Pills: Dynamic All, MCQ, Coding */}
+                {(() => {
+                  const allProblems = assessment.problems || [];
+                  const mcqCount = allProblems.filter((p) => p.type === "mcq").length;
+                  const codingCount = allProblems.filter((p) => p.type === "coding").length;
+                  const totalCount = allProblems.length;
+
+                  return (
+                    <div className="flex items-center gap-1.5 p-1 bg-[#0B0F17] rounded-xl text-xs font-mono border border-[#1E293B]">
+                      <button
+                        type="button"
+                        onClick={() => setPaletteFilter("ALL")}
+                        className={`flex-1 py-1.5 px-2 rounded-lg font-bold text-center transition-all cursor-pointer ${
+                          paletteFilter === "ALL"
+                            ? "bg-[#9DFF00] text-black shadow-xs"
+                            : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        All {totalCount}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPaletteFilter("MCQ")}
+                        className={`flex-1 py-1.5 px-2 rounded-lg font-bold text-center transition-all cursor-pointer ${
+                          paletteFilter === "MCQ"
+                            ? "bg-[#9DFF00] text-black shadow-xs"
+                            : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        MCQ {mcqCount}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPaletteFilter("CODING")}
+                        className={`flex-1 py-1.5 px-2 rounded-lg font-bold text-center transition-all cursor-pointer ${
+                          paletteFilter === "CODING"
+                            ? "bg-[#9DFF00] text-black shadow-xs"
+                            : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        Coding {codingCount}
+                      </button>
+                    </div>
+                  );
+                })()}
+
+                {/* Tactile Question Circular Pills */}
+                <div className="grid grid-cols-5 gap-2.5 pt-1">
+                  {(assessment.problems || []).map((prob, idx) => {
+                    if (paletteFilter === "MCQ" && prob.type !== "mcq") return null;
+                    if (paletteFilter === "CODING" && prob.type !== "coding") return null;
+
+                    const isCurrent = idx === currentIndex;
+                    const ans = answers[prob.id];
+                    const isAnswered =
+                      prob.type === "mcq"
+                        ? !!ans?.selectedOption
+                        : !!(ans?.code && ans.code.trim().length > 20 && ans.code !== prob.starter_code_json?.python);
+                    const isMarked = !!ans?.isMarkedReview;
 
                     return (
                       <button
-                        key={filter}
-                        type="button"
-                        onClick={() => setPaletteFilter(filter)}
-                        className={`py-1 rounded-lg font-bold text-center transition-all ${
-                          isSelected
-                            ? "bg-[#B5F500] text-black shadow-xs"
-                            : "bg-[#141A26] text-slate-400 hover:text-white border border-[#1F293D]"
+                        key={prob.id || idx}
+                        onClick={() => {
+                          navigateTo(idx);
+                          setIsPaletteOpen(false);
+                        }}
+                        className={`w-10 h-10 rounded-full text-xs font-mono font-bold transition-all flex items-center justify-center relative cursor-pointer ${
+                          isCurrent
+                            ? "bg-slate-900 text-white ring-2 ring-[#9DFF00] ring-offset-2 ring-offset-[#121824]"
+                            : isAnswered
+                            ? "bg-emerald-950/40 text-emerald-400 border-2 border-emerald-500 font-extrabold"
+                            : isMarked
+                            ? "bg-purple-950/40 text-purple-400 border-2 border-purple-400 font-bold"
+                            : "bg-[#141B2D] text-slate-400 border border-[#1E293B] hover:text-white hover:bg-white/5"
                         }`}
                       >
-                        {filter === "ALL" ? `All (${count})` : filter === "MCQ" ? `MCQ (${count})` : `Coding (${count})`}
+                        <span>{idx + 1}</span>
+                        {isAnswered && !isCurrent && (
+                          <span className="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        )}
                       </button>
                     );
                   })}
                 </div>
+
+                {/* Status Legend */}
+                <div className="pt-4 border-t border-[#1E293B] space-y-2 text-xs font-mono text-slate-400">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                    <span>Answered</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-slate-600" />
+                    <span>Not Answered</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
+                    <span>Marked for Review</span>
+                  </div>
+                </div>
               </div>
 
-              {/* Scrollable Questions List */}
-              <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                {allProblems.map((prob, idx) => {
-                  if (paletteFilter === "MCQ" && prob.type !== "mcq") return null;
-                  if (paletteFilter === "CODING" && prob.type !== "coding") return null;
-                  if (
-                    questionSearchQuery.trim() &&
-                    !prob.title.toLowerCase().includes(questionSearchQuery.toLowerCase()) &&
-                    !String(idx + 1).includes(questionSearchQuery)
-                  ) {
-                    return null;
-                  }
-
-                  const isCurrent = idx === currentIndex;
-                  const ans = answers[prob.id];
-                  const isAnswered =
-                    prob.type === "mcq"
-                      ? !!ans?.selectedOption
-                      : !!(ans?.code && ans.code.trim().length > 20 && ans.code !== prob.starter_code_json?.python);
-                  const isMarked = !!ans?.isMarkedReview;
-
-                  if (isCurrent) {
-                    return (
-                      <div
-                        key={prob.id || idx}
-                        className="bg-[#B5F500] text-black rounded-2xl p-3 shadow-md flex items-start justify-between cursor-pointer"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <Check className="w-3.5 h-3.5 text-black stroke-[3]" />
-                            <h4 className="font-bold text-xs font-sans truncate text-black">
-                              Q{idx + 1}. {prob.title}
-                            </h4>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-[10px] font-mono">
-                            <span className="px-2 py-0.5 rounded-full bg-black/10 text-black font-semibold uppercase">
-                              {prob.type}
-                            </span>
-                            <span className="px-2 py-0.5 rounded-full bg-black/10 text-black">
-                              {prob.difficulty}
-                            </span>
-                          </div>
-                        </div>
-
-                        {isMarked && (
-                          <span className="p-1 text-black font-bold" title="Marked for Review">
-                            <Bookmark className="w-3.5 h-3.5 fill-black" />
-                          </span>
-                        )}
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div
-                      key={prob.id || idx}
-                      onClick={() => navigateTo(idx)}
-                      className="bg-[#121824]/60 hover:bg-[#161F2E] border border-transparent hover:border-[#212C3D] rounded-2xl p-3 transition-all cursor-pointer flex items-start justify-between group"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <Check
-                            className={`w-3.5 h-3.5 ${
-                              isAnswered ? "text-[#9DFF00] stroke-[2.5]" : "text-slate-600"
-                            }`}
-                          />
-                          <h4 className="font-semibold text-xs text-white truncate group-hover:text-[#9DFF00] transition-colors">
-                            Q{idx + 1}. {prob.title}
-                          </h4>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[10px] font-mono">
-                          <span
-                            className={`px-2 py-0.5 rounded-full font-semibold uppercase ${
-                              prob.type === "coding"
-                                ? "bg-[#132B1D] text-[#4ADE80]"
-                                : "bg-[#182030] text-sky-400"
-                            }`}
-                          >
-                            {prob.type}
-                          </span>
-                          <span className="px-2 py-0.5 rounded-full bg-[#182030] text-slate-400">
-                            {prob.difficulty}
-                          </span>
-                        </div>
-                      </div>
-
-                      {isMarked && (
-                        <span className="p-1 text-purple-400" title="Marked for Review">
-                          <Bookmark className="w-3.5 h-3.5 fill-purple-400 text-purple-400" />
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
+              <div className="pt-3 border-t border-[#1E293B] text-[11px] text-slate-500 font-mono">
+                Proctored Room &bull; AVASC Academic
               </div>
-            </div>
-
-            {/* Bottom Drawer Bar: < > Question X of Y */}
-            <div className="p-3 border-t border-[#1A2332] flex items-center justify-between text-xs font-mono text-slate-400">
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => navigateTo(Math.max(0, currentIndex - 1))}
-                  disabled={currentIndex === 0}
-                  className="p-1 rounded hover:bg-white/10 hover:text-white transition-colors disabled:opacity-30"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigateTo(Math.min(totalCount - 1, currentIndex + 1))}
-                  disabled={currentIndex === totalCount - 1}
-                  className="p-1 rounded hover:bg-white/10 hover:text-white transition-colors disabled:opacity-30"
-                >
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              <span>
-                Question {currentIndex + 1} of {totalCount}
-              </span>
-            </div>
-          </aside>
+            </aside>
+          </>
         )}
 
-        {/* ----------------------------------------------------------------------- */}
-        {/* 2.3 QUESTION WORKSPACE CORE (MCQ vs Coding Split)                      */}
-        {/* ----------------------------------------------------------------------- */}
-        <main className="flex-1 flex flex-col bg-[#0B0F17] overflow-hidden">
-          {/* Subheader Toolbar */}
-          <div className="h-10 border-b border-[#1A2332] bg-[#0E131E] px-4 sm:px-6 flex items-center justify-between flex-shrink-0 text-xs font-sans">
-            <div className="flex items-center gap-3">
-              {!isPaletteOpen && (
-                <button
-                  type="button"
-                  onClick={() => setIsPaletteOpen(true)}
-                  className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/5 mr-1"
-                  title="Expand Question Palette"
-                >
-                  <ChevronRight className="w-4 h-4 text-[#9DFF00]" />
-                </button>
-              )}
-
+        {/* =============================================================== */}
+        {/* 2B. LEFT WORKSPACE PANE (Question Statement & Formatting)       */}
+        {/* =============================================================== */}
+        <div
+          className={`${
+            isEditorMaximized ? "hidden" : "w-1/2"
+          } flex flex-col border-r border-[#1E293B] bg-[#0B0F17] overflow-hidden`}
+        >
+          {/* Subheader: Q. X of Y, Badges & Bookmark */}
+          <div className="h-12 border-b border-[#1E293B] bg-[#0E131F] px-6 flex items-center justify-between text-xs flex-shrink-0">
+            <div className="flex items-center gap-2.5">
               <span className="font-bold text-white text-sm">
-                Q. {currentIndex + 1} of {totalCount} ({currentProblem.type === "mcq" ? "MCQ" : "Coding"})
+                Q. {currentIndex + 1} of {assessment.problems?.length || 0}
               </span>
-
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-[#141A26] border border-[#1F293D] text-slate-400">
-                {currentProblem.difficulty}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={toggleMarkReview}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold border transition-all ${
-                  answers[currentProblem.id]?.isMarkedReview
-                    ? "bg-purple-950/40 text-purple-300 border-purple-500/50"
-                    : "text-slate-400 hover:text-white border-[#1F293D] bg-[#141A26]"
+              <span
+                className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider ${
+                  currentProblem.type === "coding"
+                    ? "bg-sky-950/50 text-sky-400 border border-sky-800/40"
+                    : "bg-purple-950/50 text-purple-400 border border-purple-800/40"
                 }`}
-                title="Mark for Review"
               >
-                <Bookmark className={`w-3.5 h-3.5 ${answers[currentProblem.id]?.isMarkedReview ? "fill-purple-400 text-purple-400" : ""}`} />
-                <span>{answers[currentProblem.id]?.isMarkedReview ? "Marked" : "Mark Review"}</span>
-              </button>
+                {currentProblem.type === "coding" ? "Coding Problem" : "Multiple Choice"}
+              </span>
+              <span className="text-slate-500 text-[11px] font-mono">20 pts</span>
             </div>
+
+            <button
+              type="button"
+              onClick={toggleMarkReview}
+              className={`p-1.5 rounded-lg border transition-colors flex items-center gap-1.5 text-xs font-mono cursor-pointer ${
+                answers[currentProblem.id]?.isMarkedReview
+                  ? "bg-purple-950/40 text-purple-300 border-purple-400"
+                  : "text-slate-400 hover:text-white border-[#1E293B] hover:bg-white/5"
+              }`}
+              title="Bookmark for Review"
+            >
+              <Bookmark className={`w-3.5 h-3.5 ${answers[currentProblem.id]?.isMarkedReview ? "fill-purple-400 text-purple-400" : ""}`} />
+              <span className="hidden sm:inline">
+                {answers[currentProblem.id]?.isMarkedReview ? "Marked" : "Review"}
+              </span>
+            </button>
           </div>
 
-          {/* Core Content Area */}
-          <div className="flex-1 flex overflow-hidden">
-            {currentProblem.type === "coding" ? (
-              /* Coding Question Layout (Split between Specs & Monaco Editor) */
-              <div className="flex-1 flex overflow-hidden">
-                {/* Left Specs Pane */}
-                <div className="w-[380px] lg:w-[440px] border-r border-[#1A2332] bg-[#0E131E] p-5 overflow-y-auto space-y-5 text-sm leading-relaxed text-slate-300">
-                  <div>
-                    <h2 className="text-xl font-bold text-white tracking-tight">
-                      {currentProblem.title}
-                    </h2>
-                    <div className="flex items-center gap-2 mt-2 text-xs font-mono">
-                      <span className="px-2.5 py-0.5 rounded-full bg-[#132B1D] text-[#4ADE80] border border-[#1D4A2B] font-bold">
-                        {currentProblem.difficulty}
-                      </span>
-                      <span className="text-slate-400 font-sans">Algorithmic Problem</span>
-                    </div>
+          {/* Question Statement & Formatted Markdown */}
+          <div className="flex-1 p-6 overflow-y-auto space-y-6 text-sm leading-relaxed text-slate-300">
+            {/* Question Title if distinct */}
+            <h2 className="text-lg font-bold text-white tracking-tight">
+              {currentProblem.title}
+            </h2>
+
+            {/* Description rendered cleanly without raw markdown symbols */}
+            <div className="text-xs sm:text-sm font-sans leading-relaxed text-slate-300 space-y-3">
+              <MarkdownRenderer
+                content={
+                  currentProblem.description_md ||
+                  (currentProblem.type === "coding"
+                    ? "Given an array of integers nums and an integer target, write an optimal function in Python to return indices of the two numbers such that they add up to target."
+                    : "Which of the following algorithmic properties or data structures follows the specified discipline?")
+                }
+              />
+            </div>
+
+            {/* Coding Problem Formatted Sections */}
+            {currentProblem.type === "coding" && (
+              <div className="space-y-4 pt-2">
+                {/* Example 1 Card */}
+                <div className="space-y-1.5">
+                  <div className="text-xs font-mono font-bold text-slate-400">
+                    Example 1
                   </div>
-
-                  <div className="text-xs sm:text-sm font-sans leading-relaxed text-slate-300">
-                    <MarkdownRenderer
-                      content={
-                        currentProblem.description_md ||
-                        "Given an array of integers nums and an integer target, write an optimal function in Python to return indices of the two numbers such that they add up to target."
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-1.5 font-mono text-xs">
-                    <span className="font-bold text-white font-sans text-xs">Sample Input:</span>
-                    <div className="p-3 rounded-xl bg-[#141A26] border border-[#1F293D] text-emerald-300">
-                      2 7 11 15\n9
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5 font-mono text-xs">
-                    <span className="font-bold text-white font-sans text-xs">Sample Output:</span>
-                    <div className="p-3 rounded-xl bg-[#141A26] border border-[#1F293D] text-[#9DFF00]">
-                      0 1
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Editor & Sandbox */}
-                <div className="flex-1 flex flex-col bg-[#0B0F17] overflow-hidden">
-                  <div className="h-10 border-b border-[#1A2332] bg-[#0E131E] px-4 flex items-center justify-between flex-shrink-0">
-                    <div className="flex items-center gap-2 text-xs font-mono text-slate-300">
-                      <Code2 className="w-4 h-4 text-[#9DFF00]" />
-                      <span className="font-bold text-white">solution.py</span>
-                      <span className="text-slate-500 text-[10px]">&bull; Python 3.10 Sandbox</span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleCodeChange(
-                            currentProblem.starter_code_json?.python ||
-                              "def solve(nums, target):\n    # Write optimal logic here\n    pass\n"
-                          )
-                        }
-                        className="p-1 text-slate-400 hover:text-white text-xs flex items-center gap-1"
-                        title="Reset code"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        <span className="text-[11px] font-mono">Reset</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={handleTestExamCode}
-                        disabled={isTestingCode}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#141A26] hover:bg-[#1A2338] border border-[#212C3D] text-white text-xs font-bold transition-all active:scale-95 shadow-xs"
-                      >
-                        <Play className="w-3 h-3 text-[#9DFF00] fill-current" />
-                        <span>{isTestingCode ? "Running..." : "Run Sample Case"}</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Monaco Editor */}
-                  <div className="flex-1 overflow-hidden">
-                    <Editor
-                      height="100%"
-                      language="python"
-                      theme="vs-dark"
-                      value={
-                        answers[currentProblem.id]?.code ||
-                        currentProblem.starter_code_json?.python ||
-                        "def solve(nums, target):\n    # Write optimal logic here\n    pass\n"
-                      }
-                      onChange={(val) => handleCodeChange(val || "")}
-                      options={{
-                        minimap: { enabled: false },
-                        fontSize: 13,
-                        fontFamily: "JetBrains Mono, Menlo, monospace",
-                        lineNumbers: "on",
-                        scrollBeyondLastLine: false,
-                        tabSize: 4,
-                        automaticLayout: true,
-                        padding: { top: 12, bottom: 12 },
-                      }}
-                    />
-                  </div>
-
-                  {/* Test output banner */}
-                  {testOutput && (
-                    <div className="p-3 border-t border-[#1A2332] bg-[#0E131E] font-mono text-xs flex items-center justify-between">
-                      <span className={testOutput.startsWith("PASS") ? "text-emerald-400" : "text-rose-400"}>
-                        {testOutput}
+                  <div className="p-4 rounded-xl bg-[#141B2D]/80 border border-[#1E293B] font-mono text-xs space-y-1 text-slate-300">
+                    <div>
+                      <span className="text-slate-400">Input: </span>
+                      <span className="text-slate-200">
+                        {(currentProblem.test_cases?.[0]?.input || (currentProblem.test_cases?.[0] as any)?.input_data || "nums = [2, 7, 11, 15], target = 9").replace(/\n/g, ", ")}
                       </span>
                     </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              /* MCQ Question Layout */
-              <div className="flex-1 flex overflow-hidden">
-                <div className="flex-1 p-8 overflow-y-auto space-y-6 max-w-3xl">
-                  {/* Prompt */}
-                  <div className="text-base font-semibold text-white leading-relaxed">
-                    {currentProblem.description_md ||
-                      "Which of the following algorithmic properties or data structures correctly satisfies this condition?"}
-                  </div>
-
-                  {/* 4 Option Cards in Dark Theme */}
-                  <div className="space-y-3 pt-2">
-                    {(currentProblem.mcq_options_json || [
-                      "Option A: Constant amortized runtime",
-                      "Option B: Linear space complexity",
-                      "Option C: Logarithmic search tree",
-                      "Option D: Directed acyclic graph",
-                    ]).map((optText, optIdx) => {
-                      const label = String.fromCharCode(65 + optIdx);
-                      const isSelected = answers[currentProblem.id]?.selectedOption === optText;
-
-                      return (
-                        <button
-                          key={optIdx}
-                          type="button"
-                          onClick={() => handleSelectOption(optText)}
-                          className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between shadow-xs ${
-                            isSelected
-                              ? "bg-[#B5F500]/10 border-2 border-[#8BB310] text-white font-semibold"
-                              : "bg-[#141A26] border-[#1F293D] text-slate-200 hover:border-slate-500 hover:bg-[#1A2338]"
-                          }`}
-                        >
-                          <div className="flex items-center gap-4">
-                            <span
-                              className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs font-mono transition-all ${
-                                isSelected
-                                  ? "bg-[#B5F500] text-black shadow-xs font-extrabold"
-                                  : "bg-[#1F293D] text-slate-300"
-                              }`}
-                            >
-                              {label}
-                            </span>
-                            <span className="text-sm">{optText}</span>
-                          </div>
-                          {isSelected && (
-                            <div className="w-5 h-5 rounded-full bg-[#9DFF00] border-2 border-black flex items-center justify-center">
-                              <div className="w-2 h-2 rounded-full bg-black" />
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Right Help / Institutional Compliance Pane */}
-                <div className="w-80 border-l border-[#1A2332] bg-[#0E131E] p-6 space-y-4 hidden lg:block text-xs font-sans">
-                  <div className="p-4 rounded-2xl bg-[#141A26] border border-[#1F293D] space-y-2">
-                    <div className="flex items-center gap-2 text-white font-bold">
-                      <ShieldCheck className="w-4 h-4 text-[#9DFF00]" />
-                      <span>Proctored Session</span>
+                    <div>
+                      <span className="text-slate-400">Output: </span>
+                      <span className="text-[#9DFF00]">
+                        {currentProblem.test_cases?.[0]?.expected_output || "[0, 1]"}
+                      </span>
                     </div>
-                    <p className="text-slate-400 leading-relaxed text-[11px]">
-                      Your selected options are auto-saved to local memory and cryptographically verified upon submission.
-                    </p>
                   </div>
+                </div>
 
-                  <div className="p-4 rounded-2xl bg-[#141A26]/50 border border-[#1F293D] space-y-2">
-                    <span className="font-bold text-slate-300">Examination Instructions:</span>
-                    <ul className="text-slate-400 space-y-1 list-disc ml-4 text-[11px]">
-                      <li>1 mark per correct MCQ.</li>
-                      <li>Coding problems evaluate execution time, memory, and hidden edge cases.</li>
-                      <li>Do not exit fullscreen or switch browser tabs.</li>
-                    </ul>
-                  </div>
+                {/* Constraints Card */}
+                <div className="p-3.5 rounded-xl bg-[#141B2D]/50 border border-[#1E293B] font-mono text-xs text-slate-400 space-y-1">
+                  <div className="text-slate-300 font-bold">&gt; Constraints</div>
+                  <div>&bull; Linear or near-linear time complexity expected.</div>
+                  <div>&bull; Standard memory boundaries apply.</div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* ========================================================================= */}
-          {/* 3. BOTTOM ACTION BAR (Exact Match to Figma & UI Reference)                */}
-          {/* ========================================================================= */}
-          <footer className="h-12 border-t border-[#1A2332] bg-[#0A0D14] px-4 sm:px-6 flex items-center justify-between text-xs flex-shrink-0 z-30 font-sans">
-            {/* Left: < > Question X of Y */}
-            <div className="flex items-center gap-3 font-mono text-slate-400">
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => navigateTo(Math.max(0, currentIndex - 1))}
-                  disabled={currentIndex === 0}
-                  className="p-1 rounded hover:bg-white/10 hover:text-white transition-colors disabled:opacity-30"
-                  title="Previous Question"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigateTo(Math.min(totalCount - 1, currentIndex + 1))}
-                  disabled={currentIndex === totalCount - 1}
-                  className="p-1 rounded hover:bg-white/10 hover:text-white transition-colors disabled:opacity-30"
-                  title="Next Question"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-              <span className="text-xs">
-                Question {currentIndex + 1} of {totalCount}
-              </span>
-            </div>
+          {/* Left Bottom Pagination Status Bar */}
+          <div className="h-10 border-t border-[#1E293B] bg-[#0E131F] px-4 flex items-center justify-between text-xs font-mono text-slate-400 flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => navigateTo(Math.max(0, currentIndex - 1))}
+              disabled={currentIndex === 0}
+              className="hover:text-white disabled:opacity-30 flex items-center gap-1 transition-colors cursor-pointer"
+            >
+              <span>&larr; Previous</span>
+            </button>
+            <span className="text-slate-500">
+              Question {currentIndex + 1} of {assessment.problems?.length || 0}
+            </span>
+            <button
+              type="button"
+              onClick={() => navigateTo(Math.min((assessment.problems?.length || 1) - 1, currentIndex + 1))}
+              disabled={currentIndex >= (assessment.problems?.length || 1) - 1}
+              className="hover:text-white disabled:opacity-30 flex items-center gap-1 transition-colors cursor-pointer"
+            >
+              <span>Next &rarr;</span>
+            </button>
+          </div>
+        </div>
 
-            {/* Right: Previous, Next Question -> or Submit Exam */}
-            <div className="flex items-center gap-3">
+        {/* =============================================================== */}
+        {/* 2C. RIGHT WORKSPACE PANE (Coding IDE or MCQ Cards)               */}
+        {/* =============================================================== */}
+        <div
+          className={`${
+            isEditorMaximized ? "w-full" : "w-1/2"
+          } flex flex-col bg-[#0D1117] overflow-hidden`}
+        >
+          {currentProblem.type === "coding" ? (
+            /* Coding Problem IDE */
+            <div className="h-full flex flex-col">
+              {/* Top Editor Toolbar */}
+              <div className="h-12 border-b border-[#1E293B] bg-[#0E131F] px-4 flex items-center justify-between flex-shrink-0">
+                <div className="flex items-center gap-3">
+                  <select
+                    value={answers[currentProblem.id]?.language || "python"}
+                    onChange={(e) =>
+                      setAnswers((prev) => ({
+                        ...prev,
+                        [currentProblem.id]: {
+                          ...prev[currentProblem.id],
+                          language: e.target.value as any,
+                        },
+                      }))
+                    }
+                    className="bg-[#161D2E] border border-[#232F48] text-white text-xs font-mono rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#9DFF00] cursor-pointer"
+                  >
+                    <option value="python">Python 3.11</option>
+                  </select>
+
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#161D2E] border border-[#232F48] text-white text-xs font-mono">
+                    <span className="font-bold">solution.py</span>
+                    <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-sans">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      Auto-saved
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleCodeChange(
+                        currentProblem.starter_code_json?.python ||
+                          "def solve(nums, target):\n    # Write optimal logic here\n    pass\n"
+                      )
+                    }
+                    className="text-slate-400 hover:text-white text-xs flex items-center gap-1 px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+                    title="Reset Boilerplate Code"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Reset</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsEditorMaximized((m) => !m)}
+                    className="text-slate-400 hover:text-white text-xs flex items-center gap-1 px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+                    title={isEditorMaximized ? "Restore Split View" : "Maximize Editor"}
+                  >
+                    {isEditorMaximized ? (
+                      <Minimize2 className="w-3.5 h-3.5" />
+                    ) : (
+                      <Maximize2 className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+
+                  {/* Run Sample Case Button */}
+                  <button
+                    type="button"
+                    onClick={handleTestExamCode}
+                    disabled={isTestingCode}
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#1A2234] hover:bg-[#242F48] text-white border border-[#2B3954] text-xs font-semibold shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                  >
+                    <Play className="w-3 h-3 fill-current text-[#9DFF00]" />
+                    <span>{isTestingCode ? "Evaluating..." : "Run Sample Case"}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Monaco Editor */}
+              <div className="flex-1 relative overflow-hidden bg-[#0B0F17]">
+                <Editor
+                  height="100%"
+                  language="python"
+                  theme="vs-dark"
+                  value={
+                    answers[currentProblem.id]?.code ||
+                    currentProblem.starter_code_json?.python ||
+                    "def solve(nums, target):\n    # Write optimal logic here\n    pass\n"
+                  }
+                  onChange={(val) => handleCodeChange(val || "")}
+                  options={{
+                    minimap: { enabled: false },
+                    fontSize: 13,
+                    tabSize: 4,
+                    lineNumbers: "on",
+                    scrollBeyondLastLine: false,
+                    automaticLayout: true,
+                    padding: { top: 12 },
+                    fontFamily: "JetBrains Mono, Menlo, Monaco, monospace",
+                  }}
+                />
+              </div>
+
+              {/* Bottom Test Execution Panel */}
+              <div
+                className={`border-t border-[#1E293B] bg-[#0E131F] flex flex-col transition-all duration-200 ${
+                  isBottomCollapsed ? "h-10" : "h-52"
+                } flex-shrink-0`}
+              >
+                <div className="h-10 border-b border-[#1E293B] px-4 flex items-center justify-between text-xs font-mono">
+                  <div className="flex items-center gap-6">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveBottomTab("cases");
+                        setIsBottomCollapsed(false);
+                      }}
+                      className={`font-bold transition-colors cursor-pointer ${
+                        activeBottomTab === "cases"
+                          ? "text-[#9DFF00]"
+                          : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      <span>Test Cases ({currentProblem.test_cases?.length || 1})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveBottomTab("console");
+                        setIsBottomCollapsed(false);
+                      }}
+                      className={`font-bold transition-colors cursor-pointer ${
+                        activeBottomTab === "console"
+                          ? "text-[#9DFF00]"
+                          : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      <span>Console &gt;_</span>
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsBottomCollapsed((c) => !c)}
+                    className="text-slate-400 hover:text-white flex items-center gap-1 text-[11px] cursor-pointer"
+                  >
+                    <span>{isBottomCollapsed ? "Expand" : "Collapse"}</span>
+                    {isBottomCollapsed ? (
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    ) : (
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
+
+                {!isBottomCollapsed && (
+                  <div className="flex-1 p-4 overflow-y-auto font-mono text-xs text-slate-300 space-y-3">
+                    {testOutput ? (
+                      <div
+                        className={`p-3 rounded-xl border text-xs font-mono font-semibold ${
+                          testOutput.startsWith("PASS")
+                            ? "bg-emerald-950/40 text-emerald-300 border-emerald-800/40"
+                            : "bg-rose-950/40 text-rose-300 border-rose-800/40"
+                        }`}
+                      >
+                        {testOutput}
+                      </div>
+                    ) : (
+                      <div className="text-slate-500 font-sans">
+                        Click &lsquo;Run Sample Case&rsquo; to verify code against
+                        sample assertions in Pyodide WASM.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            /* MCQ Option Cards matching Dark Workspace Design */
+            <div className="flex-1 p-8 overflow-y-auto space-y-4 max-w-2xl mx-auto w-full flex flex-col justify-center">
+              <div className="text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">
+                Select one correct option:
+              </div>
+
+              {(currentProblem.mcq_options_json || ["Option A", "Option B", "Option C", "Option D"]).map((optText, optIdx) => {
+                const label = String.fromCharCode(65 + optIdx);
+                const isSelected = answers[currentProblem.id]?.selectedOption === optText;
+
+                return (
+                  <button
+                    key={optIdx}
+                    type="button"
+                    onClick={() => handleSelectOption(optText)}
+                    className={`w-full text-left p-4 rounded-xl border transition-all flex items-center justify-between shadow-xs cursor-pointer ${
+                      isSelected
+                        ? "bg-[#9DFF00]/10 border-2 border-[#9DFF00] text-white font-semibold"
+                        : "bg-[#141B2D] border-[#1E293B] text-slate-300 hover:border-[#334155] hover:bg-[#1A2338]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <span
+                        className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs font-mono transition-all ${
+                          isSelected
+                            ? "bg-[#9DFF00] text-black shadow-xs font-extrabold"
+                            : "bg-[#1A2234] text-slate-300 border border-[#232F48]"
+                        }`}
+                      >
+                        {label}
+                      </span>
+                      <span className="text-sm font-sans">{optText}</span>
+                    </div>
+                    {isSelected && (
+                      <div className="w-5 h-5 rounded-full bg-[#9DFF00] border-2 border-black flex items-center justify-center">
+                        <div className="w-2 h-2 rounded-full bg-black" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Bottom Action Bar */}
+          <footer className="h-14 border-t border-[#1E293B] bg-[#0E131F] px-8 flex items-center justify-between text-xs flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => navigateTo(Math.max(0, currentIndex - 1))}
+              disabled={currentIndex === 0}
+              className="flex items-center gap-2 px-6 py-2 rounded-xl border border-[#1E293B] bg-[#141B2D] text-slate-300 font-semibold hover:text-white hover:bg-slate-800 disabled:opacity-30 transition-colors cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span>Previous</span>
+            </button>
+
+            {currentIndex >= (assessment.problems?.length || 1) - 1 ? (
               <button
                 type="button"
-                onClick={() => navigateTo(Math.max(0, currentIndex - 1))}
-                disabled={currentIndex === 0}
-                className="px-4 py-1.5 rounded-xl border border-[#1F293D] bg-[#141A26] text-slate-300 font-semibold hover:bg-slate-800 disabled:opacity-30 transition-colors"
+                onClick={() => handleFinalSubmit(false)}
+                disabled={isSubmitting}
+                className="flex items-center gap-2 px-7 py-2 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold transition-all shadow-md active:scale-[0.98] cursor-pointer"
               >
-                Previous
+                <span>{isSubmitting ? "Submitting..." : "Submit Exam"}</span>
+                <CheckCircle2 className="w-4 h-4 text-black" />
               </button>
-
-              {currentIndex >= totalCount - 1 ? (
-                <button
-                  type="button"
-                  onClick={() => handleFinalSubmit(false)}
-                  disabled={isSubmitting}
-                  className="inline-flex items-center gap-2 px-6 py-1.5 rounded-full bg-[#B5F500] hover:bg-[#A3E635] text-black font-extrabold text-xs shadow-md active:scale-95 transition-all"
-                >
-                  <span>{isSubmitting ? "Submitting..." : "Submit Exam"}</span>
-                  <CheckCircle2 className="w-4 h-4 text-black" />
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => navigateTo(currentIndex + 1)}
-                  className="inline-flex items-center gap-2 px-5 py-1.5 rounded-full bg-[#B5F500] hover:bg-[#A3E635] text-black font-extrabold text-xs shadow-md active:scale-95 transition-all"
-                >
-                  <span>Next Question</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-black stroke-[2.5]" />
-                </button>
-              )}
-            </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => navigateTo(currentIndex + 1)}
+                className="flex items-center gap-2 px-7 py-2 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold transition-all shadow-md active:scale-[0.98] cursor-pointer"
+              >
+                <span>Next</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
           </footer>
-        </main>
+        </div>
       </div>
     </div>
   );
 }
+
