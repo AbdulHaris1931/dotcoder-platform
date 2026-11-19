@@ -1,5 +1,6 @@
 import { createClient } from "./client";
 import { DemoStore } from "@/lib/demo-store";
+import { CurriculumStore } from "@/lib/curriculum-store";
 import {
   Problem,
   UserProfile,
@@ -9,6 +10,15 @@ import {
   CampusDrive,
   DriveApplication,
 } from "@/types";
+import {
+  CurriculumLesson,
+  CurriculumModule,
+  CurriculumTopic,
+  CurriculumProblem,
+  ProblemSubmissionResult,
+  BranchTag,
+  SupportedLanguage,
+} from "@/types/curriculum";
 import { SEED_DRIVES, SEED_DRIVE_APPLICATIONS } from "@/lib/seed-drives";
 
 export class DataService {
@@ -559,5 +569,188 @@ export class DataService {
       }
     }
     return { success: true };
+  }
+
+  // =========================================================================
+  // RELATIONAL CURRICULUM ACCESS (Phase 2)
+  // =========================================================================
+
+  /**
+   * Fetch curriculum lessons with optional branch tag filter
+   */
+  static async getCurriculumLessons(branchFilter?: BranchTag | "ALL"): Promise<CurriculumLesson[]> {
+    const supabase = createClient();
+    if (supabase) {
+      try {
+        const query = supabase
+          .from("curriculum_lessons")
+          .select(`
+            *,
+            curriculum_modules (
+              *,
+              curriculum_topics (
+                *
+              )
+            )
+          `)
+          .order("lesson_number", { ascending: true });
+
+        const { data, error } = await query;
+        if (!error && data && data.length > 0) {
+          const lessons: CurriculumLesson[] = data.map((l: any) => ({
+            id: l.id,
+            lesson_number: l.lesson_number,
+            title: l.title,
+            description: l.description,
+            track_type: l.track_type,
+            branch_tags: l.branch_tags || [],
+            modules: (l.curriculum_modules || []).map((m: any) => ({
+              id: m.id,
+              lesson_id: m.lesson_id,
+              module_number: m.module_number,
+              title: m.title,
+              unlock_threshold: m.unlock_threshold,
+              topics: (m.curriculum_topics || []).map((t: any) => ({
+                id: t.id,
+                module_id: t.module_id,
+                topic_order: t.topic_order,
+                title: t.title,
+                concept_markdown: t.concept_markdown,
+              })),
+            })),
+          }));
+
+          if (!branchFilter || branchFilter === "ALL") {
+            return lessons;
+          }
+          return lessons.filter(
+            (l) => l.track_type === "shared_core" || l.branch_tags.includes(branchFilter as any)
+          );
+        }
+      } catch (err) {
+        console.warn("Supabase getCurriculumLessons failed, using fallback:", err);
+      }
+    }
+    return CurriculumStore.getLessons(branchFilter);
+  }
+
+  /**
+   * Fetch curriculum problem by slug or id with test cases
+   */
+  static async getCurriculumProblemBySlug(slug: string): Promise<CurriculumProblem | null> {
+    const supabase = createClient();
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from("curriculum_problems")
+          .select("*, curriculum_test_cases(*)")
+          .or(`slug.eq.${slug},id.eq.${slug}`)
+          .single();
+
+        if (!error && data) {
+          return {
+            id: data.id,
+            topic_id: data.topic_id,
+            problem_type: data.problem_type,
+            order_index: data.order_index,
+            title: data.title,
+            slug: data.slug,
+            difficulty: data.difficulty,
+            description_markdown: data.description_markdown,
+            constraints_text: data.constraints_text,
+            boilerplate_code: data.boilerplate_code || {},
+            hints: data.hints || {},
+            company_tags: data.company_tags || [],
+            test_cases: (data.curriculum_test_cases || []).map((tc: any) => ({
+              id: tc.id,
+              problem_id: tc.problem_id,
+              case_number: tc.case_number,
+              input_data: tc.input_data,
+              expected_output: tc.expected_output,
+              is_hidden: tc.is_hidden,
+              failure_category: tc.failure_category,
+            })),
+          };
+        }
+      } catch (err) {
+        console.warn("Supabase getCurriculumProblemBySlug failed, using fallback:", err);
+      }
+    }
+    return CurriculumStore.getProblemById(slug);
+  }
+
+  /**
+   * Submit curriculum solution with dual persistence (Supabase + CurriculumStore)
+   */
+  static async submitCurriculumCode(params: {
+    userId: string;
+    problem: CurriculumProblem;
+    language: SupportedLanguage;
+    sourceCode: string;
+    isFinalSubmit?: boolean;
+  }): Promise<ProblemSubmissionResult> {
+    const result = CurriculumStore.evaluateSubmission(
+      params.problem,
+      params.language,
+      params.sourceCode,
+      params.isFinalSubmit ?? true
+    );
+
+    const supabase = createClient();
+    if (supabase) {
+      try {
+        await supabase.from("curriculum_submissions").insert({
+          user_id: params.userId,
+          problem_id: params.problem.id,
+          status: result.status,
+          passed_test_cases: result.passed_cases,
+          total_test_cases: result.total_cases,
+          runtime_ms: result.runtime_ms,
+          memory_kb: result.memory_kb,
+          submitted_code: params.sourceCode,
+          language: params.language,
+          test_results: result.results,
+        });
+      } catch (err) {
+        console.warn("Supabase submitCurriculumCode notice (fallback retained):", err);
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Fetch curriculum submissions
+   */
+  static async getCurriculumSubmissions(userId?: string): Promise<ProblemSubmissionResult[]> {
+    const supabase = createClient();
+    if (supabase && userId) {
+      try {
+        const { data, error } = await supabase
+          .from("curriculum_submissions")
+          .select("*")
+          .eq("user_id", userId)
+          .order("submitted_at", { ascending: false });
+
+        if (!error && data && data.length > 0) {
+          return data.map((s: any) => ({
+            submission_id: s.id,
+            problem_id: s.problem_id,
+            status: s.status,
+            passed_cases: s.passed_test_cases,
+            total_cases: s.total_test_cases,
+            runtime_ms: s.runtime_ms,
+            memory_kb: s.memory_kb,
+            results: s.test_results || [],
+            submitted_at: s.submitted_at,
+            submitted_code: s.submitted_code,
+            language: s.language as SupportedLanguage,
+          }));
+        }
+      } catch (err) {
+        console.warn("Supabase getCurriculumSubmissions failed, using local:", err);
+      }
+    }
+    return CurriculumStore.getSubmissions();
   }
 }

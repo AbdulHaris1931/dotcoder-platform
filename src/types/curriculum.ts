@@ -1,5 +1,5 @@
 export type TrackType = "shared_core" | "branch_specific";
-export type BranchTag = "CSE" | "IT" | "AIDS";
+export type BranchTag = "CSE" | "IT" | "AIDS" | "BCA" | "B.Sc CS" | "B.Sc IT" | "MCA";
 export type ProblemDifficulty = "Easy" | "Medium" | "Hard";
 export type CurriculumProblemType = "practice" | "assessment";
 export type PracticeOrderIndex = 1 | 2 | 3 | 4 | 5;

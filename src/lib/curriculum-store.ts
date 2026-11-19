@@ -119,18 +119,71 @@ export class CurriculumStore {
   }
 
   static getProblemById(problemId: string): CurriculumProblem | null {
-    const prob = SEED_PROBLEMS.find((p) => p.id === problemId || p.slug === problemId);
+    if (!problemId) return null;
+    const cleanId = problemId.trim().toLowerCase();
+
+    // 1. Direct match by id or slug
+    let prob = SEED_PROBLEMS.find((p) => p.id === problemId || p.slug.toLowerCase() === cleanId);
+
+    // 2. Common aliases
+    if (!prob) {
+      const aliasMap: Record<string, string> = {
+        "two-sum": "optimal-two-sum-index-pairs",
+        "two_sum": "optimal-two-sum-index-pairs",
+        "twosum": "optimal-two-sum-index-pairs",
+        "two-sum-target": "optimal-two-sum-index-pairs",
+        "container-with-most-water": "container-with-most-water",
+        "longest-substring": "longest-substring-without-repeating-characters",
+        "longest-subarray": "subarray-sum-equals-target-k",
+        "subarray-sum": "subarray-sum-equals-target-k",
+        "first-missing-positive": "first-missing-positive-integer",
+        "trapping-rain-water": "trapping-rain-water-capacity",
+        "rain-water": "trapping-rain-water-capacity",
+        "max-subarray": "maximum-subarray-kadanes-optimal",
+        "kadanes": "maximum-subarray-kadanes-optimal",
+        "valid-parentheses": "optimal-two-sum-index-pairs",
+        "reverse-linked-list": "container-with-most-water",
+        "validate-bst": "longest-substring-without-repeating-characters",
+        "lru-cache": "first-missing-positive-integer",
+      };
+      const mappedSlug = aliasMap[cleanId];
+      if (mappedSlug) {
+        prob = SEED_PROBLEMS.find((p) => p.slug === mappedSlug);
+      }
+    }
+
+    // 3. Substring matching
+    if (!prob) {
+      prob = SEED_PROBLEMS.find((p) =>
+        p.slug.toLowerCase().includes(cleanId) ||
+        cleanId.includes(p.slug.toLowerCase()) ||
+        p.title.toLowerCase().includes(cleanId)
+      );
+    }
+
+    // 4. Fallback to first problem if still not found
+    if (!prob && SEED_PROBLEMS.length > 0) {
+      prob = SEED_PROBLEMS[0];
+    }
+
     if (!prob) return null;
 
     const submissions = this.getSubmissions();
     const is_solved = submissions.some(
-      (s) => s.problem_id === prob.id && s.status === "Accepted"
+      (s) => s.problem_id === prob!.id && s.status === "Accepted"
     );
 
     return {
       ...prob,
       is_solved,
     };
+  }
+
+  static recordSubmission(submission: ProblemSubmissionResult): void {
+    if (!isClient) return;
+    const existing = this.getSubmissions();
+    existing.unshift(submission);
+    localStorage.setItem(STORAGE_KEYS.SUBMISSIONS, JSON.stringify(existing.slice(0, 50)));
   }
 
   static getAssessmentForModule(moduleId: string): ModuleAssessment | null {

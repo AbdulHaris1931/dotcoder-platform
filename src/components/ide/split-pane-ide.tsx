@@ -10,6 +10,7 @@ import {
   TestCaseExecutionResult,
 } from "@/types/curriculum";
 import { CurriculumStore } from "@/lib/curriculum-store";
+import { DataService } from "@/lib/supabase/db";
 import { useSidebar } from "@/components/shared/app-shell";
 import {
   Play,
@@ -163,12 +164,29 @@ export function SplitPaneIDE({
     }, 450);
   }, [problem, language, sourceCode]);
 
-  // Submit Code against all 6 test cases
+  // Submit Code against all 6 test cases with dual persistence
   const handleSubmitCode = useCallback(async () => {
     setIsSubmitting(true);
     setActiveBottomTab("cases");
 
-    setTimeout(() => {
+    try {
+      const user = await DataService.getCurrentUser();
+      const res = await DataService.submitCurriculumCode({
+        userId: user?.id || "demo-student-id",
+        problem,
+        language,
+        sourceCode,
+        isFinalSubmit: true,
+      });
+      setLastResult(res);
+      setSubmissionHistory(CurriculumStore.getSubmissions(problem.id));
+      setIsSubmitting(false);
+      setSelectedCaseNumber(1);
+
+      if (res.status === "Accepted" && onSolveSuccess) {
+        onSolveSuccess();
+      }
+    } catch {
       const res = CurriculumStore.evaluateSubmission(problem, language, sourceCode, true);
       setLastResult(res);
       setSubmissionHistory(CurriculumStore.getSubmissions(problem.id));
@@ -178,7 +196,7 @@ export function SplitPaneIDE({
       if (res.status === "Accepted" && onSolveSuccess) {
         onSolveSuccess();
       }
-    }, 600);
+    }
   }, [problem, language, sourceCode, onSolveSuccess]);
 
   // Keyboard Shortcuts: Ctrl+Enter / Cmd+Enter to Run, Ctrl+Shift+Enter / Cmd+Shift+Enter to Submit
