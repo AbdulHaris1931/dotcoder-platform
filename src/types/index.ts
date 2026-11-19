@@ -237,5 +237,6 @@ export interface SimulatorResult {
 export * from "./skill-intelligence";
 export * from "./assignment";
 export * from "./assessment-attempt";
+export * from "./recruiter";
 
 
