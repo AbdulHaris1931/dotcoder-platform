@@ -6,6 +6,7 @@ import Link from "next/link";
 import { DataService } from "@/lib/supabase/db";
 import { subscribeToDemoStore } from "@/lib/demo-store";
 import { UserProfile, Problem, Assessment, Submission, CampusDrive } from "@/types";
+import { SkillIntelligenceService } from "@/lib/services/skill-intelligence";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import {
   ArrowRight,
@@ -21,6 +22,9 @@ import {
   Sparkles,
   TrendingUp,
   Zap,
+  BrainCircuit,
+  Target,
+  BarChart3,
 } from "lucide-react";
 
 // ─── Helpers ────────────────────────────────────────────────────────
@@ -108,6 +112,11 @@ export default function StudentDashboardPage() {
     problems.filter((p) => p.difficulty === diff && solvedIds.has(p.id)).length;
 
   const nextProblem = problems.find((p) => !solvedIds.has(p.id)) || problems[0];
+
+  const skillProfile = useMemo(() => {
+    if (!user) return null;
+    return SkillIntelligenceService.calculateSkillProfile(user, submissions);
+  }, [user, submissions]);
 
   const filtered = useMemo(() => {
     return problems.filter((p) => {
@@ -241,6 +250,88 @@ export default function StudentDashboardPage() {
           )}
         </div>
       </BlurFade>
+
+      {/* ━━━ SKILL INTELLIGENCE ENGINE: 6-DIMENSIONAL VECTORS ━━━━━━━━ */}
+      {skillProfile && (
+        <BlurFade delay={0.1}>
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-6 space-y-5 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100/90 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                    Engine v2.0 Live Telemetry
+                  </span>
+                  <span className="text-xs text-slate-500 font-mono">Annai Vailankanni Arts and Science College</span>
+                </div>
+                <h2 className="text-lg font-bold text-slate-900 mt-1 flex items-center gap-2">
+                  <BrainCircuit className="w-5 h-5 text-slate-800" />
+                  <span>DotCoder Skill Intelligence Vectors</span>
+                </h2>
+              </div>
+
+              <div className="sm:text-right">
+                <div className="text-[11px] font-mono text-slate-500">Placement Readiness Index</div>
+                <div className="text-2xl font-extrabold text-slate-900 font-mono">
+                  {skillProfile.breakdown.placementReadinessScore}%
+                </div>
+              </div>
+            </div>
+
+            {/* 6-Dimensional Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              {[
+                { label: "Coding Accuracy", code: "ACC", val: skillProfile.breakdown.accuracyScore, w: "25%" },
+                { label: "Problem Solving", code: "PSI", val: skillProfile.breakdown.psiScore, w: "25%" },
+                { label: "DSA Topic Mastery", code: "DSA", val: skillProfile.breakdown.dsaMasteryScore, w: "25%" },
+                { label: "Algorithmic Efficiency", code: "EFF", val: skillProfile.breakdown.efficiencyScore, w: "15%" },
+                { label: "Consistency & Streak", code: "CON", val: skillProfile.breakdown.consistencyScore, w: "10%" },
+                { label: "Composite Index", code: "PLR", val: skillProfile.breakdown.placementReadinessScore, w: "100%" },
+              ].map((dim) => (
+                <div key={dim.code} className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5">
+                  <div className="flex items-center justify-between text-[10px] font-mono text-slate-500">
+                    <span className="font-bold">{dim.code}</span>
+                    <span className="text-[9px] opacity-75">{dim.w}</span>
+                  </div>
+                  <div className="text-xl font-bold font-mono text-slate-900">{dim.val}%</div>
+                  <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${dim.val >= 75 ? "bg-emerald-500" : dim.val >= 60 ? "bg-amber-500" : "bg-rose-500"}`}
+                      style={{ width: `${dim.val}%` }}
+                    />
+                  </div>
+                  <div className="text-[9px] text-slate-400 truncate">{dim.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Adaptive Remedial Drill Banner if weak topics detected */}
+            {skillProfile.weakTopics.length > 0 && (
+              <div className="p-4 rounded-xl bg-amber-50/80 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold shrink-0">
+                    <Target className="w-4 h-4 text-amber-700" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-amber-950">
+                      Adaptive Diagnostic: {skillProfile.weakTopics[0].topic} Mastery at {skillProfile.weakTopics[0].score}%
+                    </div>
+                    <div className="text-[11px] text-amber-800">
+                      Below TCS & Zoho institutional benchmark (75%). Complete recommended remedial drill to boost your readiness.
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => router.push(`/practice/${skillProfile.weakTopics[0].recommendedProblemSlug}`)}
+                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-[#9DFF00] font-bold text-xs transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <span>Start Targeted Drill</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+        </BlurFade>
+      )}
 
       {/* ━━━ 3. CONTINUE WHERE YOU LEFT OFF ━━━━━━━━━━━━━━━━━━━━━━ */}
       {nextProblem && (
