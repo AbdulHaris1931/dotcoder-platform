@@ -35,13 +35,15 @@ export interface Batch {
   created_at?: string;
 }
 
-export interface TeacherAssignment {
+export interface TeacherDepartmentAssignment {
   id: string;
   teacher_id: string;
   department_id: string;
   batch_id?: string;
   assigned_at?: string;
 }
+
+export * from "./assignment";
 
 export type SupportedLanguage = "python" | "java" | "c" | "cpp" | "sql";
 

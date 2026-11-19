@@ -176,6 +176,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // Determine active item based on current route
   const getActiveItem = () => {
     if (isTeacher) {
+      if (pathname.startsWith("/teacher/assignments")) return "assignments";
+      if (pathname.startsWith("/teacher/students")) return "students";
       if (pathname.startsWith("/curriculum")) return "learn";
       if (pathname.startsWith("/admin/problems")) return "problems";
       if (pathname.startsWith("/admin/assessments")) return "assessments";
@@ -271,6 +273,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               >
                 <LayoutDashboard className={`w-4 h-4 ${activeItem === "dashboard" ? "text-black" : "text-slate-400"}`} />
                 <span>Dashboard</span>
+              </button>
+
+              <button
+                onClick={() => navigateTo("/teacher/assignments")}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeItem === "assignments"
+                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <FileSpreadsheet className={`w-4 h-4 ${activeItem === "assignments" ? "text-black" : "text-slate-400"}`} />
+                <span>Assignments</span>
+              </button>
+
+              <button
+                onClick={() => navigateTo("/teacher/students")}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeItem === "students"
+                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <GraduationCap className={`w-4 h-4 ${activeItem === "students" ? "text-black" : "text-slate-400"}`} />
+                <span>Students & Mentorship</span>
               </button>
 
               <button

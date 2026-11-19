@@ -101,17 +101,31 @@ export default function TeacherDashboardPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center flex-wrap gap-2.5">
+            <button
+              onClick={() => router.push("/teacher/assignments")}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black text-xs font-bold transition-all shadow-xs"
+            >
+              <Layers className="w-4 h-4 text-black" />
+              <span>Assignment Bundles</span>
+            </button>
+            <button
+              onClick={() => router.push("/teacher/students")}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-colors shadow-xs"
+            >
+              <Users className="w-4 h-4 text-slate-500" />
+              <span>Mentorship & Code Reviews</span>
+            </button>
             <button
               onClick={() => router.push("/curriculum")}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-colors shadow-xs"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-colors shadow-xs"
             >
               <BookOpen className="w-4 h-4 text-slate-500" />
-              <span>Curriculum Explorer</span>
+              <span>Curriculum</span>
             </button>
             <button
               onClick={() => router.push("/admin/problems")}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0F1412] hover:bg-[#1a2320] text-white text-xs font-semibold transition-all shadow-xs"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#0F1412] hover:bg-[#1a2320] text-white text-xs font-semibold transition-all shadow-xs"
             >
               <FileCode className="w-4 h-4 text-[#9DFF00]" />
               <span>Problem Bank</span>
