@@ -64,12 +64,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Only standalone auth screens (login & signup) render without the sidebar
-  const isAuthOrLanding = pathname === "/login" || pathname === "/signup";
+  // Standalone public pages (landing / home page, login & signup) render without the sidebar
+  const isAuthOrLanding = pathname === "/" || pathname === "/login" || pathname === "/signup";
 
   if (isAuthOrLanding) {
     return (
-      <div className="min-h-screen bg-[#F4F7F4] text-slate-900 flex flex-col font-sans">
+      <div className="min-h-screen text-slate-900 flex flex-col font-sans">
         {children}
         <CommandPalette isOpen={isCmdKOpen} onClose={() => setIsCmdKOpen(false)} />
       </div>
