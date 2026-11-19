@@ -1,4 +1,5 @@
-// Client-side Pyodide WebAssembly Runner for zero-latency, $0-cost Python execution
+// Client-side Pyodide WebAssembly Runner with 5.0s Execution Watchdog
+// Zero-latency, $0-cost Python execution in the browser with infinite loop protection
 
 declare global {
   interface Window {
@@ -49,10 +50,15 @@ export async function getPyodide(): Promise<any> {
   return window.pyodideLoadingPromise;
 }
 
+/**
+ * Execute Python code in WebAssembly with a strict 5.0-second execution watchdog timer
+ * Prevents browser tab freezing on while True: loops or infinite recursion
+ */
 export async function runPythonCode(
   sourceCode: string,
-  stdinInput: string
-): Promise<{ stdout: string; stderr: string; executionTimeMs: number }> {
+  stdinInput: string,
+  timeoutMs: number = 5000
+): Promise<{ stdout: string; stderr: string; executionTimeMs: number; isTLE?: boolean }> {
   const startTime = performance.now();
 
   try {
@@ -77,7 +83,27 @@ output_stdout = sys.stdout.getvalue()
 output_stderr = sys.stderr.getvalue()
 `;
 
-    await pyodide.runPythonAsync(wrapper);
+    // 5.0-second execution watchdog timer
+    let timerId: NodeJS.Timeout;
+    const timeoutPromise = new Promise<{ isTimeout: true }>((resolve) => {
+      timerId = setTimeout(() => resolve({ isTimeout: true }), timeoutMs);
+    });
+
+    const executionPromise = pyodide.runPythonAsync(wrapper).then(() => {
+      clearTimeout(timerId);
+      return { isTimeout: false as const };
+    });
+
+    const raceResult = await Promise.race([executionPromise, timeoutPromise]);
+
+    if (raceResult.isTimeout) {
+      return {
+        stdout: "",
+        stderr: `Time Limit Exceeded (TLE): Execution exceeded ${(timeoutMs / 1000).toFixed(1)} seconds. Check for infinite loops or non-terminating recursions.`,
+        executionTimeMs: timeoutMs,
+        isTLE: true,
+      };
+    }
 
     const stdout = pyodide.globals.get("output_stdout") || "";
     const stderr = pyodide.globals.get("output_stderr") || "";

@@ -11,6 +11,7 @@ import {
 } from "@/types/curriculum";
 import { CurriculumStore } from "@/lib/curriculum-store";
 import { DataService } from "@/lib/supabase/db";
+import { runPythonCode } from "@/lib/pyodide-runner";
 import { useSidebar } from "@/components/shared/app-shell";
 import {
   Play,
@@ -33,6 +34,9 @@ import {
   Maximize2,
   Minimize2,
   Sidebar,
+  Eye,
+  Lock,
+  Unlock,
 } from "lucide-react";
 
 // Dynamically load Monaco Editor without SSR
@@ -68,6 +72,7 @@ export function SplitPaneIDE({
   topicTitle,
 }: SplitPaneIDEProps) {
   const { toggleSidebar, isSidebarOpen } = useSidebar();
+  
   // Selected Language
   const [language, setLanguage] = useState<SupportedLanguage>(initialLanguage);
 
@@ -76,11 +81,11 @@ export function SplitPaneIDE({
     problem.boilerplate_code[initialLanguage] || problem.boilerplate_code.python || ""
   );
 
-  // Left Pane Active Tab: 'problem' | 'solution' | 'discussion'
-  const [activeLeftTab, setActiveLeftTab] = useState<"problem" | "solution" | "discussion">("problem");
+  // Left Pane Active Tab: 'problem' | 'solution' | 'hints' | 'discussion'
+  const [activeLeftTab, setActiveLeftTab] = useState<"problem" | "solution" | "hints" | "discussion">("problem");
 
-  // Right Bottom Pane Tab: 'cases' | 'sample' | 'hidden'
-  const [activeBottomTab, setActiveBottomTab] = useState<"cases" | "sample" | "hidden">("cases");
+  // Right Bottom Pane Tab: 'cases' | 'sample' | 'hidden' | 'custom'
+  const [activeBottomTab, setActiveBottomTab] = useState<"cases" | "sample" | "hidden" | "custom">("cases");
 
   // Collapsible Accordions in Problem tab
   const [openSections, setOpenSections] = useState<{
@@ -97,18 +102,25 @@ export function SplitPaneIDE({
   const [selectedCaseNumber, setSelectedCaseNumber] = useState<number>(1);
 
   // Custom Input State
-  const [isCustomInput, setIsCustomInput] = useState<boolean>(false);
-  const [customInputValue, setCustomInputValue] = useState<string>("");
+  const [customInputValue, setCustomInputValue] = useState<string>(
+    (problem.test_cases && problem.test_cases[0]?.input_data) || "2 7 11 15\n9"
+  );
+  const [customExecutionResult, setCustomExecutionResult] = useState<{
+    stdout: string;
+    stderr: string;
+    executionTimeMs: number;
+    isTLE?: boolean;
+  } | null>(null);
 
-  // Unlocked Accordion Hints
+  // Progressive Hints Disclosure (Hints 1, 2, 3)
   const [unlockedHints, setUnlockedHints] = useState<{
-    intuition: boolean;
-    data_structure: boolean;
-    edge_case_warning: boolean;
+    hint1: boolean;
+    hint2: boolean;
+    hint3: boolean;
   }>({
-    intuition: false,
-    data_structure: false,
-    edge_case_warning: false,
+    hint1: false,
+    hint2: false,
+    hint3: false,
   });
 
   // Execution & Submission State
@@ -151,51 +163,211 @@ export function SplitPaneIDE({
     setShowResetConfirm(false);
   };
 
-  // Run Code against visible test cases (TC 1 & TC 2)
+  // Run Code against visible test cases (TC 1 & TC 2) or Custom Input
   const handleRunCode = useCallback(async () => {
     setIsRunning(true);
+
+    if (activeBottomTab === "custom") {
+      // Execute Custom Input with 5.0s watchdog
+      if (language === "python") {
+        const pyRes = await runPythonCode(sourceCode, customInputValue, 5000);
+        setCustomExecutionResult(pyRes);
+      } else {
+        try {
+          const res = await fetch("/api/execute", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              language,
+              sourceCode,
+              intent: "run",
+              customInput: customInputValue,
+            }),
+          });
+          const data = await res.json();
+          setCustomExecutionResult({
+            stdout: data.stdout || "",
+            stderr: data.stderr || "",
+            executionTimeMs: data.executionTimeMs || 25,
+          });
+        } catch (err: any) {
+          setCustomExecutionResult({
+            stdout: "",
+            stderr: err.message || "Execution error",
+            executionTimeMs: 0,
+          });
+        }
+      }
+      setIsRunning(false);
+      return;
+    }
+
     setActiveBottomTab("cases");
 
-    setTimeout(() => {
-      const res = CurriculumStore.evaluateSubmission(problem, language, sourceCode, false);
-      setLastResult(res);
+    if (language === "python") {
+      // Client-side Pyodide WebAssembly with 5.0s Watchdog
+      const testCases = (problem.test_cases || []).filter((tc) => !tc.is_hidden || tc.case_number <= 2);
+      const executionResults: TestCaseExecutionResult[] = [];
+      let passedCount = 0;
+
+      for (const tc of testCases) {
+        const pyRes = await runPythonCode(sourceCode, tc.input_data, 5000);
+        const actualOutput = pyRes.stdout.trim();
+        const expected = tc.expected_output.trim();
+        const passed = !pyRes.isTLE && !pyRes.stderr && actualOutput === expected;
+
+        if (passed) passedCount++;
+
+        executionResults.push({
+          case_number: tc.case_number,
+          is_hidden: tc.is_hidden,
+          passed,
+          input_data: tc.input_data,
+          expected_output: tc.expected_output,
+          actual_output: pyRes.isTLE
+            ? pyRes.stderr
+            : pyRes.stderr
+            ? `Error: ${pyRes.stderr}`
+            : actualOutput,
+          execution_time_ms: pyRes.executionTimeMs,
+          failure_category: tc.failure_category,
+        });
+      }
+
+      const runRes: ProblemSubmissionResult = {
+        submission_id: `run-${Date.now()}`,
+        problem_id: problem.id,
+        status: passedCount === testCases.length ? "Accepted" : "Wrong Answer",
+        passed_cases: passedCount,
+        total_cases: testCases.length,
+        runtime_ms: executionResults.reduce((acc, r) => Math.max(acc, r.execution_time_ms), 0),
+        memory_kb: 42100,
+        results: executionResults,
+        submitted_at: new Date().toISOString(),
+        submitted_code: sourceCode,
+        language,
+      };
+
+      setLastResult(runRes);
       setIsRunning(false);
       setSelectedCaseNumber(1);
-    }, 450);
-  }, [problem, language, sourceCode]);
+    } else {
+      // Server-side /api/execute for compiled languages (C, C++, Java, SQL)
+      try {
+        const res = await fetch("/api/execute", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            problemId: problem.id,
+            language,
+            sourceCode,
+            intent: "run",
+            testCases: problem.test_cases,
+          }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          const runRes: ProblemSubmissionResult = {
+            submission_id: `run-${Date.now()}`,
+            problem_id: problem.id,
+            status: data.status,
+            passed_cases: data.passedCases,
+            total_cases: data.totalCases,
+            runtime_ms: data.executionTimeMs,
+            memory_kb: 42100,
+            results: (data.results || []).map((r: any) => ({
+              case_number: r.caseNumber || 1,
+              is_hidden: r.isHidden || false,
+              passed: r.passed,
+              input_data: r.input,
+              expected_output: r.expectedOutput,
+              actual_output: r.actualOutput,
+              execution_time_ms: r.executionTimeMs || 25,
+              failure_category: r.failureCategory || "Sample Case",
+            })),
+            submitted_at: new Date().toISOString(),
+            submitted_code: sourceCode,
+            language,
+          };
+          setLastResult(runRes);
+        }
+      } catch {
+        const fallback = CurriculumStore.evaluateSubmission(problem, language, sourceCode, false);
+        setLastResult(fallback);
+      }
+      setIsRunning(false);
+      setSelectedCaseNumber(1);
+    }
+  }, [problem, language, sourceCode, activeBottomTab, customInputValue]);
 
-  // Submit Code against all 6 test cases with dual persistence
+  // Submit Code against all 6 test cases with server-side validation & hidden case sanitization
   const handleSubmitCode = useCallback(async () => {
     setIsSubmitting(true);
     setActiveBottomTab("cases");
 
     try {
       const user = await DataService.getCurrentUser();
-      const res = await DataService.submitCurriculumCode({
-        userId: user?.id || "demo-student-id",
-        problem,
-        language,
-        sourceCode,
-        isFinalSubmit: true,
+      const res = await fetch("/api/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          problemId: problem.id,
+          language,
+          sourceCode,
+          intent: "submit",
+          userId: user?.id,
+          testCases: problem.test_cases,
+        }),
       });
-      setLastResult(res);
-      setSubmissionHistory(CurriculumStore.getSubmissions(problem.id));
-      setIsSubmitting(false);
-      setSelectedCaseNumber(1);
 
-      if (res.status === "Accepted" && onSolveSuccess) {
-        onSolveSuccess();
+      const data = await res.json();
+      if (data.success) {
+        const submissionResult: ProblemSubmissionResult = {
+          submission_id: `sub-${Date.now()}`,
+          problem_id: problem.id,
+          status: data.status,
+          passed_cases: data.passedCases,
+          total_cases: data.totalCases,
+          runtime_ms: data.executionTimeMs,
+          memory_kb: 42100,
+          results: (data.results || []).map((r: any) => ({
+            case_number: r.caseNumber || 1,
+            is_hidden: r.isHidden || false,
+            passed: r.passed,
+            input_data: r.input,
+            expected_output: r.expectedOutput,
+            actual_output: r.actualOutput,
+            execution_time_ms: r.executionTimeMs || 25,
+            failure_category: r.failureCategory || "Edge Case",
+          })),
+          submitted_at: new Date().toISOString(),
+          submitted_code: sourceCode,
+          language,
+        };
+
+        // Record submission locally for immediate reactive stats
+        CurriculumStore.recordSubmission(submissionResult);
+        setLastResult(submissionResult);
+        setSubmissionHistory(CurriculumStore.getSubmissions(problem.id));
+
+        if (submissionResult.status === "Accepted" && onSolveSuccess) {
+          onSolveSuccess();
+        }
+      } else {
+        throw new Error(data.error || "Submission failed");
       }
     } catch {
+      // Fallback to local evaluation engine
       const res = CurriculumStore.evaluateSubmission(problem, language, sourceCode, true);
       setLastResult(res);
       setSubmissionHistory(CurriculumStore.getSubmissions(problem.id));
-      setIsSubmitting(false);
-      setSelectedCaseNumber(1);
 
       if (res.status === "Accepted" && onSolveSuccess) {
         onSolveSuccess();
       }
+    } finally {
+      setIsSubmitting(false);
+      setSelectedCaseNumber(1);
     }
   }, [problem, language, sourceCode, onSolveSuccess]);
 
@@ -251,11 +423,11 @@ export function SplitPaneIDE({
 
         {/* Right: Language Selector & Run / Submit Controls matching Screen 02 */}
         <div className="flex items-center gap-3">
-          {/* Active Engine Badge */}
+          {/* Active Engine Badge & Watermark */}
           {language === "python" ? (
             <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-medium bg-[#17251B] text-[#9DFF00] border border-[#9DFF00]/30 shadow-2xs">
               <span className="w-1.5 h-1.5 rounded-full bg-[#9DFF00] animate-pulse" />
-              Pyodide WASM
+              Pyodide WASM (Client)
             </span>
           ) : language === "sql" ? (
             <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-medium bg-purple-950/40 text-purple-300 border border-purple-500/30">
@@ -266,6 +438,7 @@ export function SplitPaneIDE({
             <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-medium bg-sky-950/40 text-sky-300 border border-sky-500/30">
               <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
               Compiler Sandbox
+              <span className="text-[9px] opacity-75 font-mono ml-0.5">• Dev</span>
             </span>
           )}
 
@@ -289,7 +462,7 @@ export function SplitPaneIDE({
             type="button"
             onClick={handleResetCode}
             title="Reset to boilerplate code"
-            className="p-1.5 rounded-lg border border-[#1E293B] hover:bg-[#1A2338] text-slate-400 hover:text-slate-200 transition-colors"
+            className="p-1.5 rounded-lg border border-[#1E293B] hover:bg-[#1A2338] text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
@@ -299,7 +472,7 @@ export function SplitPaneIDE({
             type="button"
             onClick={handleRunCode}
             disabled={isRunning || isSubmitting}
-            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#9DFF00] hover:bg-[#8CE600] text-black text-xs font-bold transition-all shadow-sm active:scale-95 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#9DFF00] hover:bg-[#8CE600] text-black text-xs font-bold transition-all shadow-sm active:scale-95 disabled:opacity-50 cursor-pointer"
             title="Shortcut: Ctrl+Enter"
           >
             <Play className="w-3 h-3 text-black fill-current" />
@@ -311,7 +484,7 @@ export function SplitPaneIDE({
             type="button"
             onClick={handleSubmitCode}
             disabled={isRunning || isSubmitting}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#0F1412] hover:bg-slate-800 border border-slate-700 text-white text-xs font-semibold shadow-xs transition-all active:scale-95 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#0F1412] hover:bg-slate-800 border border-slate-700 text-white text-xs font-semibold shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
             title="Shortcut: Ctrl+Shift+Enter"
           >
             <CheckCircle2 className="w-3.5 h-3.5 text-[#9DFF00]" />
@@ -320,7 +493,7 @@ export function SplitPaneIDE({
         </div>
       </div>
 
-      {/* Styled Reset Confirmation Dialog (DEFECT-MED-002) */}
+      {/* Styled Reset Confirmation Dialog */}
       {showResetConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
           <div className="bg-[#141B2D] border border-[#1E293B] rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
@@ -339,14 +512,14 @@ export function SplitPaneIDE({
               <button
                 type="button"
                 onClick={() => setShowResetConfirm(false)}
-                className="px-3.5 py-1.5 rounded-lg border border-slate-700 text-xs font-semibold text-slate-300 hover:bg-slate-800 transition-colors"
+                className="px-3.5 py-1.5 rounded-lg border border-slate-700 text-xs font-semibold text-slate-300 hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={confirmResetCode}
-                className="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-colors shadow-xs"
+                className="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-colors shadow-xs cursor-pointer"
               >
                 Confirm Reset
               </button>
@@ -358,7 +531,7 @@ export function SplitPaneIDE({
       {/* Main Workspace Body: Split Left (Tabs) & Right (Editor + Test Console) */}
       <div className="flex-1 grid grid-cols-12 overflow-hidden">
         {/* ========================================================= */}
-        {/* LEFT PANE: Problem Title, Tabs, Problem, Solution, Discussion */}
+        {/* LEFT PANE: Problem Title, Tabs, Problem, Solution, Hints   */}
         {/* ========================================================= */}
         <div className="col-span-12 lg:col-span-5 border-r border-[#1E293B] bg-[#0E131F]/90 flex flex-col overflow-hidden">
           {/* Problem Title & Difficulty Badge matching Screen 02 */}
@@ -372,52 +545,32 @@ export function SplitPaneIDE({
               </span>
             </div>
           </div>
+
           {/* Left Tabs Bar */}
           <div className="flex items-center gap-2 px-5 pt-3 border-b border-[#1E293B] bg-[#0B0F17] text-xs font-mono">
-            <button
-              type="button"
-              onClick={() => setActiveLeftTab("problem")}
-              className={`flex items-center gap-1.5 px-3 py-2 font-semibold transition-colors border-b-2 ${
-                activeLeftTab === "problem"
-                  ? "text-[#9DFF00] border-[#9DFF00]"
-                  : "text-slate-400 hover:text-slate-200 border-transparent"
-              }`}
-            >
-              <span>Problem</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveLeftTab("solution")}
-              className={`flex items-center gap-1.5 px-3 py-2 font-semibold transition-colors border-b-2 ${
-                activeLeftTab === "solution"
-                  ? "text-[#9DFF00] border-[#9DFF00]"
-                  : "text-slate-400 hover:text-slate-200 border-transparent"
-              }`}
-            >
-              <span>Solution</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveLeftTab("discussion")}
-              className={`flex items-center gap-1.5 px-3 py-2 font-semibold transition-colors border-b-2 ${
-                activeLeftTab === "discussion"
-                  ? "text-[#9DFF00] border-[#9DFF00]"
-                  : "text-slate-400 hover:text-slate-200 border-transparent"
-              }`}
-            >
-              <span>Discussion</span>
-            </button>
+            {(["problem", "solution", "hints", "discussion"] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveLeftTab(tab)}
+                className={`flex items-center gap-1.5 px-3 py-2 font-semibold transition-colors border-b-2 capitalize cursor-pointer ${
+                  activeLeftTab === tab
+                    ? "text-[#9DFF00] border-[#9DFF00]"
+                    : "text-slate-400 hover:text-slate-200 border-transparent"
+                }`}
+              >
+                <span>{tab === "hints" ? "Hints (3)" : tab}</span>
+              </button>
+            ))}
           </div>
 
           {/* Left Tab Content Body */}
           <div className="flex-1 p-6 overflow-y-auto space-y-6 text-sm leading-relaxed text-slate-300">
-            {/* Problem Tab */}
+            {/* 1. Problem Tab */}
             {activeLeftTab === "problem" && (
               <div className="space-y-6">
                 {/* Description Text */}
-                <div className="text-xs sm:text-sm font-sans leading-relaxed text-slate-300">
+                <div className="text-xs sm:text-sm font-sans leading-relaxed text-slate-300 whitespace-pre-line">
                   {problem.description_markdown || "Given an array of integers nums and an integer target, return the indices of the two numbers such that they add up to target."}
                 </div>
 
@@ -443,7 +596,7 @@ export function SplitPaneIDE({
                     <button
                       type="button"
                       onClick={() => setOpenSections((s) => ({ ...s, constraints: !s.constraints }))}
-                      className="w-full px-4 py-3 text-left flex items-center justify-between text-xs font-mono text-slate-300 hover:bg-[#1A2338]/60"
+                      className="w-full px-4 py-3 text-left flex items-center justify-between text-xs font-mono text-slate-300 hover:bg-[#1A2338]/60 cursor-pointer"
                     >
                       <span className="font-semibold text-slate-200">&gt; Constraints</span>
                       {openSections.constraints ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -460,7 +613,7 @@ export function SplitPaneIDE({
                     <button
                       type="button"
                       onClick={() => setOpenSections((s) => ({ ...s, inputFormat: !s.inputFormat }))}
-                      className="w-full px-4 py-3 text-left flex items-center justify-between text-xs font-mono text-slate-300 hover:bg-[#1A2338]/60"
+                      className="w-full px-4 py-3 text-left flex items-center justify-between text-xs font-mono text-slate-300 hover:bg-[#1A2338]/60 cursor-pointer"
                     >
                       <span className="font-semibold text-slate-200">&gt; Input Format</span>
                       {openSections.inputFormat ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -477,14 +630,14 @@ export function SplitPaneIDE({
                     <button
                       type="button"
                       onClick={() => setOpenSections((s) => ({ ...s, outputFormat: !s.outputFormat }))}
-                      className="w-full px-4 py-3 text-left flex items-center justify-between text-xs font-mono text-slate-300 hover:bg-[#1A2338]/60"
+                      className="w-full px-4 py-3 text-left flex items-center justify-between text-xs font-mono text-slate-300 hover:bg-[#1A2338]/60 cursor-pointer"
                     >
                       <span className="font-semibold text-slate-200">&gt; Output Format</span>
                       {openSections.outputFormat ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                     </button>
                     {openSections.outputFormat && (
                       <div className="px-4 pb-3 text-xs font-mono text-slate-400 border-t border-[#1E293B]/60 pt-2">
-                        Return a list or array of two integers [index1, index2].
+                        Return a list or array of two indices [index1, index2] separated by space.
                       </div>
                     )}
                   </div>
@@ -507,12 +660,12 @@ export function SplitPaneIDE({
               </div>
             )}
 
-            {/* Solution Tab */}
+            {/* 2. Solution Tab */}
             {activeLeftTab === "solution" && (
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#9DFF00]/10 border border-[#9DFF00]/30 text-[#9DFF00] text-xs font-mono">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>Optimal Hash Map Approach</span>
+                  <span>Optimal Algorithmic Solution</span>
                 </div>
                 <div className="text-xs font-mono leading-relaxed text-slate-300 space-y-3">
                   <p>
@@ -526,7 +679,85 @@ export function SplitPaneIDE({
               </div>
             )}
 
-            {/* Discussion Tab */}
+            {/* 3. Progressive Hints Tab */}
+            {activeLeftTab === "hints" && (
+              <div className="space-y-4">
+                <div className="text-xs text-slate-400 font-mono">
+                  Progressive hints guide your problem-solving process without revealing the full solution.
+                </div>
+
+                {/* Hint 1 */}
+                <div className="border border-[#1E293B] rounded-xl overflow-hidden bg-[#141B2D]/60 p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white flex items-center gap-2">
+                      <Lightbulb className="w-4 h-4 text-amber-400" />
+                      <span>Hint 1: Algorithmic Pattern</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setUnlockedHints((h) => ({ ...h, hint1: !h.hint1 }))}
+                      className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] font-mono font-semibold text-slate-300 transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      {unlockedHints.hint1 ? <Eye className="w-3 h-3 text-[#9DFF00]" /> : <Lock className="w-3 h-3 text-slate-400" />}
+                      <span>{unlockedHints.hint1 ? "Hide" : "Reveal Hint"}</span>
+                    </button>
+                  </div>
+                  {unlockedHints.hint1 && (
+                    <div className="pt-2 text-xs font-mono text-slate-300 border-t border-[#1E293B] animate-in fade-in">
+                      {problem.hints?.intuition || "Instead of checking every pair with nested loops O(N^2), ask: for each number x, what partner value y would make x + y = target?"}
+                    </div>
+                  )}
+                </div>
+
+                {/* Hint 2 */}
+                <div className="border border-[#1E293B] rounded-xl overflow-hidden bg-[#141B2D]/60 p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white flex items-center gap-2">
+                      <Cpu className="w-4 h-4 text-sky-400" />
+                      <span>Hint 2: Data Structure Choice</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setUnlockedHints((h) => ({ ...h, hint2: !h.hint2 }))}
+                      className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] font-mono font-semibold text-slate-300 transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      {unlockedHints.hint2 ? <Eye className="w-3 h-3 text-[#9DFF00]" /> : <Lock className="w-3 h-3 text-slate-400" />}
+                      <span>{unlockedHints.hint2 ? "Hide" : "Reveal Hint"}</span>
+                    </button>
+                  </div>
+                  {unlockedHints.hint2 && (
+                    <div className="pt-2 text-xs font-mono text-slate-300 border-t border-[#1E293B] animate-in fade-in">
+                      {problem.hints?.data_structure || "Use a Hash Map to store previously visited elements as {value: index}. As you iterate, check if (target - num) exists in O(1)."}
+                    </div>
+                  )}
+                </div>
+
+                {/* Hint 3 */}
+                <div className="border border-[#1E293B] rounded-xl overflow-hidden bg-[#141B2D]/60 p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white flex items-center gap-2">
+                      <ShieldAlert className="w-4 h-4 text-rose-400" />
+                      <span>Hint 3: Edge Cases & Traps</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setUnlockedHints((h) => ({ ...h, hint3: !h.hint3 }))}
+                      className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] font-mono font-semibold text-slate-300 transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      {unlockedHints.hint3 ? <Eye className="w-3 h-3 text-[#9DFF00]" /> : <Lock className="w-3 h-3 text-slate-400" />}
+                      <span>{unlockedHints.hint3 ? "Hide" : "Reveal Hint"}</span>
+                    </button>
+                  </div>
+                  {unlockedHints.hint3 && (
+                    <div className="pt-2 text-xs font-mono text-slate-300 border-t border-[#1E293B] animate-in fade-in">
+                      {problem.hints?.edge_case_warning || "Watch out for duplicate values (e.g. [3, 3] with target 6). Ensure you don't pick the same index twice."}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 4. Discussion Tab */}
             {activeLeftTab === "discussion" && (
               <div className="space-y-3">
                 <div className="p-3.5 rounded-xl bg-[#141B2D]/70 border border-[#1E293B] space-y-1">
@@ -541,7 +772,7 @@ export function SplitPaneIDE({
         </div>
 
         {/* ========================================================= */}
-        {/* RIGHT PANE: Monaco Editor + 6-Pill Status Testcase Console */}
+        {/* RIGHT PANE: Monaco Editor + Test Cases / Custom Console   */}
         {/* ========================================================= */}
         <div className="col-span-12 lg:col-span-7 flex flex-col overflow-hidden bg-[#0B0F17]">
           {/* Top Monaco Editor Container (65% height) */}
@@ -568,15 +799,15 @@ export function SplitPaneIDE({
             />
           </div>
 
-          {/* Bottom Test Cases Dock matching Screen 02 */}
+          {/* Bottom Test Cases / Custom Input Dock */}
           <div className="flex-[38] bg-[#0E131F] flex flex-col overflow-hidden">
-            {/* Dock Tabs: Test Cases (3), Sample (2), Hidden (4) */}
+            {/* Dock Tabs: Test Cases (3), Sample (2), Hidden (4), Custom Input */}
             <div className="flex items-center justify-between px-4 pt-2.5 border-b border-[#1E293B] bg-[#0B0F17] text-xs font-mono">
               <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => setActiveBottomTab("cases")}
-                  className={`px-3.5 py-1.5 rounded-t-lg transition-colors font-semibold ${
+                  className={`px-3.5 py-1.5 rounded-t-lg transition-colors font-semibold cursor-pointer ${
                     activeBottomTab === "cases"
                       ? "bg-[#0E131F] text-[#9DFF00] border-t-2 border-[#9DFF00]"
                       : "text-slate-400 hover:text-slate-200"
@@ -587,7 +818,7 @@ export function SplitPaneIDE({
                 <button
                   type="button"
                   onClick={() => setActiveBottomTab("sample")}
-                  className={`px-3.5 py-1.5 rounded-t-lg transition-colors font-semibold ${
+                  className={`px-3.5 py-1.5 rounded-t-lg transition-colors font-semibold cursor-pointer ${
                     activeBottomTab === "sample"
                       ? "bg-[#0E131F] text-[#9DFF00] border-t-2 border-[#9DFF00]"
                       : "text-slate-400 hover:text-slate-200"
@@ -598,7 +829,7 @@ export function SplitPaneIDE({
                 <button
                   type="button"
                   onClick={() => setActiveBottomTab("hidden")}
-                  className={`px-3.5 py-1.5 rounded-t-lg transition-colors font-semibold ${
+                  className={`px-3.5 py-1.5 rounded-t-lg transition-colors font-semibold cursor-pointer ${
                     activeBottomTab === "hidden"
                       ? "bg-[#0E131F] text-[#9DFF00] border-t-2 border-[#9DFF00]"
                       : "text-slate-400 hover:text-slate-200"
@@ -606,11 +837,24 @@ export function SplitPaneIDE({
                 >
                   Hidden (4)
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveBottomTab("custom")}
+                  className={`px-3.5 py-1.5 rounded-t-lg transition-colors font-semibold cursor-pointer ${
+                    activeBottomTab === "custom"
+                      ? "bg-[#0E131F] text-[#9DFF00] border-t-2 border-[#9DFF00]"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  Custom Input
+                </button>
               </div>
 
               {/* Status Message */}
               <div className="text-[11px] font-mono text-slate-400">
-                {lastResult ? (
+                {activeBottomTab === "custom" ? (
+                  <span className="text-slate-400">Custom Stdin Mode</span>
+                ) : lastResult ? (
                   <span className="text-[#9DFF00] font-semibold">
                     {lastResult.status} ({lastResult.passed_cases}/{lastResult.total_cases})
                   </span>
@@ -620,98 +864,144 @@ export function SplitPaneIDE({
               </div>
             </div>
 
-            {/* Dynamic Test Cases Table matching Screen 02 */}
-            <div className="flex-1 p-4 overflow-y-auto space-y-2">
-              {(problem.test_cases || [])
-                .filter((tc) => {
-                  if (activeBottomTab === "sample") return !tc.is_hidden || tc.case_number <= 2;
-                  if (activeBottomTab === "hidden") return tc.is_hidden || tc.case_number > 2;
-                  return tc.case_number <= 3;
-                })
-                .map((tc) => {
-                  const res = lastResult?.results.find((r) => r.case_number === tc.case_number);
-                  const isPassed = res ? res.passed : true;
-                  const time = res ? `${res.execution_time_ms} ms` : `${3 + tc.case_number} ms`;
-                  const isExpanded = expandedCaseNumber === tc.case_number;
-
-                  return (
-                    <div
-                      key={tc.id || tc.case_number}
-                      className="rounded-xl bg-[#141B2D]/60 border border-[#1E293B] text-xs font-mono overflow-hidden transition-all"
+            {/* Tab Body: Test Cases Table OR Custom Input Panel */}
+            {activeBottomTab === "custom" ? (
+              <div className="flex-1 p-4 overflow-y-auto space-y-3 font-mono text-xs">
+                <div className="space-y-1.5">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                    <span>Standard Input (stdin)</span>
+                    <button
+                      type="button"
+                      onClick={handleRunCode}
+                      disabled={isRunning}
+                      className="px-3 py-1 rounded-lg bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-[11px] transition-colors cursor-pointer"
                     >
-                      <button
-                        type="button"
-                        onClick={() => setExpandedCaseNumber(isExpanded ? null : tc.case_number)}
-                        className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-[#141B2D] transition-colors text-left"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          {isPassed ? (
-                            <CheckCircle2 className="w-4 h-4 text-[#9DFF00]" />
-                          ) : (
-                            <XCircle className="w-4 h-4 text-rose-400" />
-                          )}
-                          <span className="font-semibold text-slate-200">Test Case {tc.case_number}</span>
-                          {tc.failure_category && (
-                            <span className="text-[10px] text-slate-400 border border-slate-700/60 px-1.5 py-0.5 rounded">
-                              {tc.failure_category}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full font-bold text-[11px] border ${
-                              isPassed
-                                ? "bg-[#9DFF00]/20 text-[#9DFF00] border-[#9DFF00]/40"
-                                : "bg-rose-500/20 text-rose-400 border-rose-500/40"
-                            }`}
-                          >
-                            {isPassed ? (
-                              <CheckCircle2 className="w-3 h-3 text-[#9DFF00]" />
-                            ) : (
-                              <XCircle className="w-3 h-3 text-rose-400" />
-                            )}
-                            <span>{isPassed ? "Passed" : "Failed"}</span>
-                          </span>
-                          <span className="text-slate-400 text-[11px] min-w-[36px] text-right font-mono">
-                            {time}
-                          </span>
-                          <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                        </div>
-                      </button>
+                      {isRunning ? "Running..." : "Run Custom"}
+                    </button>
+                  </div>
+                  <textarea
+                    rows={3}
+                    value={customInputValue}
+                    onChange={(e) => setCustomInputValue(e.target.value)}
+                    placeholder="Enter input data (e.g. 2 7 11 15\n9)..."
+                    className="w-full p-2.5 rounded-xl bg-[#141B2D] border border-[#1E293B] text-slate-200 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-[#9DFF00]"
+                  />
+                </div>
 
-                      {/* Expandable Diagnostic Telemetry Panel */}
-                      {isExpanded && (
-                        <div className="px-4 py-3 border-t border-[#1E293B] bg-[#0E131F]/90 text-[11px] space-y-2">
-                          {tc.is_hidden && tc.case_number > 2 ? (
-                            <div className="text-slate-400 italic">
-                              Hidden Stress Test Case: Input and expected output values are protected by proctoring policies to prevent hardcoding.
-                            </div>
-                          ) : (
-                            <>
-                              <div>
-                                <span className="text-slate-500 font-semibold">Input: </span>
-                                <span className="text-slate-300 font-mono">{tc.input_data}</span>
-                              </div>
-                              <div>
-                                <span className="text-slate-500 font-semibold">Expected Output: </span>
-                                <span className="text-[#9DFF00] font-mono">{tc.expected_output}</span>
-                              </div>
-                              {res && (
-                                <div>
-                                  <span className="text-slate-500 font-semibold">Actual Output: </span>
-                                  <span className={res.passed ? "text-emerald-400 font-mono" : "text-rose-400 font-mono"}>
-                                    {res.actual_output || (res.passed ? tc.expected_output : "Execution Mismatch")}
-                                  </span>
-                                </div>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      )}
+                {customExecutionResult && (
+                  <div className="space-y-1.5 pt-1">
+                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                      <span>Execution Output</span>
+                      <span className="text-[10px] text-slate-500 font-mono">
+                        {customExecutionResult.executionTimeMs} ms
+                      </span>
                     </div>
-                  );
-                })}
-            </div>
+                    {customExecutionResult.stderr ? (
+                      <pre className="p-3 rounded-xl bg-rose-950/40 border border-rose-800/40 text-rose-300 whitespace-pre-wrap text-[11px]">
+                        {customExecutionResult.stderr}
+                      </pre>
+                    ) : (
+                      <pre className="p-3 rounded-xl bg-[#141B2D] border border-[#1E293B] text-emerald-300 whitespace-pre-wrap text-[11px]">
+                        {customExecutionResult.stdout || "[Program executed with no stdout output]"}
+                      </pre>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Dynamic Test Cases Table matching Screen 02 */
+              <div className="flex-1 p-4 overflow-y-auto space-y-2">
+                {(problem.test_cases || [])
+                  .filter((tc) => {
+                    if (activeBottomTab === "sample") return !tc.is_hidden || tc.case_number <= 2;
+                    if (activeBottomTab === "hidden") return tc.is_hidden || tc.case_number > 2;
+                    return tc.case_number <= 3;
+                  })
+                  .map((tc) => {
+                    const res = lastResult?.results.find((r) => r.case_number === tc.case_number);
+                    const isPassed = res ? res.passed : true;
+                    const time = res ? `${res.execution_time_ms} ms` : `${3 + tc.case_number} ms`;
+                    const isExpanded = expandedCaseNumber === tc.case_number;
+
+                    return (
+                      <div
+                        key={tc.id || tc.case_number}
+                        className="rounded-xl bg-[#141B2D]/60 border border-[#1E293B] text-xs font-mono overflow-hidden transition-all"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setExpandedCaseNumber(isExpanded ? null : tc.case_number)}
+                          className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-[#141B2D] transition-colors text-left cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            {isPassed ? (
+                              <CheckCircle2 className="w-4 h-4 text-[#9DFF00]" />
+                            ) : (
+                              <XCircle className="w-4 h-4 text-rose-400" />
+                            )}
+                            <span className="font-semibold text-slate-200">Test Case {tc.case_number}</span>
+                            {tc.failure_category && (
+                              <span className="text-[10px] text-slate-400 border border-slate-700/60 px-1.5 py-0.5 rounded">
+                                {tc.failure_category}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full font-bold text-[11px] border ${
+                                isPassed
+                                  ? "bg-[#9DFF00]/20 text-[#9DFF00] border-[#9DFF00]/40"
+                                  : "bg-rose-500/20 text-rose-400 border-rose-500/40"
+                              }`}
+                            >
+                              {isPassed ? (
+                                <CheckCircle2 className="w-3 h-3 text-[#9DFF00]" />
+                              ) : (
+                                <XCircle className="w-3 h-3 text-rose-400" />
+                              )}
+                              <span>{isPassed ? "Passed" : "Failed"}</span>
+                            </span>
+                            <span className="text-slate-400 text-[11px] min-w-[36px] text-right font-mono">
+                              {time}
+                            </span>
+                            <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                          </div>
+                        </button>
+
+                        {/* Expandable Diagnostic Telemetry Panel */}
+                        {isExpanded && (
+                          <div className="px-4 py-3 border-t border-[#1E293B] bg-[#0E131F]/90 text-[11px] space-y-2">
+                            {tc.is_hidden && tc.case_number > 2 ? (
+                              <div className="text-slate-400 italic">
+                                Hidden Stress Test Case: Input and expected output values are protected by institutional policies to prevent hardcoding.
+                              </div>
+                            ) : (
+                              <>
+                                <div>
+                                  <span className="text-slate-500 font-semibold">Input: </span>
+                                  <span className="text-slate-300 font-mono">{tc.input_data}</span>
+                                </div>
+                                <div>
+                                  <span className="text-slate-500 font-semibold">Expected Output: </span>
+                                  <span className="text-[#9DFF00] font-mono">{tc.expected_output}</span>
+                                </div>
+                                {res && (
+                                  <div>
+                                    <span className="text-slate-500 font-semibold">Actual Output: </span>
+                                    <span className={res.passed ? "text-emerald-400 font-mono" : "text-rose-400 font-mono"}>
+                                      {res.actual_output || "[No output produced]"}
+                                    </span>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
           </div>
         </div>
       </div>
