@@ -13,6 +13,7 @@ import { CurriculumStore } from "@/lib/curriculum-store";
 import { DataService } from "@/lib/supabase/db";
 import { runPythonCode } from "@/lib/pyodide-runner";
 import { useSidebar } from "@/components/shared/app-shell";
+import { MarkdownRenderer } from "@/components/shared/markdown-renderer";
 import {
   Play,
   CheckCircle2,
@@ -569,9 +570,14 @@ export function SplitPaneIDE({
             {/* 1. Problem Tab */}
             {activeLeftTab === "problem" && (
               <div className="space-y-6">
-                {/* Description Text */}
-                <div className="text-xs sm:text-sm font-sans leading-relaxed text-slate-300 whitespace-pre-line">
-                  {problem.description_markdown || "Given an array of integers nums and an integer target, return the indices of the two numbers such that they add up to target."}
+                {/* Description Text with Clean Formatted Markdown */}
+                <div className="text-xs sm:text-sm font-sans leading-relaxed text-slate-300">
+                  <MarkdownRenderer
+                    content={
+                      problem.description_markdown ||
+                      "Given an array of integers nums and an integer target, return the indices of the two numbers such that they add up to target."
+                    }
+                  />
                 </div>
 
                 {/* Example Block matching Screen 02 */}

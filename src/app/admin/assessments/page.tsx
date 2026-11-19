@@ -202,7 +202,7 @@ export default function AdminAssessmentManagementPage() {
               {filteredAssessments.map((a) => (
                 <tr
                   key={a.id}
-                  onClick={() => router.push(`/student/exam/assessment-1`)}
+                  onClick={() => router.push(`/student/exam/${a.id || "assessment-1"}`)}
                   className="hover:bg-slate-50/70 transition-colors cursor-pointer"
                 >
                   <td className="p-4 font-semibold text-slate-900">

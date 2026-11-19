@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Editor from "@monaco-editor/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DemoStore } from "@/lib/demo-store";
+import { AssessmentRegistry } from "@/lib/assessment-registry";
 import { runPythonCode } from "@/lib/pyodide-runner";
 import { compareOutputs } from "@/lib/utils";
 import { AssessmentService } from "@/lib/services/assessment-service";
@@ -81,12 +82,15 @@ export default function ProctoredExamRoomPage() {
   const [isTestingCode, setIsTestingCode] = useState<boolean>(false);
   const [testOutput, setTestOutput] = useState<string | null>(null);
 
+  // Palette Filter: All, MCQ, Coding
+  const [paletteFilter, setPaletteFilter] = useState<"ALL" | "MCQ" | "CODING">("ALL");
+
   // 1. Initialize Exam & User State
   useEffect(() => {
     const user = DemoStore.getCurrentUser();
     setCurrentUser(user);
 
-    const exam = DemoStore.getAssessment();
+    const exam = AssessmentRegistry.getAssessment(examId || "assessment-1");
     setAssessment(exam);
 
     if (exam && exam.duration_minutes) {
@@ -105,6 +109,7 @@ export default function ProctoredExamRoomPage() {
         };
       });
       setAnswers(initialMap);
+      setCurrentIndex(0);
     }
   }, [examId]);
 
@@ -609,40 +614,70 @@ export default function ProctoredExamRoomPage() {
               Question Palette
             </h3>
 
-            {/* Filter Pills: All 20, MCQ 15, Coding 5 */}
-            <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl text-xs font-mono">
-              <button
-                type="button"
-                className="flex-1 py-1.5 px-2 rounded-lg bg-[#9DFF00] text-black font-bold text-center shadow-xs"
-              >
-                All 20
-              </button>
-              <button
-                type="button"
-                className="flex-1 py-1.5 px-2 rounded-lg text-slate-600 hover:text-slate-900 font-medium text-center transition-colors"
-              >
-                MCQ 15
-              </button>
-              <button
-                type="button"
-                className="flex-1 py-1.5 px-2 rounded-lg text-slate-600 hover:text-slate-900 font-medium text-center transition-colors"
-              >
-                Coding 5
-              </button>
-            </div>
+            {/* Filter Pills: Dynamic All, MCQ, Coding */}
+            {(() => {
+              const allProblems = assessment.problems || [];
+              const mcqCount = allProblems.filter((p) => p.type === "mcq").length;
+              const codingCount = allProblems.filter((p) => p.type === "coding").length;
+              const totalCount = allProblems.length;
 
-            {/* Tactile 1-20 Question Circular Pills */}
+              return (
+                <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl text-xs font-mono">
+                  <button
+                    type="button"
+                    onClick={() => setPaletteFilter("ALL")}
+                    className={`flex-1 py-1.5 px-2 rounded-lg font-bold text-center transition-all ${
+                      paletteFilter === "ALL"
+                        ? "bg-[#9DFF00] text-black shadow-xs"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    All {totalCount}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaletteFilter("MCQ")}
+                    className={`flex-1 py-1.5 px-2 rounded-lg font-bold text-center transition-all ${
+                      paletteFilter === "MCQ"
+                        ? "bg-[#9DFF00] text-black shadow-xs"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    MCQ {mcqCount}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaletteFilter("CODING")}
+                    className={`flex-1 py-1.5 px-2 rounded-lg font-bold text-center transition-all ${
+                      paletteFilter === "CODING"
+                        ? "bg-[#9DFF00] text-black shadow-xs"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    Coding {codingCount}
+                  </button>
+                </div>
+              );
+            })()}
+
+            {/* Tactile Question Circular Pills */}
             <div className="grid grid-cols-5 gap-2.5 pt-1">
-              {Array.from({ length: Math.max(20, assessment.problems?.length || 20) }).map((_, idx) => {
-                const prob = assessment.problems?.[idx];
+              {(assessment.problems || []).map((prob, idx) => {
+                if (paletteFilter === "MCQ" && prob.type !== "mcq") return null;
+                if (paletteFilter === "CODING" && prob.type !== "coding") return null;
+
                 const isCurrent = idx === currentIndex;
-                const isAnswered = idx < 7 || (prob && answers[prob.id]?.selectedOption);
-                const isMarked = prob && answers[prob.id]?.isMarkedReview;
+                const ans = answers[prob.id];
+                const isAnswered =
+                  prob.type === "mcq"
+                    ? !!ans?.selectedOption
+                    : !!(ans?.code && ans.code.trim().length > 20 && ans.code !== prob.starter_code_json?.python);
+                const isMarked = !!ans?.isMarkedReview;
 
                 return (
                   <button
-                    key={idx}
-                    onClick={() => prob && navigateTo(idx)}
+                    key={prob.id || idx}
+                    onClick={() => navigateTo(idx)}
                     className={`w-10 h-10 rounded-full text-xs font-mono font-bold transition-all flex items-center justify-center relative ${
                       isCurrent
                         ? "bg-slate-900 text-white ring-2 ring-[#9DFF00] ring-offset-2"
@@ -682,10 +717,10 @@ export default function ProctoredExamRoomPage() {
 
         {/* Right Active Question Workspace matching Screen 03 */}
         <main className="flex-1 flex flex-col bg-[#F4F7F4] overflow-hidden">
-          {/* Subheader: Q. 7 (MCQ) & Bookmark */}
+          {/* Subheader: Q. 1 of N & Bookmark */}
           <div className="h-12 border-b border-slate-200/80 bg-white px-8 flex items-center justify-between text-xs">
             <span className="font-bold text-slate-900 text-sm">
-              Q. {currentIndex + 1} ({currentProblem.type === "mcq" ? "MCQ" : "Coding"})
+              Q. {currentIndex + 1} of {assessment.problems?.length || 0} ({currentProblem.type === "mcq" ? "MCQ" : "Coding"})
             </span>
 
             <button
@@ -773,18 +808,11 @@ export default function ProctoredExamRoomPage() {
                 </div>
               </div>
             ) : (
-              /* 4 Option Cards matching Screen 03 */
+              /* Dynamic Option Cards */
               <div className="space-y-3 pt-2">
-                {[
-                  { label: "A", text: "Stack" },
-                  { label: "B", text: "Queue" },
-                  { label: "C", text: "Tree" },
-                  { label: "D", text: "Graph" },
-                ].map((opt, optIdx) => {
-                  const optText = currentProblem.mcq_options_json?.[optIdx] || opt.text;
-                  const isSelected =
-                    answers[currentProblem.id]?.selectedOption === optText ||
-                    (!answers[currentProblem.id]?.selectedOption && opt.label === "B");
+                {(currentProblem.mcq_options_json || ["Option A", "Option B", "Option C", "Option D"]).map((optText, optIdx) => {
+                  const label = String.fromCharCode(65 + optIdx);
+                  const isSelected = answers[currentProblem.id]?.selectedOption === optText;
 
                   return (
                     <button
@@ -800,11 +828,11 @@ export default function ProctoredExamRoomPage() {
                         <span
                           className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs font-mono transition-all ${
                             isSelected
-                              ? "bg-[#9DFF00] text-black shadow-xs"
+                              ? "bg-[#9DFF00] text-black shadow-xs font-extrabold"
                               : "bg-slate-100 text-slate-600 border border-slate-200"
                           }`}
                         >
-                          {opt.label}
+                          {label}
                         </span>
                         <span className="text-sm">{optText}</span>
                       </div>
@@ -820,24 +848,37 @@ export default function ProctoredExamRoomPage() {
             )}
           </div>
 
-          {/* Bottom Action Bar matching Screen 03 */}
+          {/* Bottom Action Bar */}
           <footer className="h-16 border-t border-slate-200/90 bg-white px-8 flex items-center justify-between text-xs shadow-xs">
             <button
               onClick={() => navigateTo(Math.max(0, currentIndex - 1))}
               disabled={currentIndex === 0}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold hover:bg-slate-50 disabled:opacity-30 transition-colors"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold hover:bg-slate-50 disabled:opacity-30 transition-colors cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
               <span>Previous</span>
             </button>
 
-            <button
-              onClick={() => navigateTo(currentIndex + 1)}
-              className="flex items-center gap-2 px-7 py-2.5 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold transition-all shadow-xs active:scale-[0.98]"
-            >
-              <span>Next</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
+            {currentIndex >= (assessment.problems?.length || 1) - 1 ? (
+              <button
+                type="button"
+                onClick={() => handleFinalSubmit(false)}
+                disabled={isSubmitting}
+                className="flex items-center gap-2 px-7 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-[#9DFF00] font-bold transition-all shadow-xs active:scale-[0.98] cursor-pointer"
+              >
+                <span>{isSubmitting ? "Submitting..." : "Submit Exam"}</span>
+                <CheckCircle2 className="w-4 h-4 text-[#9DFF00]" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => navigateTo(currentIndex + 1)}
+                className="flex items-center gap-2 px-7 py-2.5 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold transition-all shadow-xs active:scale-[0.98] cursor-pointer"
+              >
+                <span>Next</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
           </footer>
         </main>
       </div>

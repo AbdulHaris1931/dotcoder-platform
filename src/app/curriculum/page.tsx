@@ -371,7 +371,7 @@ function CurriculumPageContent() {
                   <ArrowRight className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => router.push("/student/exam/assessment-1")}
+                  onClick={() => router.push(`/student/exam/module-${currentModule.number}`)}
                   className="py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs sm:text-sm border border-white/10 transition-all flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer"
                 >
                   <ShieldCheck className="w-4 h-4 text-[#9DFF00]" />

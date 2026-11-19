@@ -23,6 +23,7 @@ import {
   SEED_ASSESSMENT,
   SEED_SUBMISSIONS,
 } from "./seed-data";
+import { AssessmentRegistry } from "./assessment-registry";
 
 const STORAGE_KEYS = {
   CURRENT_USER: "dotcoder_v2_current_user",
@@ -198,8 +199,11 @@ export class DemoStore {
   }
 
   // Assessment
-  static getAssessment(): Assessment {
-    return SEED_ASSESSMENT;
+  static getAssessment(id?: string): Assessment {
+    if (id) {
+      return AssessmentRegistry.getAssessment(id);
+    }
+    return AssessmentRegistry.getAssessment("assessment-1");
   }
 
   // Submissions

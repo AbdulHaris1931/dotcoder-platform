@@ -7,42 +7,7 @@ import {
   QuestionGradingDetail,
 } from "@/types/assessment-attempt";
 import { evaluateDeterministicCode } from "@/lib/code-evaluator";
-
-// Server-side answer key for MCQs (Protected from client inspection)
-const SERVER_MCQ_ANSWER_KEYS: Record<
-  string,
-  {
-    correctOption: number | string;
-    explanation: string;
-    maxScore: number;
-  }
-> = {
-  "q-time-complexity": {
-    correctOption: 1, // Option index or value
-    explanation: "Two-pointer convergence operates in linear time O(n).",
-    maxScore: 20,
-  },
-  "q-stack-lifo": {
-    correctOption: 0,
-    explanation: "Stacks follow Last-In, First-Out (LIFO) discipline.",
-    maxScore: 20,
-  },
-  "q-hash-lookup": {
-    correctOption: 2,
-    explanation: "Average hash table lookup is O(1) constant time.",
-    maxScore: 20,
-  },
-  "q1": {
-    correctOption: 0,
-    explanation: "Optimal two-pointer approach reduces complexity from O(n^2) to O(n).",
-    maxScore: 20,
-  },
-  "q2": {
-    correctOption: 2,
-    explanation: "A binary search tree maintains left < node < right invariant.",
-    maxScore: 20,
-  },
-};
+import { AssessmentRegistry } from "@/lib/assessment-registry";
 
 export async function POST(req: NextRequest) {
   try {
@@ -68,6 +33,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const assessment = AssessmentRegistry.getAssessment(assessmentId);
+    const problemMap = new Map((assessment?.problems || []).map((p) => [p.id, p]));
+
     const questionEntries = Object.entries(answers);
     const gradingDetails: QuestionGradingDetail[] = [];
     let totalScore = 0;
@@ -75,33 +43,36 @@ export async function POST(req: NextRequest) {
     let correctCount = 0;
 
     for (const [qId, ans] of questionEntries) {
+      const problemDef = problemMap.get(qId);
+
       if (ans.questionType === "mcq") {
-        const key = SERVER_MCQ_ANSWER_KEYS[qId] || {
-          correctOption: 0,
-          explanation: "Standard algorithmic property definition.",
-          maxScore: 20,
-        };
-        maxPossibleScore += key.maxScore;
+        const correctOption =
+          problemDef?.correct_option ||
+          (problemDef?.mcq_options_json && problemDef.mcq_options_json[0]) ||
+          "Option A";
+        const explanation = problemDef?.explanation || "Algorithmic invariant verified.";
+        const maxScore = 20;
+        maxPossibleScore += maxScore;
 
         const isCorrect =
           ans.selectedOption !== undefined &&
-          (ans.selectedOption === key.correctOption ||
-            String(ans.selectedOption).trim().toLowerCase() === String(key.correctOption).trim().toLowerCase());
+          (ans.selectedOption === correctOption ||
+            String(ans.selectedOption).trim().toLowerCase() === String(correctOption).trim().toLowerCase());
 
-        const awarded = isCorrect ? key.maxScore : 0;
+        const awarded = isCorrect ? maxScore : 0;
         totalScore += awarded;
         if (isCorrect) correctCount++;
 
         gradingDetails.push({
           questionId: qId,
-          questionTitle: ans.questionTitle || `Question ${gradingDetails.length + 1}`,
+          questionTitle: ans.questionTitle || problemDef?.title || `Question ${gradingDetails.length + 1}`,
           questionType: "mcq",
-          maxScore: key.maxScore,
+          maxScore,
           awardedScore: awarded,
           passed: isCorrect,
           userAnswer: ans.selectedOption,
-          correctAnswer: key.correctOption,
-          feedback: isCorrect ? "Correct answer." : key.explanation,
+          correctAnswer: correctOption,
+          feedback: isCorrect ? "Correct answer." : explanation,
         });
       } else {
         // Coding Question
@@ -109,30 +80,24 @@ export async function POST(req: NextRequest) {
         maxPossibleScore += maxScore;
         const code = ans.code || "";
 
-        // Deterministic code evaluator with sample test cases
+        const testCases = (problemDef?.test_cases && problemDef.test_cases.length > 0)
+          ? problemDef.test_cases.map((tc, tcIdx) => ({
+              id: tc.id || `tc-${tcIdx + 1}`,
+              input: tc.input || (tc as any).input_data || "",
+              expectedOutput: tc.expected_output || tc.expectedOutput || "",
+              isHidden: tc.is_hidden ?? tc.isHidden ?? false,
+            }))
+          : [
+              { id: "tc-1", input: "2 7 11 15\n9", expectedOutput: "0 1", isHidden: false },
+              { id: "tc-2", input: "3 2 4\n6", expectedOutput: "1 2", isHidden: false },
+              { id: "tc-3", input: "3 3\n6", expectedOutput: "0 1", isHidden: true },
+            ];
+
+        // Deterministic code evaluator with problem test cases
         const evalResult = evaluateDeterministicCode({
           language: (ans.language as any) || "python",
           sourceCode: code,
-          testCases: [
-            {
-              id: "tc-1",
-              input: "2 7 11 15\n9",
-              expectedOutput: "0 1",
-              isHidden: false,
-            },
-            {
-              id: "tc-2",
-              input: "3 2 4\n6",
-              expectedOutput: "1 2",
-              isHidden: false,
-            },
-            {
-              id: "tc-3",
-              input: "3 3\n6",
-              expectedOutput: "0 1",
-              isHidden: true,
-            },
-          ],
+          testCases,
         });
 
         const passRate = evalResult.totalCases > 0 ? evalResult.passedCases / evalResult.totalCases : 0;
@@ -143,7 +108,7 @@ export async function POST(req: NextRequest) {
 
         gradingDetails.push({
           questionId: qId,
-          questionTitle: ans.questionTitle || "Algorithmic Code Implementation",
+          questionTitle: ans.questionTitle || problemDef?.title || "Algorithmic Code Implementation",
           questionType: "coding",
           maxScore,
           awardedScore: awarded,
