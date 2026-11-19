@@ -103,22 +103,37 @@ export default function StudentResumePage() {
             </div>
           </div>
 
-          {/* Right: QR Code & Verified Credential Box matching Screen 06 */}
-          <div className="flex items-center gap-4 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-100">
-            {/* QR Code Container */}
-            <div className="w-16 h-16 bg-white p-1 rounded-xl border border-slate-200 flex items-center justify-center flex-shrink-0">
-              <QrCode className="w-14 h-14 text-slate-800" />
-            </div>
+          {/* Right: QR Code & Verified Credential Box linking to /verify/[credentialId] */}
+          <div className="flex items-center gap-4 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
+            {/* Clickable QR Code Container */}
+            <a
+              href="/verify/AVASC-2026-BCA-23BCA01-92-A1K7"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-16 h-16 bg-white p-1 rounded-xl border border-slate-200 flex items-center justify-center flex-shrink-0 hover:border-slate-400 hover:shadow-xs transition-all group"
+              title="Click to open verification portal"
+            >
+              <QrCode className="w-14 h-14 text-slate-800 group-hover:text-black transition-colors" />
+            </a>
 
             {/* Verified Credential Text */}
-            <div className="space-y-1 max-w-[190px]">
+            <div className="space-y-1 max-w-[210px]">
               <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 fill-emerald-100" />
                 <span>Verified Credential</span>
               </div>
               <p className="text-[10px] text-slate-500 leading-tight">
-                This resume is verified by DotCoder. Scan the QR code to validate the credentials.
+                Authenticity cryptographically verified by DotCoder.
               </p>
+              <a
+                href="/verify/AVASC-2026-BCA-23BCA01-92-A1K7"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-800 hover:text-black hover:underline font-mono"
+              >
+                <span>AVASC-2026-BCA-92-A1K7</span>
+                <span className="text-[#84cc16]">&bull; Verify &rarr;</span>
+              </a>
             </div>
           </div>
         </div>

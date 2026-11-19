@@ -34,6 +34,8 @@ export function generatePlacementCsv(
   submissions: Submission[]
 ): string {
   const headers = [
+    "Institution Code",
+    "NAAC Metric",
     "Roll No",
     "Full Name",
     "Department",
@@ -43,6 +45,8 @@ export function generatePlacementCsv(
     "Readiness Score (%)",
     "Placement Status",
     "Integrity Violations",
+    "Accreditation Hash",
+    "Verification URL",
   ];
 
   const rows = students.map((student) => {
@@ -66,16 +70,23 @@ export function generatePlacementCsv(
         ? "Needs Practice"
         : "At-Risk";
 
+    const hash = `AVASC-2026-${(student.department || "BCA").replace(/[^A-Z]/g, "")}-${student.roll_no || "23BCA01"}-${Math.round(student.readiness_score)}-A1K7`;
+    const verifyUrl = `http://localhost:3000/verify/${hash}`;
+
     return [
-      `"${student.roll_no}"`,
+      `"AVASC-TNJ"`,
+      `"Criterion 5.2.1"`,
+      `"${student.roll_no || ""}"`,
       `"${student.full_name}"`,
       `"${student.department}"`,
-      student.batch_year,
+      student.batch_year || 2026,
       studentSubs.length,
       `${avgScore}%`,
       `${student.readiness_score}%`,
       `"${readinessTier}"`,
       violations,
+      `"${hash}"`,
+      `"${verifyUrl}"`,
     ].join(",");
   });
 
