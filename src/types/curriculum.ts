@@ -66,7 +66,7 @@ export interface CurriculumProblem {
   difficulty: ProblemDifficulty;
   description_markdown: string;
   constraints_text: string;
-  boilerplate_code: Record<SupportedLanguage, string>;
+  boilerplate_code: Partial<Record<SupportedLanguage, string>> | Record<string, string>;
   hints: ProgressiveHints;
   company_tags: string[];
   test_cases?: CurriculumTestCase[];

@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
           java: { language: "java", version: "15.0.2" },
           c: { language: "c", version: "10.2.0" },
           cpp: { language: "c++", version: "10.2.0" },
+          sql: { language: "sqlite3", version: "3.36.0" },
         };
 
         const targetLang = pistonLangMap[language as SupportedLanguage] || pistonLangMap.python;

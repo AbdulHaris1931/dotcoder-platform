@@ -16,11 +16,17 @@ export class DataService {
    * Fetch current user profile from Supabase Auth or fallback to DemoStore
    */
   static async getCurrentUser(): Promise<UserProfile> {
+    const demoUser = DemoStore.getCurrentUser();
     const supabase = createClient();
     if (supabase) {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
+          // If a demo persona was specifically switched or set, honor it
+          if (demoUser && demoUser.email && demoUser.email !== user.email) {
+            return demoUser;
+          }
+
           const { data: profile } = await supabase
             .from("profiles")
             .select("*")
@@ -33,9 +39,9 @@ export class DataService {
               email: profile.email || user.email,
               full_name: profile.full_name,
               role: profile.role,
-              college_name: profile.college_name || "Independent / General",
+              college_name: profile.college_name || "Annai Vailankanni Arts and Science College, Thanjavur",
               roll_no: profile.roll_no || "GEN-" + profile.id.slice(0, 6),
-              department: profile.department || "CSE",
+              department: profile.department || "BCA",
               batch_year: profile.batch_year || 2026,
               readiness_score: Number(profile.readiness_score) || 0,
               problems_solved: profile.problems_solved || 0,
@@ -47,7 +53,7 @@ export class DataService {
         console.warn("Supabase auth check failed, falling back to local demo:", err);
       }
     }
-    return DemoStore.getCurrentUser();
+    return demoUser;
   }
 
   /**

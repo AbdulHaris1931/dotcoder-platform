@@ -19,11 +19,11 @@ import {
 
 export function StudentDrawer({
   student,
-  submissions,
+  submissions = [],
   onClose,
 }: {
   student: UserProfile | null;
-  submissions: Submission[];
+  submissions?: Submission[];
   onClose: () => void;
 }) {
   if (!student) return null;

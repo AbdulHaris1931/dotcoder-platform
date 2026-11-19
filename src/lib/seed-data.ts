@@ -1,32 +1,141 @@
-import { Organization, UserProfile, Problem, Assessment, Submission } from "@/types";
+import {
+  Organization,
+  Department,
+  Batch,
+  UserProfile,
+  Problem,
+  Assessment,
+  Submission,
+} from "@/types";
 
 export const SEED_ORGANIZATION: Organization = {
   id: "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
   name: "Annai Vailankanni Arts and Science College, Thanjavur",
   code: "AVASC-TNJ",
   city: "Thanjavur, Tamil Nadu",
-  plan_tier: "enterprise",
+  plan_tier: "enterprise_institutional",
+  created_at: new Date().toISOString(),
+};
+
+export const SEED_DEPARTMENTS: Department[] = [
+  {
+    id: "d0000000-0000-0000-0000-000000000001",
+    organization_id: SEED_ORGANIZATION.id,
+    name: "Bachelor of Computer Applications",
+    code: "BCA",
+  },
+  {
+    id: "d0000000-0000-0000-0000-000000000002",
+    organization_id: SEED_ORGANIZATION.id,
+    name: "B.Sc Computer Science",
+    code: "B.Sc CS",
+  },
+  {
+    id: "d0000000-0000-0000-0000-000000000003",
+    organization_id: SEED_ORGANIZATION.id,
+    name: "B.Sc Information Technology",
+    code: "B.Sc IT",
+  },
+  {
+    id: "d0000000-0000-0000-0000-000000000004",
+    organization_id: SEED_ORGANIZATION.id,
+    name: "Master of Computer Applications",
+    code: "MCA",
+  },
+];
+
+export const SEED_BATCHES: Batch[] = [
+  {
+    id: "b0000000-0000-0000-0000-000000000001",
+    department_id: "d0000000-0000-0000-0000-000000000001",
+    name: "BCA (2023 - 2026)",
+    start_year: 2023,
+    end_year: 2026,
+  },
+  {
+    id: "b0000000-0000-0000-0000-000000000002",
+    department_id: "d0000000-0000-0000-0000-000000000002",
+    name: "B.Sc CS (2023 - 2026)",
+    start_year: 2023,
+    end_year: 2026,
+  },
+  {
+    id: "b0000000-0000-0000-0000-000000000003",
+    department_id: "d0000000-0000-0000-0000-000000000004",
+    name: "MCA (2024 - 2026)",
+    start_year: 2024,
+    end_year: 2026,
+  },
+];
+
+export const SEED_ADMIN: UserProfile = {
+  id: "a0000000-0000-0000-0000-000000000000",
+  organization_id: SEED_ORGANIZATION.id,
+  org_id: SEED_ORGANIZATION.id,
+  full_name: "Dr. V. Rajesh",
+  roll_no: "AV-ADM-01",
+  department: "Principal Office",
+  batch_year: 2026,
+  role: "admin",
+  readiness_score: 99.0,
+  email: "admin@avc.edu.in",
+  college_name: "Annai Vailankanni Arts and Science College, Thanjavur",
   created_at: new Date().toISOString(),
 };
 
 export const SEED_TPO: UserProfile = {
   id: "a0000000-0000-0000-0000-000000000001",
+  organization_id: SEED_ORGANIZATION.id,
   org_id: SEED_ORGANIZATION.id,
   full_name: "Prof. R. Anandhan",
   roll_no: "AV-TPO-01",
   department: "Placement Cell",
   batch_year: 2026,
-  role: "admin",
+  role: "tpo",
   readiness_score: 98.5,
-  email: "admin@avc.edu.in",
+  email: "tpo@avc.edu.in",
   college_name: "Annai Vailankanni Arts and Science College, Thanjavur",
+  created_at: new Date().toISOString(),
+};
+
+export const SEED_TEACHER: UserProfile = {
+  id: "a0000000-0000-0000-0000-000000000010",
+  organization_id: SEED_ORGANIZATION.id,
+  org_id: SEED_ORGANIZATION.id,
+  department_id: "d0000000-0000-0000-0000-000000000001",
+  full_name: "Dr. S. Meenakshi",
+  roll_no: "AV-FAC-01",
+  department: "BCA & Computer Science",
+  batch_year: 2026,
+  role: "teacher",
+  readiness_score: 96.0,
+  email: "teacher@avc.edu.in",
+  college_name: "Annai Vailankanni Arts and Science College, Thanjavur",
+  created_at: new Date().toISOString(),
+};
+
+export const SEED_RECRUITER: UserProfile = {
+  id: "a0000000-0000-0000-0000-000000000020",
+  organization_id: SEED_ORGANIZATION.id,
+  org_id: SEED_ORGANIZATION.id,
+  full_name: "Kavitha R.",
+  roll_no: "ZOHO-REC-01",
+  department: "Technical Recruitment",
+  batch_year: 2026,
+  role: "recruiter",
+  readiness_score: 95.0,
+  email: "recruiter@zoho.com",
+  college_name: "Zoho Corporation",
   created_at: new Date().toISOString(),
 };
 
 export const SEED_STUDENTS: UserProfile[] = [
   {
     id: "a0000000-0000-0000-0000-000000000002",
+    organization_id: SEED_ORGANIZATION.id,
     org_id: SEED_ORGANIZATION.id,
+    department_id: "d0000000-0000-0000-0000-000000000001",
+    batch_id: "b0000000-0000-0000-0000-000000000001",
     full_name: "Karthik S.",
     roll_no: "23BCA01",
     department: "BCA",
@@ -35,10 +144,14 @@ export const SEED_STUDENTS: UserProfile[] = [
     readiness_score: 88.0,
     email: "karthik.bca@avc.edu.in",
     college_name: "Annai Vailankanni Arts and Science College, Thanjavur",
+    problems_solved: 512,
   },
   {
     id: "a0000000-0000-0000-0000-000000000003",
+    organization_id: SEED_ORGANIZATION.id,
     org_id: SEED_ORGANIZATION.id,
+    department_id: "d0000000-0000-0000-0000-000000000002",
+    batch_id: "b0000000-0000-0000-0000-000000000002",
     full_name: "Priya Dharshini M.",
     roll_no: "23CS012",
     department: "B.Sc CS",
@@ -47,10 +160,13 @@ export const SEED_STUDENTS: UserProfile[] = [
     readiness_score: 92.5,
     email: "priya.cs@avc.edu.in",
     college_name: "Annai Vailankanni Arts and Science College, Thanjavur",
+    problems_solved: 489,
   },
   {
     id: "a0000000-0000-0000-0000-000000000004",
+    organization_id: SEED_ORGANIZATION.id,
     org_id: SEED_ORGANIZATION.id,
+    department_id: "d0000000-0000-0000-0000-000000000003",
     full_name: "Saravanan V.",
     roll_no: "23IT005",
     department: "B.Sc IT",
@@ -59,10 +175,14 @@ export const SEED_STUDENTS: UserProfile[] = [
     readiness_score: 78.5,
     email: "saravanan.it@avc.edu.in",
     college_name: "Annai Vailankanni Arts and Science College, Thanjavur",
+    problems_solved: 340,
   },
   {
     id: "a0000000-0000-0000-0000-000000000005",
+    organization_id: SEED_ORGANIZATION.id,
     org_id: SEED_ORGANIZATION.id,
+    department_id: "d0000000-0000-0000-0000-000000000004",
+    batch_id: "b0000000-0000-0000-0000-000000000003",
     full_name: "Divya Bharathi K.",
     roll_no: "24MCA08",
     department: "MCA",
@@ -71,7 +191,16 @@ export const SEED_STUDENTS: UserProfile[] = [
     readiness_score: 84.0,
     email: "divya.mca@avc.edu.in",
     college_name: "Annai Vailankanni Arts and Science College, Thanjavur",
+    problems_solved: 410,
   },
+];
+
+export const ALL_SEED_USERS: UserProfile[] = [
+  SEED_ADMIN,
+  SEED_TPO,
+  SEED_TEACHER,
+  SEED_RECRUITER,
+  ...SEED_STUDENTS,
 ];
 
 export const SEED_PROBLEMS: Problem[] = [
@@ -1525,7 +1654,7 @@ export const SEED_SUBMISSIONS: Submission[] = [
     user_id: SEED_STUDENTS[0].id,
     problem_id: SEED_PROBLEMS[0].id,
     language: "python",
-    source_code: SEED_PROBLEMS[0].starter_code_json.python,
+    source_code: SEED_PROBLEMS[0].starter_code_json?.python || "",
     status: "Accepted",
     passed_cases: 5,
     total_cases: 5,
@@ -1541,7 +1670,7 @@ export const SEED_SUBMISSIONS: Submission[] = [
     user_id: SEED_STUDENTS[1].id,
     problem_id: SEED_PROBLEMS[0].id,
     language: "python",
-    source_code: SEED_PROBLEMS[0].starter_code_json.python,
+    source_code: SEED_PROBLEMS[0].starter_code_json?.python || "",
     status: "Accepted",
     passed_cases: 5,
     total_cases: 5,

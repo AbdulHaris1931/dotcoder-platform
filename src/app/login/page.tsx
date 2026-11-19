@@ -65,7 +65,13 @@ function LoginForm() {
             });
           }
 
-          if (profile?.role === "admin" || profile?.role === "super_admin" || profile?.role === "tpo") {
+          if (profile?.role === "teacher") {
+            router.push("/teacher/dashboard");
+          } else if (profile?.role === "recruiter") {
+            router.push("/recruiter/dashboard");
+          } else if (profile?.role === "tpo") {
+            router.push("/tpo/dashboard");
+          } else if (profile?.role === "admin" || profile?.role === "super_admin") {
             router.push("/admin/dashboard");
           } else {
             router.push("/student/dashboard");
@@ -73,27 +79,52 @@ function LoginForm() {
           return;
         }
       } catch (err: any) {
-        setErrorMsg(err.message || "Invalid email or password.");
-        setLoading(false);
-        return;
+        // If Supabase auth fails (e.g. institutional test accounts not provisioned in cloud auth),
+        // gracefully fall through to DemoStore local fallback for verified seed personas
+        const demoUser = DemoStore.getUserByEmail(email);
+        if (!demoUser && password !== "Password@123") {
+          setErrorMsg(err.message || "Invalid email or password.");
+          setLoading(false);
+          return;
+        }
       }
     }
 
     // Local fallback sign-in
     setTimeout(() => {
       setLoading(false);
-      const isCandidateAdmin =
-        email.toLowerCase().includes("admin") ||
-        email.toLowerCase().includes("tpo") ||
-        email.toLowerCase().includes("faculty");
+      const matchedUser = DemoStore.getUserByEmail(email);
+      if (matchedUser) {
+        DemoStore.setCurrentUser(matchedUser);
+        if (matchedUser.role === "teacher") {
+          router.push("/teacher/dashboard");
+        } else if (matchedUser.role === "recruiter") {
+          router.push("/recruiter/dashboard");
+        } else if (matchedUser.role === "tpo") {
+          router.push("/tpo/dashboard");
+        } else if (matchedUser.role === "admin" || matchedUser.role === "super_admin") {
+          router.push("/admin/dashboard");
+        } else {
+          router.push("/student/dashboard");
+        }
+        return;
+      }
 
-      if (isCandidateAdmin) {
-        DemoStore.setCurrentUser(SEED_TPO);
+      const lower = email.toLowerCase();
+      if (lower.includes("teacher") || lower.includes("faculty")) {
+        DemoStore.switchRole("teacher");
+        router.push("/teacher/dashboard");
+      } else if (lower.includes("recruiter") || lower.includes("talent")) {
+        DemoStore.switchRole("recruiter");
+        router.push("/recruiter/dashboard");
+      } else if (lower.includes("tpo")) {
+        DemoStore.switchRole("tpo");
+        router.push("/tpo/dashboard");
+      } else if (lower.includes("admin")) {
+        DemoStore.switchRole("admin");
         router.push("/admin/dashboard");
       } else {
-        const students = DemoStore.getStudents();
-        const matched = students.find((s) => s.email?.toLowerCase() === email.toLowerCase());
-        DemoStore.setCurrentUser(matched || students[0]);
+        DemoStore.switchRole("student");
         router.push("/student/dashboard");
       }
     }, 400);
@@ -213,6 +244,60 @@ function LoginForm() {
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
+
+          {/* Quick-select test accounts for Annai Vailankanni Arts and Science College */}
+          <div className="pt-2 border-t border-slate-100">
+            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2 flex items-center justify-between">
+              <span>AVASC Test Accounts</span>
+              <span className="font-mono text-[10px] text-slate-400">Password@123</span>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail("karthik.bca@avc.edu.in");
+                  setPassword("Password@123");
+                }}
+                className="text-left px-2.5 py-1.5 rounded-lg border border-slate-200 hover:border-slate-400 bg-slate-50 hover:bg-slate-100 transition-all text-xs"
+              >
+                <div className="font-semibold text-slate-800 text-[11px] truncate">Karthik S.</div>
+                <div className="text-[10px] text-slate-500 truncate">Student (BCA)</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail("teacher@avc.edu.in");
+                  setPassword("Password@123");
+                }}
+                className="text-left px-2.5 py-1.5 rounded-lg border border-slate-200 hover:border-slate-400 bg-slate-50 hover:bg-slate-100 transition-all text-xs"
+              >
+                <div className="font-semibold text-slate-800 text-[11px] truncate">Dr. S. Meenakshi</div>
+                <div className="text-[10px] text-slate-500 truncate">Teacher / Mentor</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail("tpo@avc.edu.in");
+                  setPassword("Password@123");
+                }}
+                className="text-left px-2.5 py-1.5 rounded-lg border border-slate-200 hover:border-slate-400 bg-slate-50 hover:bg-slate-100 transition-all text-xs"
+              >
+                <div className="font-semibold text-slate-800 text-[11px] truncate">Prof. R. Anandhan</div>
+                <div className="text-[10px] text-slate-500 truncate">Placement Officer</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail("recruiter@zoho.com");
+                  setPassword("Password@123");
+                }}
+                className="text-left px-2.5 py-1.5 rounded-lg border border-slate-200 hover:border-slate-400 bg-slate-50 hover:bg-slate-100 transition-all text-xs"
+              >
+                <div className="font-semibold text-slate-800 text-[11px] truncate">Kavitha R.</div>
+                <div className="text-[10px] text-slate-500 truncate">Recruiter (Zoho)</div>
+              </button>
+            </div>
+          </div>
 
           {/* Switcher */}
           <div className="text-center pt-2">

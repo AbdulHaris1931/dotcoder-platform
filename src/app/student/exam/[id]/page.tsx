@@ -84,7 +84,7 @@ export default function ProctoredExamRoomPage() {
       exam.problems.forEach((p, idx) => {
         initialMap[p.id] = {
           selectedOption: undefined,
-          code: p.type === "coding" ? p.starter_code_json.python : undefined,
+          code: p.type === "coding" ? (p.starter_code_json?.python || "") : undefined,
           language: "python",
           isMarkedReview: false,
           visited: idx === 0,

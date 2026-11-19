@@ -27,6 +27,9 @@ import {
   Sidebar,
   X,
   ChevronLeft,
+  GraduationCap,
+  Star,
+  UserCheck,
 } from "lucide-react";
 
 interface SidebarContextType {
@@ -50,6 +53,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [isCmdKOpen, setIsCmdKOpen] = useState(false);
+  const [isPersonaSwitcherOpen, setIsPersonaSwitcherOpen] = useState(false);
 
   useEffect(() => {
     async function fetchUser() {
@@ -142,15 +146,48 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
+  const effectiveRole =
+    (pathname.startsWith("/teacher")
+      ? "teacher"
+      : pathname.startsWith("/recruiter")
+      ? "recruiter"
+      : pathname.startsWith("/admin") || pathname.startsWith("/tpo")
+      ? "tpo"
+      : currentUser?.role || "student");
+
+  const isTeacher = effectiveRole === "teacher" || pathname.startsWith("/teacher");
+  const isRecruiter = effectiveRole === "recruiter" || pathname.startsWith("/recruiter");
   const isTPO =
-    currentUser?.role === "tpo" ||
-    currentUser?.role === "admin" ||
-    currentUser?.role === "super_admin" ||
+    effectiveRole === "tpo" ||
+    effectiveRole === "admin" ||
+    effectiveRole === "super_admin" ||
     pathname.startsWith("/admin") ||
     pathname.startsWith("/tpo");
+  const isStudent = !isTeacher && !isRecruiter && !isTPO;
+
+  const homeUrl = isTeacher
+    ? "/teacher/dashboard"
+    : isRecruiter
+    ? "/recruiter/dashboard"
+    : isTPO
+    ? "/admin/dashboard"
+    : "/student/dashboard";
 
   // Determine active item based on current route
   const getActiveItem = () => {
+    if (isTeacher) {
+      if (pathname.startsWith("/curriculum")) return "learn";
+      if (pathname.startsWith("/admin/problems")) return "problems";
+      if (pathname.startsWith("/admin/assessments")) return "assessments";
+      return "dashboard";
+    }
+
+    if (isRecruiter) {
+      if (pathname.startsWith("/admin/drives")) return "recruitment";
+      if (pathname.startsWith("/student/resume")) return "resume";
+      return "dashboard";
+    }
+
     if (isTPO) {
       if (pathname.startsWith("/tpo/students")) return "students";
       if (pathname.startsWith("/admin/problems")) return "problems";
@@ -181,6 +218,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const handleSwitchPersona = (role: any, redirectPath: string) => {
+    DemoStore.switchRole(role);
+    setIsPersonaSwitcherOpen(false);
+    router.push(redirectPath);
+  };
+
   const handleProgressClick = () => {
     if (pathname === "/student/dashboard") {
       document.getElementById("progress")?.scrollIntoView({ behavior: "smooth" });
@@ -202,7 +245,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="p-4 space-y-6">
         {/* Logo & Collapse Button */}
         <div className="px-2 pt-2 pb-1 flex items-center justify-between">
-          <DotCoderLogo size="md" theme="dark" href={isTPO ? "/admin/dashboard" : "/student/dashboard"} />
+          <DotCoderLogo size="md" theme="dark" href={homeUrl} />
           <button
             type="button"
             onClick={() => setIsSidebarOpen(false)}
@@ -215,11 +258,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Nav Items */}
         <nav className="space-y-1">
-          {!isTPO ? (
-            // Student Navigation Links
+          {isTeacher ? (
+            // Teacher Navigation Links
             <>
               <button
-                onClick={() => navigateTo("/student/dashboard")}
+                onClick={() => navigateTo("/teacher/dashboard")}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   activeItem === "dashboard"
                     ? "bg-[#9DFF00] text-black shadow-sm font-bold"
@@ -239,23 +282,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 }`}
               >
                 <BookOpen className={`w-4 h-4 ${activeItem === "learn" ? "text-black" : "text-slate-400"}`} />
-                <span>Learn</span>
+                <span>Curriculum</span>
               </button>
 
               <button
-                onClick={() => navigateTo("/practice/two-sum")}
+                onClick={() => navigateTo("/admin/problems")}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                  activeItem === "practice"
+                  activeItem === "problems"
                     ? "bg-[#9DFF00] text-black shadow-sm font-bold"
                     : "text-slate-400 hover:text-white hover:bg-white/5"
                 }`}
               >
-                <Code2 className={`w-4 h-4 ${activeItem === "practice" ? "text-black" : "text-slate-400"}`} />
-                <span>Practice</span>
+                <Code2 className={`w-4 h-4 ${activeItem === "problems" ? "text-black" : "text-slate-400"}`} />
+                <span>Problem Bank</span>
               </button>
 
               <button
-                onClick={() => navigateTo("/student/exam/assessment-1")}
+                onClick={() => navigateTo("/admin/assessments")}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   activeItem === "assessments"
                     ? "bg-[#9DFF00] text-black shadow-sm font-bold"
@@ -265,9 +308,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <ShieldCheck className={`w-4 h-4 ${activeItem === "assessments" ? "text-black" : "text-slate-400"}`} />
                 <span>Assessments</span>
               </button>
+            </>
+          ) : isRecruiter ? (
+            // Recruiter Navigation Links
+            <>
+              <button
+                onClick={() => navigateTo("/recruiter/dashboard")}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeItem === "dashboard"
+                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Users className={`w-4 h-4 ${activeItem === "dashboard" ? "text-black" : "text-slate-400"}`} />
+                <span>Talent Discovery</span>
+              </button>
 
               <button
-                onClick={() => navigateTo("/student/drives")}
+                onClick={() => navigateTo("/admin/drives")}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   activeItem === "recruitment"
                     ? "bg-[#9DFF00] text-black shadow-sm font-bold"
@@ -275,7 +333,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 }`}
               >
                 <Briefcase className={`w-4 h-4 ${activeItem === "recruitment" ? "text-black" : "text-slate-400"}`} />
-                <span>Recruitment</span>
+                <span>Campus Drives</span>
               </button>
 
               <button
@@ -287,22 +345,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 }`}
               >
                 <FileText className={`w-4 h-4 ${activeItem === "resume" ? "text-black" : "text-slate-400"}`} />
-                <span>Resume</span>
-              </button>
-
-              <button
-                onClick={handleProgressClick}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                  activeItem === "progress"
-                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <TrendingUp className={`w-4 h-4 ${activeItem === "progress" ? "text-black" : "text-slate-400"}`} />
-                <span>Progress</span>
+                <span>Verified Resumes</span>
               </button>
             </>
-          ) : (
+          ) : isTPO ? (
             // Admin / TPO Navigation Links
             <>
               <button
@@ -413,6 +459,93 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <span>Settings</span>
               </button>
             </>
+          ) : (
+            // Student Navigation Links
+            <>
+              <button
+                onClick={() => navigateTo("/student/dashboard")}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeItem === "dashboard"
+                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <LayoutDashboard className={`w-4 h-4 ${activeItem === "dashboard" ? "text-black" : "text-slate-400"}`} />
+                <span>Dashboard</span>
+              </button>
+
+              <button
+                onClick={() => navigateTo("/curriculum")}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeItem === "learn"
+                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <BookOpen className={`w-4 h-4 ${activeItem === "learn" ? "text-black" : "text-slate-400"}`} />
+                <span>Learn</span>
+              </button>
+
+              <button
+                onClick={() => navigateTo("/practice/two-sum")}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeItem === "practice"
+                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Code2 className={`w-4 h-4 ${activeItem === "practice" ? "text-black" : "text-slate-400"}`} />
+                <span>Practice</span>
+              </button>
+
+              <button
+                onClick={() => navigateTo("/student/exam/assessment-1")}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeItem === "assessments"
+                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <ShieldCheck className={`w-4 h-4 ${activeItem === "assessments" ? "text-black" : "text-slate-400"}`} />
+                <span>Assessments</span>
+              </button>
+
+              <button
+                onClick={() => navigateTo("/student/drives")}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeItem === "recruitment"
+                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Briefcase className={`w-4 h-4 ${activeItem === "recruitment" ? "text-black" : "text-slate-400"}`} />
+                <span>Recruitment</span>
+              </button>
+
+              <button
+                onClick={() => navigateTo("/student/resume")}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeItem === "resume"
+                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <FileText className={`w-4 h-4 ${activeItem === "resume" ? "text-black" : "text-slate-400"}`} />
+                <span>Resume</span>
+              </button>
+
+              <button
+                onClick={handleProgressClick}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeItem === "progress"
+                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <TrendingUp className={`w-4 h-4 ${activeItem === "progress" ? "text-black" : "text-slate-400"}`} />
+                <span>Progress</span>
+              </button>
+            </>
           )}
         </nav>
       </div>
@@ -428,33 +561,110 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <span>Help & Support</span>
         </button>
 
-        {/* User Profile Card */}
+        {/* User Profile Card & Persona Switcher */}
         {currentUser && (
-          <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-[#161D19] border border-[#222C26]">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-[#9DFF00] text-black flex items-center justify-center font-bold text-xs font-mono shrink-0">
-                {currentUser.full_name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .slice(0, 2)
-                  .join("")}
-              </div>
-              <div className="truncate flex-1 min-w-0">
-                <div className="font-semibold text-xs text-white truncate">
-                  {currentUser.full_name}
+          <div className="relative">
+            {isPersonaSwitcherOpen && (
+              <div className="absolute bottom-full left-0 right-0 mb-2 p-2 bg-[#161D19] border border-[#222C26] rounded-2xl shadow-2xl space-y-1 z-50 animate-in fade-in slide-in-from-bottom-2">
+                <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                  <span>Switch Role</span>
+                  <span className="font-mono text-[#9DFF00]">AVASC</span>
                 </div>
-                <div className="text-[10px] text-slate-400 font-mono truncate">
-                  {currentUser.role.toUpperCase()}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchPersona("student", "/student/dashboard")}
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-left transition-colors ${
+                    effectiveRole === "student"
+                      ? "bg-[#9DFF00] text-black font-bold"
+                      : "text-slate-300 hover:bg-white/5"
+                  }`}
+                >
+                  <span className="truncate">Karthik S.</span>
+                  <span className="text-[10px] opacity-75 font-mono">Student</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchPersona("teacher", "/teacher/dashboard")}
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-left transition-colors ${
+                    effectiveRole === "teacher"
+                      ? "bg-[#9DFF00] text-black font-bold"
+                      : "text-slate-300 hover:bg-white/5"
+                  }`}
+                >
+                  <span className="truncate">Dr. S. Meenakshi</span>
+                  <span className="text-[10px] opacity-75 font-mono">Teacher</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchPersona("tpo", "/tpo/dashboard")}
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-left transition-colors ${
+                    effectiveRole === "tpo"
+                      ? "bg-[#9DFF00] text-black font-bold"
+                      : "text-slate-300 hover:bg-white/5"
+                  }`}
+                >
+                  <span className="truncate">Prof. R. Anandhan</span>
+                  <span className="text-[10px] opacity-75 font-mono">TPO</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchPersona("admin", "/admin/dashboard")}
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-left transition-colors ${
+                    effectiveRole === "admin" || effectiveRole === "super_admin"
+                      ? "bg-[#9DFF00] text-black font-bold"
+                      : "text-slate-300 hover:bg-white/5"
+                  }`}
+                >
+                  <span className="truncate">Dr. V. Rajesh</span>
+                  <span className="text-[10px] opacity-75 font-mono">Admin</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchPersona("recruiter", "/recruiter/dashboard")}
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-left transition-colors ${
+                    effectiveRole === "recruiter"
+                      ? "bg-[#9DFF00] text-black font-bold"
+                      : "text-slate-300 hover:bg-white/5"
+                  }`}
+                >
+                  <span className="truncate">Kavitha R.</span>
+                  <span className="text-[10px] opacity-75 font-mono">Recruiter</span>
+                </button>
               </div>
+            )}
+
+            <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-[#161D19] border border-[#222C26]">
+              <button
+                type="button"
+                onClick={() => setIsPersonaSwitcherOpen((prev) => !prev)}
+                className="flex items-center gap-2.5 min-w-0 text-left hover:opacity-85 transition-opacity flex-1"
+                title="Click to switch test persona"
+              >
+                <div className="w-7 h-7 rounded-lg bg-[#9DFF00] text-black flex items-center justify-center font-bold text-xs font-mono shrink-0">
+                  {currentUser.full_name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .slice(0, 2)
+                    .join("")}
+                </div>
+                <div className="truncate flex-1 min-w-0">
+                  <div className="font-semibold text-xs text-white truncate">
+                    {currentUser.full_name}
+                  </div>
+                  <div className="text-[10px] text-slate-400 font-mono truncate flex items-center gap-1">
+                    <span>{currentUser.role.toUpperCase()}</span>
+                    <span className="text-[#9DFF00] text-[9px]">• switch</span>
+                  </div>
+                </div>
+              </button>
+              <button
+                onClick={handleSignOut}
+                title="Sign out"
+                className="text-slate-400 hover:text-red-400 transition-colors p-1 rounded-lg hover:bg-white/5 shrink-0"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
             </div>
-            <button
-              onClick={handleSignOut}
-              title="Sign out"
-              className="text-slate-400 hover:text-red-400 transition-colors p-1 rounded-lg hover:bg-white/5 shrink-0"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-            </button>
           </div>
         )}
       </div>

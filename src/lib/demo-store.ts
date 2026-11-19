@@ -1,5 +1,8 @@
 import {
   UserProfile,
+  UserRole,
+  Department,
+  Batch,
   Problem,
   Assessment,
   Submission,
@@ -7,8 +10,14 @@ import {
 } from "@/types";
 import {
   SEED_ORGANIZATION,
+  SEED_DEPARTMENTS,
+  SEED_BATCHES,
+  SEED_ADMIN,
   SEED_TPO,
+  SEED_TEACHER,
+  SEED_RECRUITER,
   SEED_STUDENTS,
+  ALL_SEED_USERS,
   SEED_PROBLEMS,
   SEED_MCQS,
   SEED_ASSESSMENT,
@@ -68,10 +77,50 @@ export class DemoStore {
     notifyListeners();
   }
 
-  static switchRole(role: "student" | "tpo"): UserProfile {
-    const targetUser = role === "tpo" ? SEED_TPO : SEED_STUDENTS[0];
+  static switchRole(role: UserRole): UserProfile {
+    let targetUser: UserProfile;
+    switch (role) {
+      case "teacher":
+        targetUser = SEED_TEACHER;
+        break;
+      case "recruiter":
+        targetUser = SEED_RECRUITER;
+        break;
+      case "tpo":
+        targetUser = SEED_TPO;
+        break;
+      case "admin":
+      case "super_admin":
+        targetUser = SEED_ADMIN;
+        break;
+      case "student":
+      default:
+        targetUser = SEED_STUDENTS[0];
+        break;
+    }
     this.setCurrentUser(targetUser);
     return targetUser;
+  }
+
+  static getAllUsers(): UserProfile[] {
+    return ALL_SEED_USERS;
+  }
+
+  static getDepartments(): Department[] {
+    return SEED_DEPARTMENTS;
+  }
+
+  static getBatches(): Batch[] {
+    return SEED_BATCHES;
+  }
+
+  static getUserByEmail(email: string): UserProfile | undefined {
+    const clean = email.toLowerCase().trim();
+    const matched = ALL_SEED_USERS.find((u) => u.email?.toLowerCase() === clean);
+    if (matched) return matched;
+    // Check custom added students
+    const students = this.getStudents();
+    return students.find((s) => s.email?.toLowerCase() === clean);
   }
 
   // Students list

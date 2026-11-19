@@ -1,15 +1,49 @@
-export type UserRole = "student" | "admin" | "super_admin" | "tpo";
+export type UserRole =
+  | "student"
+  | "teacher"
+  | "admin"
+  | "tpo"
+  | "super_admin"
+  | "recruiter";
 
 export interface Organization {
   id: string;
   name: string;
   code: string;
+  slug?: string;
   city: string;
   plan_tier: string;
+  logo_url?: string;
+  is_active?: boolean;
   created_at?: string;
 }
 
-export type SupportedLanguage = "python" | "java" | "c" | "cpp";
+export interface Department {
+  id: string;
+  organization_id: string;
+  name: string;
+  code: string;
+  created_at?: string;
+}
+
+export interface Batch {
+  id: string;
+  department_id: string;
+  name: string;
+  start_year: number;
+  end_year: number;
+  created_at?: string;
+}
+
+export interface TeacherAssignment {
+  id: string;
+  teacher_id: string;
+  department_id: string;
+  batch_id?: string;
+  assigned_at?: string;
+}
+
+export type SupportedLanguage = "python" | "java" | "c" | "cpp" | "sql";
 
 export type ProblemDifficulty = "Easy" | "Medium" | "Hard";
 
@@ -21,11 +55,15 @@ export interface UserProfile {
   full_name: string;
   role: UserRole;
   college_name?: string;
+  organization_id?: string;
+  department_id?: string;
+  batch_id?: string;
   roll_no?: string;
   department?: string;
   batch_year?: number;
   readiness_score: number;
   problems_solved?: number;
+  avatar_url?: string;
   created_at?: string;
   // legacy alias for backward compatibility
   org_id?: string;
@@ -50,7 +88,7 @@ export interface Problem {
   company_tags: string[];
   type: ProblemType;
   description_md: string;
-  starter_code_json: Record<SupportedLanguage, string>;
+  starter_code_json?: Partial<Record<SupportedLanguage, string>> | Record<string, string>;
   mcq_options_json?: string[];
   correct_option?: string;
   explanation?: string;
