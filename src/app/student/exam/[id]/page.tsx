@@ -7,6 +7,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { DemoStore } from "@/lib/demo-store";
 import { runPythonCode } from "@/lib/pyodide-runner";
 import { compareOutputs } from "@/lib/utils";
+import { AssessmentService } from "@/lib/services/assessment-service";
+import {
+  AssessmentAttempt,
+  ProctorIntegrityEvent,
+  QuestionSubmissionAnswer,
+} from "@/types/assessment-attempt";
 import {
   Assessment,
   Problem,
@@ -29,6 +35,11 @@ import {
   Lock,
   Play,
   RotateCcw,
+  Award,
+  FileCheck,
+  Copy,
+  ExternalLink,
+  Sparkles,
 } from "lucide-react";
 
 type QuestionStatus = "not_visited" | "current" | "answered" | "marked_review";
@@ -54,6 +65,9 @@ export default function ProctoredExamRoomPage() {
   // Countdown Timer
   const [timeLeftSeconds, setTimeLeftSeconds] = useState<number>(45 * 60);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [submittedAttempt, setSubmittedAttempt] = useState<AssessmentAttempt | null>(null);
+  const [copiedHash, setCopiedHash] = useState<boolean>(false);
 
   // Anti-Cheating Telemetry
   const [tabSwitches, setTabSwitches] = useState<number>(0);
@@ -248,37 +262,56 @@ export default function ProctoredExamRoomPage() {
     }
   };
 
-  const handleFinalSubmit = (isAuto = false) => {
-    if (isSubmitted || !assessment || !currentUser) return;
-    setIsSubmitted(true);
+  const handleFinalSubmit = async (isAuto = false) => {
+    if (isSubmitted || isSubmitting || !assessment || !currentUser) return;
+    setIsSubmitting(true);
 
-    let totalScore = 0;
-    const totalQuestions = assessment.problems?.length || 1;
-
+    const answersPayload: Record<string, QuestionSubmissionAnswer> = {};
     assessment.problems?.forEach((p) => {
       const ans = answers[p.id];
-      if (p.type === "mcq" && ans?.selectedOption === p.correct_option) {
-        totalScore += 20;
-      } else if (p.type === "coding" && ans?.code) {
-        totalScore += 20;
+      answersPayload[p.id] = {
+        questionId: p.id,
+        questionType: p.type === "coding" ? "coding" : "mcq",
+        questionTitle: p.title,
+        selectedOption: ans?.selectedOption,
+        code: ans?.code,
+        language: ans?.language || "python",
+        isMarkedReview: ans?.isMarkedReview,
+      };
+    });
+
+    const integrityEvents: ProctorIntegrityEvent[] = violationLogs.map((vl, idx) => ({
+      id: `evt-${idx + 1}`,
+      timestamp: new Date().toISOString(),
+      type: vl.type as any,
+      details: vl.details,
+      severity: vl.type === "fullscreen_exit" ? "high" : "medium",
+    }));
+
+    try {
+      const res = await AssessmentService.submitAssessment({
+        assessmentId: assessment.id,
+        assessmentTitle: assessment.title,
+        userId: currentUser.id,
+        studentName: currentUser.full_name,
+        rollNo: currentUser.roll_no || "23BCA01",
+        department: currentUser.department || "BCA",
+        collegeName: currentUser.college_name || "Annai Vailankanni Arts and Science College, Thanjavur",
+        durationSpentSeconds: (assessment.duration_minutes || 45) * 60 - timeLeftSeconds,
+        tabSwitches,
+        answers: answersPayload,
+        integrityEvents,
+      });
+
+      if (res.success && res.attempt) {
+        setSubmittedAttempt(res.attempt);
+        setIsSubmitted(true);
       }
-    });
-
-    const percentage = Math.round((totalScore / (totalQuestions * 20)) * 100);
-
-    DemoStore.recordSubmission({
-      assessment_id: assessment.id,
-      user_id: currentUser.id,
-      problem_id: assessment.problems?.[0].id || "exam-problem",
-      language: "python",
-      source_code: "# Final Exam Submission",
-      status: percentage >= 60 ? "Accepted" : "Wrong Answer",
-      passed_cases: Math.round((percentage / 100) * 5),
-      total_cases: 5,
-      score: percentage,
-      execution_time_ms: 180,
-      tab_switches: tabSwitches,
-    });
+    } catch (err) {
+      console.error("Submission failed:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const formatTime = (secs: number) => {
@@ -304,46 +337,167 @@ export default function ProctoredExamRoomPage() {
     );
   }
 
-  // Submitted Completion Screen
-  if (isSubmitted) {
+  // Submitted Completion Screen with Accreditation Compliance Certificate & Details
+  if (isSubmitted && submittedAttempt) {
+    const isPassing = submittedAttempt.passed;
     return (
-      <div className="h-screen w-screen flex items-center justify-center p-6 bg-[#F8FAFC] text-slate-900 font-sans">
-        <div className="card-luxury max-w-md w-full rounded-3xl p-8 text-center space-y-6 shadow-2xl border border-slate-200/90 bg-white">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto shadow-sm">
-            <CheckCircle2 className="w-8 h-8" />
+      <div className="min-h-screen w-screen py-10 px-4 sm:px-6 bg-[#0B0F17] text-white font-sans flex items-center justify-center overflow-y-auto">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="max-w-3xl w-full bg-[#121824] border border-[#1E293B] rounded-3xl shadow-2xl p-6 sm:p-10 space-y-8"
+        >
+          {/* Institutional Accreditation Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#1E293B]">
+            <div>
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[#9DFF00] text-black border border-[#8CE600]">
+                  Accreditation Certified
+                </span>
+                <span className="text-xs text-slate-400 font-mono">AVASC-TNJ</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                Assessment Examination Milestone
+              </h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {submittedAttempt.collegeName} &bull; {submittedAttempt.department} (Batch {submittedAttempt.batchYear})
+              </p>
+            </div>
+
+            <div className="text-left sm:text-right">
+              <div className="text-[10px] text-slate-400 uppercase font-semibold">Accreditation Hash</div>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="font-mono text-xs text-[#9DFF00] font-bold truncate max-w-[200px]">
+                  {submittedAttempt.accreditationHash}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(submittedAttempt.accreditationHash);
+                    setCopiedHash(true);
+                    setTimeout(() => setCopiedHash(false), 2000);
+                  }}
+                  className="p-1 rounded bg-[#1A2338] hover:bg-[#232F4C] text-slate-300 transition-colors"
+                  title="Copy verification hash"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              {copiedHash && <span className="text-[10px] text-emerald-400">Copied!</span>}
+            </div>
           </div>
 
-          <div>
-            <h2 className="text-2xl font-extrabold text-slate-900">Assessment Submitted</h2>
-            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-              Your test responses and anti-cheat telemetry have been securely transferred to the college placement cell.
-            </p>
+          {/* Primary Result Banner & Score Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-5 rounded-2xl bg-[#161F30] border border-[#22314E] flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  Assessment Score
+                </span>
+                <div className="text-3xl font-black text-white font-mono mt-1">
+                  {submittedAttempt.score}%
+                </div>
+                <span className={`text-[11px] font-bold ${isPassing ? "text-[#9DFF00]" : "text-amber-400"}`}>
+                  {isPassing ? "PASSED (Cutoff 60%)" : "Needs Retake"}
+                </span>
+              </div>
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isPassing ? "bg-[#9DFF00]/10 text-[#9DFF00]" : "bg-amber-500/10 text-amber-400"}`}>
+                <Award className="w-6 h-6" />
+              </div>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-[#161F30] border border-[#22314E] flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  Anti-Cheat Integrity
+                </span>
+                <div className="text-3xl font-black font-mono text-white mt-1">
+                  {submittedAttempt.antiCheatScore}%
+                </div>
+                <span className="text-[11px] text-emerald-400 font-semibold">
+                  {submittedAttempt.tabSwitchCount === 0 ? "Zero Violations Logged" : `${submittedAttempt.tabSwitchCount} Tab Switches`}
+                </span>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-[#161F30] border border-[#22314E] flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  Time Spent
+                </span>
+                <div className="text-3xl font-black text-white font-mono mt-1">
+                  {Math.floor(submittedAttempt.durationSpentSeconds / 60)}m {submittedAttempt.durationSpentSeconds % 60}s
+                </div>
+                <span className="text-[11px] text-slate-400">
+                  {submittedAttempt.correctAnswers} / {submittedAttempt.totalQuestions} Solved
+                </span>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
+                <Clock className="w-6 h-6" />
+              </div>
+            </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs font-mono">
-            <div className="flex justify-between text-slate-600">
-              <span>Candidate:</span>
-              <strong className="text-slate-900">{currentUser?.full_name} ({currentUser?.roll_no})</strong>
-            </div>
-            <div className="flex justify-between text-slate-600">
-              <span>Audit Violations:</span>
-              <span className={`font-bold ${tabSwitches > 0 ? "text-rose-600" : "text-emerald-600"}`}>
-                {tabSwitches} Logged
-              </span>
-            </div>
-            <div className="flex justify-between text-slate-600">
-              <span>Institution:</span>
-              <span className="text-slate-900">{currentUser?.college_name || "Annai Vailankanni Arts and Science College, Thanjavur"}</span>
+          {/* Question Breakdown */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Question-by-Question Grading Breakdown
+            </h3>
+            <div className="space-y-2">
+              {submittedAttempt.gradingDetails.map((gd, idx) => (
+                <div
+                  key={gd.questionId || idx}
+                  className="p-4 rounded-xl bg-[#161F30] border border-[#22314E] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${gd.passed ? "bg-emerald-500/20 text-emerald-400" : "bg-rose-500/20 text-rose-400"}`}>
+                      {gd.passed ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
+                    </div>
+                    <div>
+                      <div className="font-bold text-white">
+                        {gd.questionTitle}
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-0.5">
+                        {gd.feedback}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 sm:text-right shrink-0">
+                    {gd.executionTimeMs !== undefined && (
+                      <span className="font-mono text-[11px] text-slate-400">
+                        {gd.executionTimeMs}ms
+                      </span>
+                    )}
+                    <span className="font-mono font-bold text-xs px-2.5 py-1 rounded bg-[#1A2338] text-white">
+                      {gd.awardedScore} / {gd.maxScore} pts
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          <button
-            onClick={() => router.push("/student/dashboard")}
-            className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-500/20 active:scale-[0.98]"
-          >
-            Return to Student Workspace
-          </button>
-        </div>
+          {/* Verification Audit Footer & Navigation */}
+          <div className="pt-4 border-t border-[#1E293B] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              <FileCheck className="w-4 h-4 text-[#9DFF00]" />
+              <span>Accreditation snapshot cryptographically secured for NAAC 5.2.1 compliance.</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => router.push("/student/dashboard")}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs transition-all shadow-md active:scale-95"
+            >
+              <span>Return to Student Workspace</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </motion.div>
       </div>
     );
   }
@@ -431,9 +585,17 @@ export default function ProctoredExamRoomPage() {
           {/* Submit Button (Screen 03 Lime Green Pill) */}
           <button
             onClick={() => handleFinalSubmit(false)}
-            className="px-6 py-2 rounded-full bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs shadow-sm transition-all active:scale-[0.98]"
+            disabled={isSubmitting}
+            className="px-6 py-2 rounded-full bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs shadow-sm transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer flex items-center gap-2"
           >
-            Submit
+            {isSubmitting ? (
+              <>
+                <span className="w-2.5 h-2.5 rounded-full border-2 border-black border-t-transparent animate-spin" />
+                <span>Grading & Certifying...</span>
+              </>
+            ) : (
+              <span>Submit Exam</span>
+            )}
           </button>
         </div>
       </header>
@@ -539,58 +701,123 @@ export default function ProctoredExamRoomPage() {
             </button>
           </div>
 
-          {/* Question & Options Area */}
+          {/* Question & Options / Monaco Workspace Area */}
           <div className="flex-1 p-8 overflow-y-auto space-y-6 max-w-4xl">
             {/* Question Prompt matching Screen 03 */}
             <div className="text-base font-semibold text-slate-900 leading-relaxed">
               {currentProblem.description_md ||
-                "Which of the following data structures follows the FIFO (First In First Out) principle?"}
+                (currentProblem.type === "coding"
+                  ? "Given an array of integers nums and an integer target, write an optimal function in Python to return indices of the two numbers such that they add up to target."
+                  : "Which of the following data structures follows the FIFO (First In First Out) principle?")}
             </div>
 
-            {/* 4 Option Cards matching Screen 03 */}
-            <div className="space-y-3 pt-2">
-              {[
-                { label: "A", text: "Stack" },
-                { label: "B", text: "Queue" },
-                { label: "C", text: "Tree" },
-                { label: "D", text: "Graph" },
-              ].map((opt, optIdx) => {
-                const optText = currentProblem.mcq_options_json?.[optIdx] || opt.text;
-                const isSelected =
-                  answers[currentProblem.id]?.selectedOption === optText ||
-                  (!answers[currentProblem.id]?.selectedOption && opt.label === "B");
-
-                return (
+            {/* Conditional: Coding Editor vs MCQ Options */}
+            {currentProblem.type === "coding" ? (
+              <div className="space-y-4 pt-1">
+                <div className="flex items-center justify-between px-3 py-2 bg-slate-900 text-white rounded-t-2xl text-xs font-mono">
+                  <div className="flex items-center gap-2">
+                    <Code2 className="w-4 h-4 text-[#9DFF00]" />
+                    <span className="font-bold">solution.py</span>
+                    <span className="text-slate-400 text-[10px]">&bull; Python 3.10 Sandbox</span>
+                  </div>
                   <button
-                    key={optIdx}
-                    onClick={() => handleSelectOption(optText)}
-                    className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between shadow-xs ${
-                      isSelected
-                        ? "bg-[#9DFF00]/10 border-2 border-[#8BB310] text-slate-900 font-semibold"
-                        : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
-                    }`}
+                    type="button"
+                    onClick={() => handleCodeChange(currentProblem.starter_code_json?.python || "def solve(nums, target):\n    # Write optimal logic here\n    pass\n")}
+                    className="text-slate-400 hover:text-white text-[11px] flex items-center gap-1"
                   >
-                    <div className="flex items-center gap-4">
-                      <span
-                        className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs font-mono transition-all ${
-                          isSelected
-                            ? "bg-[#9DFF00] text-black shadow-xs"
-                            : "bg-slate-100 text-slate-600 border border-slate-200"
-                        }`}
-                      >
-                        {opt.label}
-                      </span>
-                      <span className="text-sm">{optText}</span>
-                    </div>
-                    {isSelected && (
-                      <div className="w-5 h-5 rounded-full bg-[#9DFF00] border-2 border-black flex items-center justify-center">
-                        <div className="w-2 h-2 rounded-full bg-black" />
-                      </div>
-                    )}
+                    <RotateCcw className="w-3 h-3" />
+                    <span>Reset Boilerplate</span>
                   </button>
-                );
-              })}
-            </div>
+                </div>
+
+                <div className="rounded-b-2xl overflow-hidden border border-slate-900 shadow-md">
+                  <Editor
+                    height="320px"
+                    language="python"
+                    theme="vs-dark"
+                    value={answers[currentProblem.id]?.code || currentProblem.starter_code_json?.python || "def solve(nums, target):\n    # Write optimal logic here\n    pass\n"}
+                    onChange={(val) => handleCodeChange(val || "")}
+                    options={{
+                      minimap: { enabled: false },
+                      fontSize: 13,
+                      lineNumbers: "on",
+                      scrollBeyondLastLine: false,
+                      tabSize: 4,
+                      automaticLayout: true,
+                    }}
+                  />
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleTestExamCode}
+                    disabled={isTestingCode}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all shadow-xs cursor-pointer active:scale-95"
+                  >
+                    <Play className="w-3 h-3 text-[#9DFF00] fill-current" />
+                    <span>{isTestingCode ? "Evaluating Sandbox..." : "Run Sample Case"}</span>
+                  </button>
+
+                  {testOutput && (
+                    <div
+                      className={`text-xs font-mono font-semibold px-3 py-1.5 rounded-xl border ${
+                        testOutput.startsWith("PASS")
+                          ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                          : "bg-rose-50 text-rose-800 border-rose-200"
+                      }`}
+                    >
+                      {testOutput}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* 4 Option Cards matching Screen 03 */
+              <div className="space-y-3 pt-2">
+                {[
+                  { label: "A", text: "Stack" },
+                  { label: "B", text: "Queue" },
+                  { label: "C", text: "Tree" },
+                  { label: "D", text: "Graph" },
+                ].map((opt, optIdx) => {
+                  const optText = currentProblem.mcq_options_json?.[optIdx] || opt.text;
+                  const isSelected =
+                    answers[currentProblem.id]?.selectedOption === optText ||
+                    (!answers[currentProblem.id]?.selectedOption && opt.label === "B");
+
+                  return (
+                    <button
+                      key={optIdx}
+                      onClick={() => handleSelectOption(optText)}
+                      className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between shadow-xs ${
+                        isSelected
+                          ? "bg-[#9DFF00]/10 border-2 border-[#8BB310] text-slate-900 font-semibold"
+                          : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <span
+                          className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs font-mono transition-all ${
+                            isSelected
+                              ? "bg-[#9DFF00] text-black shadow-xs"
+                              : "bg-slate-100 text-slate-600 border border-slate-200"
+                          }`}
+                        >
+                          {opt.label}
+                        </span>
+                        <span className="text-sm">{optText}</span>
+                      </div>
+                      {isSelected && (
+                        <div className="w-5 h-5 rounded-full bg-[#9DFF00] border-2 border-black flex items-center justify-center">
+                          <div className="w-2 h-2 rounded-full bg-black" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Bottom Action Bar matching Screen 03 */}
