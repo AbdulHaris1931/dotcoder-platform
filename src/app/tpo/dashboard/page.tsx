@@ -70,8 +70,9 @@ export default function TPODashboardPage() {
         totalViolations: violations,
       });
 
-      // Compute Department Stats
-      const depts = ["CSE", "IT", "ECE", "EEE", "Mech"];
+      // Compute Dynamic Department Stats
+      const discoveredDepts = Array.from(new Set(studs.map((s) => s.department).filter((d): d is string => Boolean(d))));
+      const depts = discoveredDepts.length > 0 ? discoveredDepts : ["BCA", "B.Sc CS", "B.Sc IT", "MCA"];
       const stats: DepartmentStat[] = depts.map((d) => {
         const branchStudents = studs.filter((s) => s.department === d);
         const branchReady = branchStudents.filter((s) => s.readiness_score >= 75).length;

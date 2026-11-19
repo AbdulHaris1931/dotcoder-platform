@@ -54,7 +54,7 @@ export default function StudentResumePage() {
         <button
           type="button"
           onClick={handleDownload}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold text-xs transition-all shadow-xs active:scale-[0.98]"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs transition-all shadow-xs active:scale-[0.98]"
         >
           <Download className="w-4 h-4 text-black" />
           <span>Download PDF</span>
@@ -193,7 +193,7 @@ export default function StudentResumePage() {
                   cx="50"
                   cy="50"
                   r="40"
-                  stroke="#C4F82A"
+                  stroke="#9DFF00"
                   strokeWidth="8"
                   fill="none"
                   strokeDasharray="251.2"

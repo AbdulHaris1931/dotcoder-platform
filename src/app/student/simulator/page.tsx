@@ -128,7 +128,7 @@ export default function SimulatorPage() {
               onClick={() => setActiveCategory(cat)}
               className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all shadow-2xs ${
                 isSelected
-                  ? "bg-[#C4F82A] text-black"
+                  ? "bg-[#9DFF00] text-black"
                   : "bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:text-black"
               }`}
             >
@@ -177,7 +177,7 @@ export default function SimulatorPage() {
             <button
               type="button"
               onClick={() => router.push(`/student/exam/assessment-1/simulator?company=${company.id}`)}
-              className="w-full py-2.5 px-4 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-2xs active:scale-[0.98]"
+              className="w-full py-2.5 px-4 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-2xs active:scale-[0.98]"
             >
               <span>Start Test</span>
               <ArrowRight className="w-3.5 h-3.5" />

@@ -102,7 +102,7 @@ export default function AdminProblemManagementPage() {
           <button
             type="button"
             onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold text-xs transition-all shadow-xs active:scale-[0.98]"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs transition-all shadow-xs active:scale-[0.98]"
           >
             <Plus className="w-4 h-4 text-black stroke-[3]" />
             <span>Add Problem</span>
@@ -125,7 +125,7 @@ export default function AdminProblemManagementPage() {
               onClick={() => setActiveTab(tab.id as any)}
               className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all shadow-2xs ${
                 isSelected
-                  ? "bg-[#C4F82A] text-black"
+                  ? "bg-[#9DFF00] text-black"
                   : "bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:text-black"
               }`}
             >
@@ -145,7 +145,7 @@ export default function AdminProblemManagementPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search problems..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#C4F82A] shadow-2xs"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#9DFF00] shadow-2xs"
           />
         </div>
 
@@ -212,7 +212,7 @@ export default function AdminProblemManagementPage() {
                     <span
                       className={`inline-block px-2.5 py-0.5 rounded-md font-mono font-bold text-[11px] ${
                         problem.difficulty === "Easy"
-                          ? "bg-[#C4F82A]/20 text-[#2D5A12] border border-[#C4F82A]/40"
+                          ? "bg-[#9DFF00]/20 text-[#2D5A12] border border-[#9DFF00]/40"
                           : problem.difficulty === "Medium"
                           ? "bg-amber-500/15 text-amber-800 border border-amber-300"
                           : "bg-rose-500/15 text-rose-800 border border-rose-300"
@@ -225,7 +225,7 @@ export default function AdminProblemManagementPage() {
                     <span
                       className={`inline-block px-2.5 py-0.5 rounded-md font-sans font-semibold text-[11px] ${
                         problem.status === "Published"
-                          ? "bg-[#C4F82A]/20 text-[#2D5A12] border border-[#C4F82A]/40"
+                          ? "bg-[#9DFF00]/20 text-[#2D5A12] border border-[#9DFF00]/40"
                           : "bg-slate-100 text-slate-600 border border-slate-200"
                       }`}
                     >
@@ -289,7 +289,7 @@ export default function AdminProblemManagementPage() {
                   placeholder="e.g. Subarray Sum Equals K"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#C4F82A]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#9DFF00]"
                 />
               </div>
 
@@ -298,7 +298,7 @@ export default function AdminProblemManagementPage() {
                 <select
                   value={newTopic}
                   onChange={(e) => setNewTopic(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#C4F82A]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#9DFF00]"
                 >
                   <option value="Arrays">Arrays</option>
                   <option value="Stack">Stack</option>
@@ -313,7 +313,7 @@ export default function AdminProblemManagementPage() {
                 <select
                   value={newDifficulty}
                   onChange={(e) => setNewDifficulty(e.target.value as any)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#C4F82A]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#9DFF00]"
                 >
                   <option value="Easy">Easy</option>
                   <option value="Medium">Medium</option>
@@ -331,7 +331,7 @@ export default function AdminProblemManagementPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold shadow-xs"
+                  className="px-5 py-2 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold shadow-xs"
                 >
                   Create Problem
                 </button>

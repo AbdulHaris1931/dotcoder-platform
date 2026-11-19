@@ -32,7 +32,7 @@ export function DotCoderLogo({
 
   const content = (
     <div className={`inline-flex items-center gap-2 select-none font-sans font-bold tracking-tight ${className}`}>
-      <span className={`font-mono font-black text-[#C4F82A] ${tagSizes[size]}`}>
+      <span className={`font-mono font-black text-[#9DFF00] ${tagSizes[size]}`}>
         &lt;/&gt;
       </span>
       <span className={`${textSizes[size]} ${isDark ? "text-white" : "text-slate-900"}`}>

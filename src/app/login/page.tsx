@@ -17,6 +17,7 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotHint, setShowForgotHint] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -158,7 +159,7 @@ function LoginForm() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@avc.edu.in or karthik.bca@avc.edu.in"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#F8FAF8] border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#C4F82A] focus:border-slate-800 transition-all font-medium"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#F8FAF8] border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#9DFF00] focus:border-slate-800 transition-all font-medium"
                 />
               </div>
             </div>
@@ -168,16 +169,13 @@ function LoginForm() {
                 <label className="text-xs font-semibold text-slate-700">
                   Password
                 </label>
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    alert("For test accounts, password is Password@123");
-                  }}
+                <button
+                  type="button"
+                  onClick={() => setShowForgotHint((prev) => !prev)}
                   className="text-xs text-slate-400 hover:text-slate-700 transition-colors"
                 >
                   Forgot Password?
-                </a>
+                </button>
               </div>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
@@ -187,7 +185,7 @@ function LoginForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter Password@123"
-                  className="w-full pl-10 pr-10 py-3 rounded-xl bg-[#F8FAF8] border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#C4F82A] focus:border-slate-800 transition-all font-medium"
+                  className="w-full pl-10 pr-10 py-3 rounded-xl bg-[#F8FAF8] border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#9DFF00] focus:border-slate-800 transition-all font-medium"
                 />
                 <button
                   type="button"
@@ -197,13 +195,19 @@ function LoginForm() {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              {showForgotHint && (
+                <div className="mt-2 p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-sans leading-relaxed flex items-start justify-between gap-2 animate-in fade-in">
+                  <span>💡 For institutional test accounts, all passwords are pre-set to <strong>Password@123</strong>. For college SSO recovery, contact your Placement Cell coordinator.</span>
+                  <button type="button" onClick={() => setShowForgotHint(false)} className="text-emerald-700 hover:text-emerald-900 font-bold text-xs">✕</button>
+                </div>
+              )}
             </div>
 
             {/* Neon Lime Primary CTA matching Screen 10 */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-3.5 px-4 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold text-xs sm:text-sm transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 active:scale-[0.99]"
+              className="w-full mt-2 py-3.5 px-4 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs sm:text-sm transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 active:scale-[0.99]"
             >
               <span>{loading ? "Authenticating..." : "Login"}</span>
               <ArrowRight className="w-4 h-4" />

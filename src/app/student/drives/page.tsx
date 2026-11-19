@@ -123,7 +123,7 @@ export default function StudentDrivesPage() {
               onClick={() => setActiveTab(tab.id as any)}
               className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all shadow-2xs ${
                 isSelected
-                  ? "bg-[#C4F82A] text-black"
+                  ? "bg-[#9DFF00] text-black"
                   : "bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:text-black"
               }`}
             >
@@ -188,7 +188,7 @@ export default function StudentDrivesPage() {
                     className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs whitespace-nowrap ${
                       isApplied
                         ? "bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default"
-                        : "bg-[#C4F82A] hover:bg-[#B5EA20] text-black active:scale-95"
+                        : "bg-[#9DFF00] hover:bg-[#8CE600] text-black active:scale-95"
                     }`}
                   >
                     <span>{isApplied ? "Applied ✓" : `${drive.actionText} →`}</span>
@@ -212,7 +212,7 @@ export default function StudentDrivesPage() {
             />
             {/* Glowing Lime Wave Gradient Overlay matching Screen 05 */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#0A0E0C] via-[#0F1412]/80 to-transparent" />
-            <div className="absolute -bottom-10 -left-10 w-60 h-60 bg-[#C4F82A]/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-10 -left-10 w-60 h-60 bg-[#9DFF00]/20 rounded-full blur-3xl pointer-events-none" />
 
             {/* Content matching Screen 05 */}
             <div className="relative z-10 space-y-4">
@@ -220,7 +220,7 @@ export default function StudentDrivesPage() {
                 <h2 className="text-3xl font-extrabold tracking-tight text-white leading-tight">
                   Placement
                   <br />
-                  <span className="text-[#C4F82A]">Drive 2025</span>
+                  <span className="text-[#9DFF00]">Drive 2025</span>
                 </h2>
                 <p className="text-xs text-slate-300 mt-2 leading-relaxed max-w-xs">
                   Get hired by top companies on campus.
@@ -233,7 +233,7 @@ export default function StudentDrivesPage() {
                   type="button"
                   onClick={() => router.push("/student/resume")}
                   aria-label="View placement credentials"
-                  className="w-12 h-12 rounded-full bg-[#C4F82A] hover:bg-[#B5EA20] text-black flex items-center justify-center font-bold shadow-lg transition-transform active:scale-95 group"
+                  className="w-12 h-12 rounded-full bg-[#9DFF00] hover:bg-[#8CE600] text-black flex items-center justify-center font-bold shadow-lg transition-transform active:scale-95 group"
                 >
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
                 </button>

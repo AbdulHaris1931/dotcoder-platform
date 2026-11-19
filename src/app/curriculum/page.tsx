@@ -125,7 +125,7 @@ function CurriculumPageContent() {
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
               />
               <path
-                className="text-[#C4F82A]"
+                className="text-[#9DFF00]"
                 strokeDasharray="56, 100"
                 strokeWidth="3.5"
                 strokeLinecap="round"
@@ -174,7 +174,7 @@ function CurriculumPageContent() {
                 onClick={() => setSelectedModuleNumber(mod.number)}
                 className={`p-4 rounded-2xl cursor-pointer transition-all border ${
                   isSelected
-                    ? "bg-white border-[#C4F82A] ring-2 ring-[#C4F82A]/30 shadow-sm"
+                    ? "bg-white border-[#9DFF00] ring-2 ring-[#9DFF00]/30 shadow-sm"
                     : "bg-white border-slate-200/80 hover:border-slate-300"
                 }`}
               >
@@ -184,7 +184,7 @@ function CurriculumPageContent() {
                       {mod.completed ? (
                         <CheckCircle2 className="w-5 h-5 text-emerald-500 fill-emerald-100" />
                       ) : isSelected ? (
-                        <div className="w-5 h-5 rounded-full border-2 border-[#C4F82A] flex items-center justify-center">
+                        <div className="w-5 h-5 rounded-full border-2 border-[#9DFF00] flex items-center justify-center">
                           <div className="w-2 h-2 rounded-full bg-[#0F1412]" />
                         </div>
                       ) : (
@@ -216,7 +216,7 @@ function CurriculumPageContent() {
             {/* Top row with 3D Cube Icon */}
             <div className="flex items-start justify-between">
               <div>
-                <span className="inline-block px-3 py-1 rounded-full bg-[#1A231C] text-[#C4F82A] text-xs font-mono font-bold border border-[#2B3B2E]">
+                <span className="inline-block px-3 py-1 rounded-full bg-[#1A231C] text-[#9DFF00] text-xs font-mono font-bold border border-[#2B3B2E]">
                   Module {currentModule.number}
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mt-3">
@@ -228,7 +228,7 @@ function CurriculumPageContent() {
               </div>
 
               {/* 3D Isometric Lime Green Cube graphic */}
-              <div className="w-20 h-20 rounded-2xl bg-[#162016] border border-[#2B3B2E] flex items-center justify-center text-[#C4F82A] shadow-inner shrink-0">
+              <div className="w-20 h-20 rounded-2xl bg-[#162016] border border-[#2B3B2E] flex items-center justify-center text-[#9DFF00] shadow-inner shrink-0">
                 <Box className="w-10 h-10 stroke-[1.5]" />
               </div>
             </div>
@@ -236,7 +236,7 @@ function CurriculumPageContent() {
             {/* Progress Info */}
             <div className="space-y-2 pt-2 border-t border-[#1C271E]">
               <div className="flex items-center justify-between text-xs font-mono">
-                <span className="text-[#C4F82A] font-bold">
+                <span className="text-[#9DFF00] font-bold">
                   {currentModule.number === 3 ? "60% Complete" : currentModule.completed ? "100% Complete" : "0% Complete"}
                 </span>
                 <span className="text-slate-400">
@@ -245,7 +245,7 @@ function CurriculumPageContent() {
               </div>
               <div className="w-full h-2 bg-[#1C271E] rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[#C4F82A] rounded-full transition-all duration-500"
+                  className="h-full bg-[#9DFF00] rounded-full transition-all duration-500"
                   style={{
                     width: currentModule.number === 3 ? "60%" : currentModule.completed ? "100%" : "0%",
                   }}
@@ -257,7 +257,7 @@ function CurriculumPageContent() {
             <div className="flex flex-col sm:flex-row gap-3 pt-1">
               <button
                 onClick={() => router.push("/practice/two-sum")}
-                className="flex-1 py-3 px-4 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold text-xs sm:text-sm transition-all shadow-sm flex items-center justify-center gap-2 active:scale-[0.99]"
+                className="flex-1 py-3 px-4 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs sm:text-sm transition-all shadow-sm flex items-center justify-center gap-2 active:scale-[0.99]"
               >
                 <span>Continue Learning</span>
                 <ArrowRight className="w-4 h-4" />
@@ -266,7 +266,7 @@ function CurriculumPageContent() {
                 onClick={() => router.push("/student/exam/assessment-1")}
                 className="py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs sm:text-sm border border-white/10 transition-all flex items-center justify-center gap-2 active:scale-[0.99]"
               >
-                <ShieldCheck className="w-4 h-4 text-[#C4F82A]" />
+                <ShieldCheck className="w-4 h-4 text-[#9DFF00]" />
                 <span>Take Module Assessment</span>
               </button>
             </div>

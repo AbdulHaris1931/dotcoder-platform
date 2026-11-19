@@ -431,7 +431,7 @@ export default function ProctoredExamRoomPage() {
           {/* Submit Button (Screen 03 Lime Green Pill) */}
           <button
             onClick={() => handleFinalSubmit(false)}
-            className="px-6 py-2 rounded-full bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold text-xs shadow-sm transition-all active:scale-[0.98]"
+            className="px-6 py-2 rounded-full bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs shadow-sm transition-all active:scale-[0.98]"
           >
             Submit
           </button>
@@ -451,7 +451,7 @@ export default function ProctoredExamRoomPage() {
             <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl text-xs font-mono">
               <button
                 type="button"
-                className="flex-1 py-1.5 px-2 rounded-lg bg-[#C4F82A] text-black font-bold text-center shadow-xs"
+                className="flex-1 py-1.5 px-2 rounded-lg bg-[#9DFF00] text-black font-bold text-center shadow-xs"
               >
                 All 20
               </button>
@@ -483,7 +483,7 @@ export default function ProctoredExamRoomPage() {
                     onClick={() => prob && navigateTo(idx)}
                     className={`w-10 h-10 rounded-full text-xs font-mono font-bold transition-all flex items-center justify-center relative ${
                       isCurrent
-                        ? "bg-slate-900 text-white ring-2 ring-[#C4F82A] ring-offset-2"
+                        ? "bg-slate-900 text-white ring-2 ring-[#9DFF00] ring-offset-2"
                         : isAnswered
                         ? "bg-emerald-50 text-emerald-800 border-2 border-emerald-500 font-extrabold"
                         : isMarked
@@ -566,7 +566,7 @@ export default function ProctoredExamRoomPage() {
                     onClick={() => handleSelectOption(optText)}
                     className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between shadow-xs ${
                       isSelected
-                        ? "bg-[#C4F82A]/10 border-2 border-[#8BB310] text-slate-900 font-semibold"
+                        ? "bg-[#9DFF00]/10 border-2 border-[#8BB310] text-slate-900 font-semibold"
                         : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
                     }`}
                   >
@@ -574,7 +574,7 @@ export default function ProctoredExamRoomPage() {
                       <span
                         className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs font-mono transition-all ${
                           isSelected
-                            ? "bg-[#C4F82A] text-black shadow-xs"
+                            ? "bg-[#9DFF00] text-black shadow-xs"
                             : "bg-slate-100 text-slate-600 border border-slate-200"
                         }`}
                       >
@@ -583,7 +583,7 @@ export default function ProctoredExamRoomPage() {
                       <span className="text-sm">{optText}</span>
                     </div>
                     {isSelected && (
-                      <div className="w-5 h-5 rounded-full bg-[#C4F82A] border-2 border-black flex items-center justify-center">
+                      <div className="w-5 h-5 rounded-full bg-[#9DFF00] border-2 border-black flex items-center justify-center">
                         <div className="w-2 h-2 rounded-full bg-black" />
                       </div>
                     )}
@@ -606,7 +606,7 @@ export default function ProctoredExamRoomPage() {
 
             <button
               onClick={() => navigateTo(currentIndex + 1)}
-              className="flex items-center gap-2 px-7 py-2.5 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold transition-all shadow-xs active:scale-[0.98]"
+              className="flex items-center gap-2 px-7 py-2.5 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold transition-all shadow-xs active:scale-[0.98]"
             >
               <span>Next</span>
               <ChevronRight className="w-4 h-4" />

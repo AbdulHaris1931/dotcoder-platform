@@ -181,7 +181,7 @@ export default function SignupPage() {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Karthik S."
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#F8FAF8] border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#C4F82A] focus:border-slate-800 transition-all font-medium"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#F8FAF8] border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#9DFF00] focus:border-slate-800 transition-all font-medium"
                 />
               </div>
             </div>
@@ -198,7 +198,7 @@ export default function SignupPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="karthik.bca@avc.edu.in"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#F8FAF8] border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#C4F82A] focus:border-slate-800 transition-all font-medium"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#F8FAF8] border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#9DFF00] focus:border-slate-800 transition-all font-medium"
                 />
               </div>
             </div>
@@ -215,7 +215,7 @@ export default function SignupPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="At least 8 characters"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#F8FAF8] border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#C4F82A] focus:border-slate-800 transition-all font-medium"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#F8FAF8] border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#9DFF00] focus:border-slate-800 transition-all font-medium"
                 />
               </div>
             </div>
@@ -224,7 +224,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-3.5 px-4 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold text-xs sm:text-sm transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 active:scale-[0.99]"
+              className="w-full mt-2 py-3.5 px-4 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs sm:text-sm transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 active:scale-[0.99]"
             >
               <span>{loading ? "Creating workspace..." : "Create Account"}</span>
               <ArrowRight className="w-4 h-4" />

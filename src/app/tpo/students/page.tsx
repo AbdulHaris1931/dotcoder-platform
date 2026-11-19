@@ -1,7 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { DataService } from "@/lib/supabase/db";
+import { UserProfile, Submission } from "@/types";
+import { StudentDrawer } from "@/components/tpo/student-drawer";
 import {
   Users,
   Search,
@@ -20,76 +23,142 @@ import {
 } from "lucide-react";
 
 interface StudentRecord {
+  id?: string;
   rollNo: string;
   name: string;
   department: string;
   progress: number;
   readiness: number;
+  email?: string;
 }
 
 const INITIAL_STUDENTS: StudentRecord[] = [
   {
+    id: "a0000000-0000-0000-0000-000000000002",
     rollNo: "23BCA001",
     name: "Karthik S.",
     department: "BCA",
     progress: 78,
-    readiness: 78,
+    readiness: 88,
+    email: "karthik.bca@avc.edu.in",
   },
   {
+    id: "a0000000-0000-0000-0000-000000000003",
     rollNo: "23BCS014",
     name: "Priya Dharshini M.",
     department: "B.Sc CS",
     progress: 72,
-    readiness: 72,
+    readiness: 92,
+    email: "priya.cs@avc.edu.in",
   },
   {
+    id: "a0000000-0000-0000-0000-000000000004",
     rollNo: "23BIT008",
     name: "Saravanan V.",
     department: "B.Sc IT",
     progress: 76,
     readiness: 76,
+    email: "saravanan.it@avc.edu.in",
   },
   {
+    id: "a0000000-0000-0000-0000-000000000005",
     rollNo: "24MCA005",
     name: "Divya Bharathi K.",
     department: "MCA",
     progress: 88,
     readiness: 88,
+    email: "divya.mca@avc.edu.in",
   },
 ];
 
 export default function StudentManagementPage() {
   const router = useRouter();
   const [students, setStudents] = useState<StudentRecord[]>(INITIAL_STUDENTS);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("All");
-  const [statusFilter, setStatusFilter] = useState("All");
   const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<StudentRecord | null>(null);
+  const [drawerStudent, setDrawerStudent] = useState<UserProfile | null>(null);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   // New Student Form State
   const [newRollNo, setNewRollNo] = useState("");
   const [newName, setNewName] = useState("");
   const [newDept, setNewDept] = useState("BCA");
 
-  const filteredStudents = students.filter((s) => {
-    const matchesSearch =
-      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.rollNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.department.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesDept = departmentFilter === "All" || s.department === departmentFilter;
-    return matchesSearch && matchesDept;
-  });
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [studs, subs] = await Promise.all([
+          DataService.getStudents(),
+          DataService.getSubmissions(),
+        ]);
+        setSubmissions(subs);
+        if (studs && studs.length > 0) {
+          const mapped: StudentRecord[] = studs.map((s) => ({
+            id: s.id,
+            rollNo: s.roll_no || "23BCA01",
+            name: s.full_name,
+            department: s.department || "BCA",
+            progress: Math.min(100, Math.round((s.readiness_score || 70) * 0.9)),
+            readiness: Math.round(s.readiness_score || 75),
+            email: s.email,
+          }));
+          setStudents(mapped);
+        }
+      } catch (err) {
+        console.warn("Failed to load students data:", err);
+      }
+    }
+    loadData();
+  }, []);
+
+  const filteredStudents = useMemo(() => {
+    return students.filter((s) => {
+      const matchesSearch =
+        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.rollNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.department.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesDept = departmentFilter === "All" || s.department === departmentFilter;
+      return matchesSearch && matchesDept;
+    });
+  }, [students, searchQuery, departmentFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredStudents.length / pageSize));
+  const pagedStudents = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredStudents.slice(start, start + pageSize);
+  }, [filteredStudents, currentPage, pageSize]);
+
+  const handleOpenDrawer = (record: StudentRecord) => {
+    const profile: UserProfile = {
+      id: record.id || `stud-${record.rollNo}`,
+      full_name: record.name,
+      roll_no: record.rollNo,
+      department: record.department,
+      readiness_score: record.readiness,
+      email: record.email || `${record.rollNo.toLowerCase()}@avc.edu.in`,
+      role: "student",
+      college_name: "Annai Vailankanni Arts and Science College, Thanjavur",
+      batch_year: 2026,
+    };
+    setDrawerStudent(profile);
+  };
 
   const handleAddStudent = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newRollNo || !newName) return;
     const added: StudentRecord = {
+      id: `new-${Date.now()}`,
       rollNo: newRollNo,
       name: newName,
       department: newDept,
       progress: 60,
-      readiness: 65,
+      readiness: 70,
+      email: `${newRollNo.toLowerCase()}@avc.edu.in`,
     };
     setStudents((prev) => [added, ...prev]);
     setShowAddModal(false);
@@ -114,7 +183,7 @@ export default function StudentManagementPage() {
         <button
           type="button"
           onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold text-xs transition-all shadow-xs active:scale-[0.98]"
+          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs transition-all shadow-xs active:scale-[0.98]"
         >
           <Plus className="w-4 h-4 text-black stroke-[3]" />
           <span>Add Student</span>
@@ -125,8 +194,8 @@ export default function StudentManagementPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         {/* Total Students */}
         <div className="rounded-2xl bg-white border border-slate-200/90 p-5 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-[#C4F82A]/20 flex items-center justify-center flex-shrink-0 text-[#2D5A12]">
-            <Users className="w-6 h-6 text-[#2D5A12]" />
+          <div className="w-12 h-12 rounded-xl bg-[#9DFF00]/20 flex items-center justify-center flex-shrink-0 text-[#17251B]">
+            <Users className="w-6 h-6 text-[#17251B]" />
           </div>
           <div>
             <div className="text-2xl font-extrabold text-slate-900 font-mono tracking-tight">
@@ -177,9 +246,12 @@ export default function StudentManagementPage() {
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
             placeholder="Search by name, roll no, or department..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#C4F82A] shadow-2xs"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#9DFF00] shadow-2xs"
           />
         </div>
 
@@ -189,7 +261,10 @@ export default function StudentManagementPage() {
             <span className="text-slate-400">Department:</span>
             <select
               value={departmentFilter}
-              onChange={(e) => setDepartmentFilter(e.target.value)}
+              onChange={(e) => {
+                setDepartmentFilter(e.target.value);
+                setCurrentPage(1);
+              }}
               className="bg-transparent font-semibold text-slate-800 focus:outline-none cursor-pointer"
             >
               <option value="All">All</option>
@@ -199,64 +274,54 @@ export default function StudentManagementPage() {
               <option value="MCA">MCA</option>
             </select>
           </div>
-
-          <div className="flex items-center gap-1.5 bg-white border border-slate-200 px-3 py-2 rounded-xl text-slate-700 shadow-2xs">
-            <span className="text-slate-400">Status:</span>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-transparent font-semibold text-slate-800 focus:outline-none cursor-pointer"
-            >
-              <option value="All">All</option>
-              <option value="Ready">Ready</option>
-              <option value="In Progress">In Progress</option>
-            </select>
-          </div>
         </div>
       </div>
 
-      {/* Student Records Table matching Screen 07 */}
+      {/* Student Table matching Screen 07 */}
       <div className="rounded-2xl bg-white border border-slate-200/90 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[11px] uppercase tracking-wider">
-              <tr>
-                <th className="p-4 w-10">
-                  <input type="checkbox" className="rounded border-slate-300 cursor-pointer" />
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-slate-100 bg-[#F9FAF8] text-slate-500 font-mono text-[11px] uppercase tracking-wider">
+                <th className="p-4 w-12 text-center">
+                  <input type="checkbox" className="rounded border-slate-300 text-slate-900 focus:ring-0" />
                 </th>
-                <th className="p-4">Roll No.</th>
-                <th className="p-4">Name</th>
-                <th className="p-4">Department</th>
-                <th className="p-4">Progress</th>
-                <th className="p-4">Readiness</th>
-                <th className="p-4 text-center">Actions</th>
+                <th className="p-4 font-semibold">Roll No.</th>
+                <th className="p-4 font-semibold">Name</th>
+                <th className="p-4 font-semibold">Department</th>
+                <th className="p-4 font-semibold">Progress</th>
+                <th className="p-4 font-semibold">Readiness</th>
+                <th className="p-4 font-semibold text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-800">
-              {filteredStudents.map((student) => (
-                <tr key={student.rollNo} className="hover:bg-slate-50/70 transition-colors">
-                  <td className="p-4">
-                    <input type="checkbox" className="rounded border-slate-300 cursor-pointer" />
+              {pagedStudents.map((student) => (
+                <tr
+                  key={student.rollNo}
+                  className="hover:bg-slate-50/80 transition-colors"
+                >
+                  <td className="p-4 text-center">
+                    <input type="checkbox" className="rounded border-slate-300 text-slate-900 focus:ring-0" />
                   </td>
-                  <td className="p-4 font-mono font-bold text-slate-900">
+                  <td className="p-4 font-mono font-medium text-slate-600">
                     {student.rollNo}
                   </td>
                   <td className="p-4 font-semibold text-slate-900">
                     {student.name}
                   </td>
-                  <td className="p-4 font-medium text-slate-600">
+                  <td className="p-4 text-slate-600">
                     {student.department}
                   </td>
                   <td className="p-4 w-44">
                     <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                       <div
-                        className="bg-[#C4F82A] h-2 rounded-full"
+                        className="bg-[#9DFF00] h-2 rounded-full"
                         style={{ width: `${student.progress}%` }}
                       />
                     </div>
                   </td>
                   <td className="p-4 font-mono font-bold text-emerald-700">
-                    <span className="inline-block px-2.5 py-0.5 rounded-md bg-[#C4F82A]/20 text-[#2D5A12] border border-[#C4F82A]/40 font-bold">
+                    <span className="inline-block px-2.5 py-0.5 rounded-md bg-[#9DFF00]/20 text-[#17251B] border border-[#9DFF00]/40 font-bold">
                       {student.readiness}%
                     </span>
                   </td>
@@ -264,23 +329,25 @@ export default function StudentManagementPage() {
                     <div className="inline-flex items-center gap-2 text-slate-400">
                       <button
                         type="button"
-                        onClick={() => setSelectedStudent(student)}
-                        title="View profile"
-                        className="p-1 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+                        onClick={() => handleOpenDrawer(student)}
+                        title="View profile telemetry drawer"
+                        className="p-1 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
                       >
-                        <Eye className="w-3.5 h-3.5" />
+                        <Eye className="w-4 h-4 text-slate-600" />
                       </button>
                       <button
                         type="button"
+                        onClick={() => handleOpenDrawer(student)}
                         title="Edit student"
-                        className="p-1 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+                        className="p-1 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         type="button"
+                        onClick={() => handleOpenDrawer(student)}
                         title="More options"
-                        className="p-1 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+                        className="p-1 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
                       >
                         <MoreVertical className="w-3.5 h-3.5" />
                       </button>
@@ -295,47 +362,61 @@ export default function StudentManagementPage() {
         {/* Table Pagination Footer matching Screen 07 */}
         <div className="p-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500 font-sans">
           <span>
-            Showing 1–{filteredStudents.length} of 1,248
+            Showing {filteredStudents.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}–
+            {Math.min(currentPage * pageSize, filteredStudents.length)} of 1,248
           </span>
 
           {/* Numbered Pill Pagination */}
           <div className="flex items-center gap-1.5 font-mono text-xs">
             <button
               type="button"
-              className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50"
+              disabled={currentPage <= 1}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40"
             >
-              &lt;
+              <ChevronLeft className="w-3.5 h-3.5" />
             </button>
+            {Array.from({ length: Math.min(3, totalPages) }).map((_, i) => {
+              const p = i + 1;
+              const isActive = p === currentPage;
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setCurrentPage(p)}
+                  className={`w-7 h-7 rounded-lg font-bold flex items-center justify-center transition-all ${
+                    isActive
+                      ? "bg-[#9DFF00] text-black shadow-2xs"
+                      : "hover:bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  {p}
+                </button>
+              );
+            })}
+            {totalPages > 3 && (
+              <>
+                <span className="px-1 text-slate-400">...</span>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(totalPages)}
+                  className={`w-8 h-7 rounded-lg flex items-center justify-center transition-all ${
+                    currentPage === totalPages
+                      ? "bg-[#9DFF00] text-black font-bold"
+                      : "hover:bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  {totalPages}
+                </button>
+              </>
+            )}
             <button
               type="button"
-              className="w-7 h-7 rounded-lg bg-[#C4F82A] text-black font-bold flex items-center justify-center shadow-2xs"
+              disabled={currentPage >= totalPages}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40"
             >
-              1
-            </button>
-            <button
-              type="button"
-              className="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-600 flex items-center justify-center"
-            >
-              2
-            </button>
-            <button
-              type="button"
-              className="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-600 flex items-center justify-center"
-            >
-              3
-            </button>
-            <span className="px-1 text-slate-400">...</span>
-            <button
-              type="button"
-              className="w-8 h-7 rounded-lg hover:bg-slate-100 text-slate-600 flex items-center justify-center"
-            >
-              312
-            </button>
-            <button
-              type="button"
-              className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50"
-            >
-              &gt;
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -365,7 +446,7 @@ export default function StudentManagementPage() {
                   placeholder="e.g. 23BCA025"
                   value={newRollNo}
                   onChange={(e) => setNewRollNo(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-[#C4F82A]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-[#9DFF00]"
                 />
               </div>
 
@@ -377,7 +458,7 @@ export default function StudentManagementPage() {
                   placeholder="e.g. Ananya R."
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#C4F82A]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#9DFF00]"
                 />
               </div>
 
@@ -386,7 +467,7 @@ export default function StudentManagementPage() {
                 <select
                   value={newDept}
                   onChange={(e) => setNewDept(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#C4F82A]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#9DFF00]"
                 >
                   <option value="BCA">BCA</option>
                   <option value="B.Sc CS">B.Sc CS</option>
@@ -405,7 +486,7 @@ export default function StudentManagementPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold shadow-xs"
+                  className="px-5 py-2 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold shadow-xs"
                 >
                   Save Student
                 </button>
@@ -414,6 +495,13 @@ export default function StudentManagementPage() {
           </div>
         </div>
       )}
+
+      {/* Candidate Profile Telemetry Slide-Over Drawer */}
+      <StudentDrawer
+        student={drawerStudent}
+        submissions={submissions}
+        onClose={() => setDrawerStudent(null)}
+      />
     </div>
   );
 }

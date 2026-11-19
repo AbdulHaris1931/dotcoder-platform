@@ -129,7 +129,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   onClick={() => router.push("/student/dashboard")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                     activeItem === "dashboard"
-                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      ? "bg-[#9DFF00] text-black shadow-sm font-bold"
                       : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
@@ -141,7 +141,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   onClick={() => router.push("/curriculum")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                     activeItem === "learn"
-                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      ? "bg-[#9DFF00] text-black shadow-sm font-bold"
                       : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
@@ -153,7 +153,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   onClick={() => router.push("/practice/two-sum")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                     activeItem === "practice"
-                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      ? "bg-[#9DFF00] text-black shadow-sm font-bold"
                       : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
@@ -165,7 +165,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   onClick={() => router.push("/student/exam/assessment-1")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                     activeItem === "assessments"
-                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      ? "bg-[#9DFF00] text-black shadow-sm font-bold"
                       : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
@@ -177,7 +177,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   onClick={() => router.push("/student/drives")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                     activeItem === "recruitment"
-                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      ? "bg-[#9DFF00] text-black shadow-sm font-bold"
                       : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
@@ -189,7 +189,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   onClick={() => router.push("/student/resume")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                     activeItem === "resume"
-                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      ? "bg-[#9DFF00] text-black shadow-sm font-bold"
                       : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
@@ -198,10 +198,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </button>
 
                 <button
-                  onClick={() => router.push("/student/dashboard#progress")}
+                  onClick={() => {
+                    if (pathname === "/student/dashboard") {
+                      document.getElementById("progress")?.scrollIntoView({ behavior: "smooth" });
+                    } else {
+                      router.push("/student/dashboard#progress");
+                      setTimeout(() => {
+                        document.getElementById("progress")?.scrollIntoView({ behavior: "smooth" });
+                      }, 200);
+                    }
+                  }}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                     activeItem === "progress"
-                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      ? "bg-[#9DFF00] text-black shadow-sm font-bold"
                       : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
@@ -216,7 +225,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   onClick={() => router.push("/admin/dashboard")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                     activeItem === "dashboard"
-                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      ? "bg-[#9DFF00] text-black shadow-sm font-bold"
                       : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
@@ -228,7 +237,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   onClick={() => router.push("/tpo/students")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                     activeItem === "students"
-                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      ? "bg-[#9DFF00] text-black shadow-sm font-bold"
                       : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
@@ -240,7 +249,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   onClick={() => router.push("/admin/problems")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                     activeItem === "problems"
-                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      ? "bg-[#9DFF00] text-black shadow-sm font-bold"
                       : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
@@ -252,7 +261,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   onClick={() => router.push("/admin/assessments")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                     activeItem === "assessments"
-                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      ? "bg-[#9DFF00] text-black shadow-sm font-bold"
                       : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
@@ -264,7 +273,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   onClick={() => router.push("/admin/drives")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                     activeItem === "recruitment"
-                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      ? "bg-[#9DFF00] text-black shadow-sm font-bold"
                       : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
@@ -276,7 +285,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   onClick={() => router.push("/admin/dashboard")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                     activeItem === "analytics"
-                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      ? "bg-[#9DFF00] text-black shadow-sm font-bold"
                       : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
@@ -288,7 +297,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   onClick={() => router.push("/tpo/dashboard")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                     activeItem === "reports"
-                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      ? "bg-[#9DFF00] text-black shadow-sm font-bold"
                       : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
@@ -300,7 +309,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   onClick={() => router.push("/admin/dashboard#institution")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                     activeItem === "institution"
-                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      ? "bg-[#9DFF00] text-black shadow-sm font-bold"
                       : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
@@ -312,7 +321,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   onClick={() => router.push("/admin/dashboard#settings")}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                     activeItem === "settings"
-                      ? "bg-[#C4F82A] text-black shadow-sm font-bold"
+                      ? "bg-[#9DFF00] text-black shadow-sm font-bold"
                       : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
@@ -339,7 +348,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {currentUser && (
             <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-[#161D19] border border-[#222C26]">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-[#C4F82A] text-black flex items-center justify-center font-bold text-xs font-mono shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-[#9DFF00] text-black flex items-center justify-center font-bold text-xs font-mono shrink-0">
                   {currentUser.full_name
                     .split(" ")
                     .map((n) => n[0])

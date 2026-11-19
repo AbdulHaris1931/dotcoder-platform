@@ -15,7 +15,7 @@ export default function ModuleAssessmentRedirectPage() {
   return (
     <div className="h-screen w-full bg-[#0F1412] text-white flex items-center justify-center font-mono text-sm">
       <div className="flex items-center gap-3">
-        <span className="w-2.5 h-2.5 rounded-full bg-[#C4F82A] animate-pulse" />
+        <span className="w-2.5 h-2.5 rounded-full bg-[#9DFF00] animate-pulse" />
         <span>Entering Assessment Room...</span>
       </div>
     </div>

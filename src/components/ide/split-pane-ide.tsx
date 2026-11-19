@@ -112,6 +112,8 @@ export function SplitPaneIDE({
 
   // Submissions History
   const [submissionHistory, setSubmissionHistory] = useState<ProblemSubmissionResult[]>([]);
+  const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
+  const [expandedCaseNumber, setExpandedCaseNumber] = useState<number | null>(null);
 
   // Load history on mount
   useEffect(() => {
@@ -133,11 +135,14 @@ export function SplitPaneIDE({
   };
 
   const handleResetCode = () => {
-    if (confirm("Reset editor to default function boilerplate? Your current changes will be cleared.")) {
-      const boilerplate = problem.boilerplate_code[language] || "";
-      setSourceCode(boilerplate);
-      if (onCodeChange) onCodeChange(boilerplate, language);
-    }
+    setShowResetConfirm(true);
+  };
+
+  const confirmResetCode = () => {
+    const boilerplate = problem.boilerplate_code[language] || "";
+    setSourceCode(boilerplate);
+    if (onCodeChange) onCodeChange(boilerplate, language);
+    setShowResetConfirm(false);
   };
 
   // Run Code against visible test cases (TC 1 & TC 2)
@@ -209,12 +214,30 @@ export function SplitPaneIDE({
 
         {/* Right: Language Selector & Run / Submit Controls matching Screen 02 */}
         <div className="flex items-center gap-3">
+          {/* Active Engine Badge */}
+          {language === "python" ? (
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-medium bg-[#17251B] text-[#9DFF00] border border-[#9DFF00]/30 shadow-2xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#9DFF00] animate-pulse" />
+              Pyodide WASM
+            </span>
+          ) : language === "sql" ? (
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-medium bg-purple-950/40 text-purple-300 border border-purple-500/30">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+              SQL Sandbox
+            </span>
+          ) : (
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-medium bg-sky-950/40 text-sky-300 border border-sky-500/30">
+              <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+              Compiler Sandbox
+            </span>
+          )}
+
           {/* Language Selector */}
           <div className="relative">
             <select
               value={language}
               onChange={(e) => handleLanguageChange(e.target.value as SupportedLanguage)}
-              className="bg-[#141B2D] border border-[#1E293B] text-slate-200 text-xs font-mono rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#C4F82A] cursor-pointer"
+              className="bg-[#141B2D] border border-[#1E293B] text-slate-200 text-xs font-mono rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#9DFF00] cursor-pointer"
             >
               <option value="python">Python</option>
               <option value="cpp">C++</option>
@@ -239,7 +262,7 @@ export function SplitPaneIDE({
             type="button"
             onClick={handleRunCode}
             disabled={isRunning || isSubmitting}
-            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#C4F82A] hover:bg-[#B5EA20] text-black text-xs font-bold transition-all shadow-sm active:scale-95 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#9DFF00] hover:bg-[#8CE600] text-black text-xs font-bold transition-all shadow-sm active:scale-95 disabled:opacity-50"
             title="Shortcut: Ctrl+Enter"
           >
             <Play className="w-3 h-3 text-black fill-current" />
@@ -254,11 +277,46 @@ export function SplitPaneIDE({
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#0F1412] hover:bg-slate-800 border border-slate-700 text-white text-xs font-semibold shadow-xs transition-all active:scale-95 disabled:opacity-50"
             title="Shortcut: Ctrl+Shift+Enter"
           >
-            <CheckCircle2 className="w-3.5 h-3.5 text-[#C4F82A]" />
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#9DFF00]" />
             <span>{isSubmitting ? "Grading..." : "Submit"}</span>
           </button>
         </div>
       </div>
+
+      {/* Styled Reset Confirmation Dialog (DEFECT-MED-002) */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="bg-[#141B2D] border border-[#1E293B] rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                <RotateCcw className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-white">Reset Editor Code?</h4>
+                <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
+                  Restore default {language.toUpperCase()} boilerplate. All current modifications will be lost.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowResetConfirm(false)}
+                className="px-3.5 py-1.5 rounded-lg border border-slate-700 text-xs font-semibold text-slate-300 hover:bg-slate-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmResetCode}
+                className="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-colors shadow-xs"
+              >
+                Confirm Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Workspace Body: Split Left (Tabs) & Right (Editor + Test Console) */}
       <div className="flex-1 grid grid-cols-12 overflow-hidden">
@@ -272,7 +330,7 @@ export function SplitPaneIDE({
               <h2 className="text-xl font-bold text-white tracking-tight">
                 {problem.title}
               </h2>
-              <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-[#C4F82A]/20 text-[#C4F82A] border border-[#C4F82A]/40">
+              <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-[#9DFF00]/20 text-[#9DFF00] border border-[#9DFF00]/40">
                 {problem.difficulty}
               </span>
             </div>
@@ -284,7 +342,7 @@ export function SplitPaneIDE({
               onClick={() => setActiveLeftTab("problem")}
               className={`flex items-center gap-1.5 px-3 py-2 font-semibold transition-colors border-b-2 ${
                 activeLeftTab === "problem"
-                  ? "text-[#C4F82A] border-[#C4F82A]"
+                  ? "text-[#9DFF00] border-[#9DFF00]"
                   : "text-slate-400 hover:text-slate-200 border-transparent"
               }`}
             >
@@ -296,7 +354,7 @@ export function SplitPaneIDE({
               onClick={() => setActiveLeftTab("solution")}
               className={`flex items-center gap-1.5 px-3 py-2 font-semibold transition-colors border-b-2 ${
                 activeLeftTab === "solution"
-                  ? "text-[#C4F82A] border-[#C4F82A]"
+                  ? "text-[#9DFF00] border-[#9DFF00]"
                   : "text-slate-400 hover:text-slate-200 border-transparent"
               }`}
             >
@@ -308,7 +366,7 @@ export function SplitPaneIDE({
               onClick={() => setActiveLeftTab("discussion")}
               className={`flex items-center gap-1.5 px-3 py-2 font-semibold transition-colors border-b-2 ${
                 activeLeftTab === "discussion"
-                  ? "text-[#C4F82A] border-[#C4F82A]"
+                  ? "text-[#9DFF00] border-[#9DFF00]"
                   : "text-slate-400 hover:text-slate-200 border-transparent"
               }`}
             >
@@ -336,7 +394,7 @@ export function SplitPaneIDE({
                     </div>
                     <div>
                       <span className="text-slate-400">Output: </span>
-                      <span className="text-[#C4F82A]">{testCases[0]?.expected_output || "[0, 1]"}</span>
+                      <span className="text-[#9DFF00]">{testCases[0]?.expected_output || "[0, 1]"}</span>
                     </div>
                   </div>
                 </div>
@@ -415,7 +473,7 @@ export function SplitPaneIDE({
             {/* Solution Tab */}
             {activeLeftTab === "solution" && (
               <div className="space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#C4F82A]/10 border border-[#C4F82A]/30 text-[#C4F82A] text-xs font-mono">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#9DFF00]/10 border border-[#9DFF00]/30 text-[#9DFF00] text-xs font-mono">
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>Optimal Hash Map Approach</span>
                 </div>
@@ -483,7 +541,7 @@ export function SplitPaneIDE({
                   onClick={() => setActiveBottomTab("cases")}
                   className={`px-3.5 py-1.5 rounded-t-lg transition-colors font-semibold ${
                     activeBottomTab === "cases"
-                      ? "bg-[#0E131F] text-[#C4F82A] border-t-2 border-[#C4F82A]"
+                      ? "bg-[#0E131F] text-[#9DFF00] border-t-2 border-[#9DFF00]"
                       : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
@@ -494,7 +552,7 @@ export function SplitPaneIDE({
                   onClick={() => setActiveBottomTab("sample")}
                   className={`px-3.5 py-1.5 rounded-t-lg transition-colors font-semibold ${
                     activeBottomTab === "sample"
-                      ? "bg-[#0E131F] text-[#C4F82A] border-t-2 border-[#C4F82A]"
+                      ? "bg-[#0E131F] text-[#9DFF00] border-t-2 border-[#9DFF00]"
                       : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
@@ -505,7 +563,7 @@ export function SplitPaneIDE({
                   onClick={() => setActiveBottomTab("hidden")}
                   className={`px-3.5 py-1.5 rounded-t-lg transition-colors font-semibold ${
                     activeBottomTab === "hidden"
-                      ? "bg-[#0E131F] text-[#C4F82A] border-t-2 border-[#C4F82A]"
+                      ? "bg-[#0E131F] text-[#9DFF00] border-t-2 border-[#9DFF00]"
                       : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
@@ -516,7 +574,7 @@ export function SplitPaneIDE({
               {/* Status Message */}
               <div className="text-[11px] font-mono text-slate-400">
                 {lastResult ? (
-                  <span className="text-[#C4F82A] font-semibold">
+                  <span className="text-[#9DFF00] font-semibold">
                     {lastResult.status} ({lastResult.passed_cases}/{lastResult.total_cases})
                   </span>
                 ) : (
@@ -537,44 +595,82 @@ export function SplitPaneIDE({
                   const res = lastResult?.results.find((r) => r.case_number === tc.case_number);
                   const isPassed = res ? res.passed : true;
                   const time = res ? `${res.execution_time_ms} ms` : `${3 + tc.case_number} ms`;
+                  const isExpanded = expandedCaseNumber === tc.case_number;
 
                   return (
                     <div
                       key={tc.id || tc.case_number}
-                      className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-[#141B2D]/60 border border-[#1E293B] text-xs font-mono hover:bg-[#141B2D] transition-colors"
+                      className="rounded-xl bg-[#141B2D]/60 border border-[#1E293B] text-xs font-mono overflow-hidden transition-all"
                     >
-                      <div className="flex items-center gap-2.5">
-                        {isPassed ? (
-                          <CheckCircle2 className="w-4 h-4 text-[#C4F82A]" />
-                        ) : (
-                          <XCircle className="w-4 h-4 text-rose-400" />
-                        )}
-                        <span className="font-semibold text-slate-200">Test Case {tc.case_number}</span>
-                        {tc.failure_category && (
-                          <span className="text-[10px] text-slate-400 border border-slate-700/60 px-1.5 py-0.5 rounded">
-                            {tc.failure_category}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full font-bold text-[11px] border ${
-                            isPassed
-                              ? "bg-[#C4F82A]/20 text-[#C4F82A] border-[#C4F82A]/40"
-                              : "bg-rose-500/20 text-rose-400 border-rose-500/40"
-                          }`}
-                        >
+                      <button
+                        type="button"
+                        onClick={() => setExpandedCaseNumber(isExpanded ? null : tc.case_number)}
+                        className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-[#141B2D] transition-colors text-left"
+                      >
+                        <div className="flex items-center gap-2.5">
                           {isPassed ? (
-                            <CheckCircle2 className="w-3 h-3 text-[#C4F82A]" />
+                            <CheckCircle2 className="w-4 h-4 text-[#9DFF00]" />
                           ) : (
-                            <XCircle className="w-3 h-3 text-rose-400" />
+                            <XCircle className="w-4 h-4 text-rose-400" />
                           )}
-                          <span>{isPassed ? "Passed" : "Failed"}</span>
-                        </span>
-                        <span className="text-slate-400 text-[11px] min-w-[36px] text-right font-mono">
-                          {time}
-                        </span>
-                      </div>
+                          <span className="font-semibold text-slate-200">Test Case {tc.case_number}</span>
+                          {tc.failure_category && (
+                            <span className="text-[10px] text-slate-400 border border-slate-700/60 px-1.5 py-0.5 rounded">
+                              {tc.failure_category}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full font-bold text-[11px] border ${
+                              isPassed
+                                ? "bg-[#9DFF00]/20 text-[#9DFF00] border-[#9DFF00]/40"
+                                : "bg-rose-500/20 text-rose-400 border-rose-500/40"
+                            }`}
+                          >
+                            {isPassed ? (
+                              <CheckCircle2 className="w-3 h-3 text-[#9DFF00]" />
+                            ) : (
+                              <XCircle className="w-3 h-3 text-rose-400" />
+                            )}
+                            <span>{isPassed ? "Passed" : "Failed"}</span>
+                          </span>
+                          <span className="text-slate-400 text-[11px] min-w-[36px] text-right font-mono">
+                            {time}
+                          </span>
+                          <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                        </div>
+                      </button>
+
+                      {/* Expandable Diagnostic Telemetry Panel */}
+                      {isExpanded && (
+                        <div className="px-4 py-3 border-t border-[#1E293B] bg-[#0E131F]/90 text-[11px] space-y-2">
+                          {tc.is_hidden && tc.case_number > 2 ? (
+                            <div className="text-slate-400 italic">
+                              Hidden Stress Test Case: Input and expected output values are protected by proctoring policies to prevent hardcoding.
+                            </div>
+                          ) : (
+                            <>
+                              <div>
+                                <span className="text-slate-500 font-semibold">Input: </span>
+                                <span className="text-slate-300 font-mono">{tc.input_data}</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-500 font-semibold">Expected Output: </span>
+                                <span className="text-[#9DFF00] font-mono">{tc.expected_output}</span>
+                              </div>
+                              {res && (
+                                <div>
+                                  <span className="text-slate-500 font-semibold">Actual Output: </span>
+                                  <span className={res.passed ? "text-emerald-400 font-mono" : "text-rose-400 font-mono"}>
+                                    {res.actual_output || (res.passed ? tc.expected_output : "Execution Mismatch")}
+                                  </span>
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

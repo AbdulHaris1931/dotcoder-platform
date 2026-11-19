@@ -247,16 +247,16 @@ export default function StudentDashboardPage() {
         <BlurFade delay={0.12}>
           <button
             onClick={() => router.push(`/practice/two-sum`)}
-            className="w-full text-left p-5 sm:p-6 rounded-2xl border border-slate-200/90 bg-white hover:border-[#C4F82A] hover:shadow-md transition-all group shadow-xs"
+            className="w-full text-left p-5 sm:p-6 rounded-2xl border border-slate-200/90 bg-white hover:border-[#9DFF00] hover:shadow-md transition-all group shadow-xs"
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-[#C4F82A]/20 text-[#2D5A12] flex items-center justify-center flex-shrink-0 group-hover:bg-[#C4F82A] group-hover:text-black transition-colors">
+                <div className="w-10 h-10 rounded-xl bg-[#9DFF00]/20 text-[#17251B] flex items-center justify-center flex-shrink-0 group-hover:bg-[#9DFF00] group-hover:text-black transition-colors">
                   <Zap className="w-5 h-5 fill-current" />
                 </div>
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold text-[#2D5A12] uppercase tracking-wide">Up Next</span>
+                    <span className="text-[11px] font-bold text-[#17251B] uppercase tracking-wide">Up Next</span>
                   </div>
                   <h3 className="text-base font-bold text-slate-900 group-hover:text-black transition-colors">
                     {nextProblem.title}
@@ -274,7 +274,7 @@ export default function StudentDashboardPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black transition-all shadow-2xs group-hover:scale-105">
+              <div className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black transition-all shadow-2xs group-hover:scale-105">
                 <span>Continue</span>
                 <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
               </div>
@@ -299,7 +299,7 @@ export default function StudentDashboardPage() {
                     onClick={() => setTrackFilter(tag)}
                     className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
                       trackFilter === tag
-                        ? "bg-[#C4F82A] text-black shadow-2xs"
+                        ? "bg-[#9DFF00] text-black shadow-2xs"
                         : "bg-white border border-slate-200 text-slate-600 hover:text-black"
                     }`}
                   >
@@ -316,8 +316,17 @@ export default function StudentDashboardPage() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search..."
-                  className="pl-8 pr-3 py-2 w-full sm:w-56 text-[13px] bg-white border border-slate-200 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                  className="pl-8 pr-8 py-2 w-full sm:w-56 text-[13px] bg-white border border-slate-200 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#9DFF00]/40 focus:border-slate-800 transition-all"
                 />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery("")}
+                    className="absolute right-2.5 top-[10px] text-slate-400 hover:text-slate-600 text-xs font-bold"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
             </div>
           </BlurFade>
@@ -401,7 +410,7 @@ export default function StudentDashboardPage() {
 
           {/* Activity Heatmap (GitHub-style) */}
           <BlurFade delay={0.16}>
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
+            <div id="progress" className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4 scroll-mt-6">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
                   Activity

@@ -131,7 +131,7 @@ export default function AdminAssessmentManagementPage() {
           <button
             type="button"
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold text-xs transition-all shadow-xs active:scale-[0.98]"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs transition-all shadow-xs active:scale-[0.98]"
           >
             <Plus className="w-4 h-4 text-black stroke-[3]" />
             <span>Create Assessment</span>
@@ -155,7 +155,7 @@ export default function AdminAssessmentManagementPage() {
               onClick={() => setActiveTab(tab.id as any)}
               className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all shadow-2xs ${
                 isSelected
-                  ? "bg-[#C4F82A] text-black"
+                  ? "bg-[#9DFF00] text-black"
                   : "bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:text-black"
               }`}
             >
@@ -201,7 +201,7 @@ export default function AdminAssessmentManagementPage() {
                     <span
                       className={`inline-block px-2.5 py-0.5 rounded-md font-sans font-semibold text-[11px] ${
                         a.status === "Active"
-                          ? "bg-[#C4F82A]/20 text-[#2D5A12] border border-[#C4F82A]/40 font-bold"
+                          ? "bg-[#9DFF00]/20 text-[#2D5A12] border border-[#9DFF00]/40 font-bold"
                           : a.status === "Scheduled"
                           ? "bg-blue-50 text-blue-700 border border-blue-200"
                           : "bg-slate-100 text-slate-600 border border-slate-200"
@@ -241,7 +241,7 @@ export default function AdminAssessmentManagementPage() {
                   placeholder="e.g. Data Structures & Algorithms Exam"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#C4F82A]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#9DFF00]"
                 />
               </div>
 
@@ -250,7 +250,7 @@ export default function AdminAssessmentManagementPage() {
                 <select
                   value={newType}
                   onChange={(e) => setNewType(e.target.value as any)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#C4F82A]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#9DFF00]"
                 >
                   <option value="Module">Module Assessment</option>
                   <option value="Recruitment">Recruitment Mock Test</option>
@@ -264,7 +264,7 @@ export default function AdminAssessmentManagementPage() {
                 <select
                   value={newDuration}
                   onChange={(e) => setNewDuration(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#C4F82A]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#9DFF00]"
                 >
                   <option value="30 mins">30 mins</option>
                   <option value="60 mins">60 mins</option>
@@ -284,7 +284,7 @@ export default function AdminAssessmentManagementPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold shadow-xs"
+                  className="px-5 py-2 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold shadow-xs"
                 >
                   Publish Assessment
                 </button>

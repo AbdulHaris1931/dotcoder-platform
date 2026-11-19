@@ -131,7 +131,7 @@ export default function HomePage() {
 
             <Link
               href="/signup"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#4F46E5] hover:bg-indigo-700 text-white text-sm font-semibold shadow-xs transition-all active:scale-[0.98]"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-[#111111] text-sm font-bold shadow-xs transition-all active:scale-[0.98]"
             >
               <span>Start free</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -152,13 +152,13 @@ export default function HomePage() {
 
         {/* Ambient Top Glows */}
         <div className="absolute top-0 right-1/4 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-1/3 left-10 w-96 h-96 bg-indigo-200/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/3 left-10 w-96 h-96 bg-slate-200/30 rounded-full blur-3xl pointer-events-none" />
 
         <div className="max-w-5xl mx-auto relative z-10 text-center space-y-6">
           {/* Eyebrow Pill */}
           <BlurFade delay={0.05}>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50/80 border border-indigo-200/70 text-indigo-700 text-xs font-mono font-bold tracking-widest uppercase shadow-2xs backdrop-blur-xs">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10B981] animate-pulse" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#17251B] border border-[#2B3B2E] text-[#9DFF00] text-xs font-mono font-bold tracking-widest uppercase shadow-2xs backdrop-blur-xs">
+              <span className="w-2 h-2 rounded-full bg-[#9DFF00] shadow-[0_0_8px_#9DFF00] animate-pulse" />
               <span>The Intelligent Coding Platform</span>
             </div>
           </BlurFade>
@@ -167,21 +167,8 @@ export default function HomePage() {
           <BlurFade delay={0.1}>
             <h1 className="text-4xl sm:text-6xl lg:text-[68px] font-extrabold tracking-tight text-slate-900 leading-[1.08] max-w-4xl mx-auto">
               Where coders are{" "}
-              <span className="relative inline-block text-[#4F46E5]">
+              <span className="relative inline-block text-slate-900 underline decoration-[#9DFF00] decoration-wavy decoration-2">
                 made, not measured.
-                <svg
-                  className="absolute -bottom-2 left-0 w-full h-3 text-[#22C55E]/40"
-                  viewBox="0 0 300 12"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M3 9C60 3 180 3 297 9"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                  />
-                </svg>
               </span>
             </h1>
           </BlurFade>
@@ -198,7 +185,7 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-2">
               <Link
                 href="/signup"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white text-sm font-semibold shadow-lg shadow-indigo-500/25 transition-all active:scale-[0.98]"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-[#111111] text-sm font-bold shadow-lg shadow-[#9DFF00]/20 transition-all active:scale-[0.98]"
               >
                 <span>Start learning free</span>
                 <ArrowRight className="w-4 h-4" />
@@ -209,10 +196,10 @@ export default function HomePage() {
                 onClick={handleLaunchStudent}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-white border border-slate-200/90 hover:border-slate-300 text-slate-800 text-sm font-semibold shadow-2xs hover:bg-slate-50 transition-all active:scale-[0.98]"
               >
-                <div className="w-5 h-5 rounded-full bg-slate-900 flex items-center justify-center text-white">
+                <div className="w-5 h-5 rounded-full bg-[#111111] flex items-center justify-center text-white">
                   <Play className="w-2.5 h-2.5 fill-current ml-0.5" />
                 </div>
-                <span>Book a walkthrough</span>
+                <span>Explore Interactive Demo</span>
               </button>
             </div>
           </BlurFade>
@@ -283,7 +270,7 @@ export default function HomePage() {
                   onClick={() => setActiveCodeTab("code")}
                   className={`px-3 py-1 rounded-md transition-all ${
                     activeCodeTab === "code"
-                      ? "bg-indigo-600 text-white font-bold"
+                      ? "bg-[#9DFF00] text-black font-bold shadow-xs"
                       : "text-slate-400 hover:text-white"
                   }`}
                 >
@@ -294,18 +281,18 @@ export default function HomePage() {
                   onClick={() => setActiveCodeTab("ai")}
                   className={`px-3 py-1 rounded-md transition-all flex items-center gap-1.5 ${
                     activeCodeTab === "ai"
-                      ? "bg-indigo-600 text-white font-bold"
+                      ? "bg-[#9DFF00] text-black font-bold shadow-xs"
                       : "text-slate-400 hover:text-white"
                   }`}
                 >
-                  <Sparkles className="w-3 h-3 text-emerald-400" />
+                  <Sparkles className="w-3 h-3 text-[#9DFF00]" />
                   <span>Dot AI</span>
                 </button>
               </div>
 
               {/* Status */}
-              <div className="flex items-center gap-2 text-xs font-mono text-emerald-400">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34D399]" />
+              <div className="flex items-center gap-2 text-xs font-mono text-[#9DFF00]">
+                <span className="w-2 h-2 rounded-full bg-[#9DFF00] shadow-[0_0_8px_#9DFF00]" />
                 <span className="hidden sm:inline text-slate-300">Pyodide WASM Ready</span>
               </div>
             </div>
@@ -321,8 +308,8 @@ export default function HomePage() {
                   <div className="space-y-1.5 pl-2">
                     <div className="text-slate-400">⌄ src</div>
                     <div className="pl-3 space-y-1">
-                      <div className="flex items-center gap-2 text-indigo-300 bg-indigo-500/15 px-2 py-1 rounded-lg border border-indigo-500/30 font-medium">
-                        <span className="text-indigo-400">#</span>
+                      <div className="flex items-center gap-2 text-[#9DFF00] bg-[#17251B] px-2 py-1 rounded-lg border border-[#2B3B2E] font-medium">
+                        <span className="text-[#9DFF00]">#</span>
                         <span>challenge.py</span>
                       </div>
                       <div className="flex items-center gap-2 text-slate-500 px-2 py-1 hover:text-slate-300 cursor-pointer">
@@ -342,7 +329,7 @@ export default function HomePage() {
                     Live Session
                   </div>
                   <div className="flex items-center gap-2 text-xs text-slate-300">
-                    <Users className="w-3.5 h-3.5 text-indigo-400" />
+                    <Users className="w-3.5 h-3.5 text-[#9DFF00]" />
                     <span>3 campus peers live</span>
                   </div>
                 </div>
@@ -358,19 +345,19 @@ export default function HomePage() {
 
                   <pre className="text-slate-300 overflow-x-auto text-xs leading-6">
                     <code>
-                      <span className="text-indigo-400 font-semibold">def</span>{" "}
+                      <span className="text-[#9DFF00] font-semibold">def</span>{" "}
                       <span className="text-amber-300 font-semibold">longest_streak</span>
                       <span className="text-slate-400">(events: list[int]) -&gt; int:</span>
                       {"\n"}    <span className="text-slate-500 italic"># Return the maximum consecutive days active</span>
-                      {"\n"}    streak = best = <span className="text-emerald-400 font-semibold">0</span>
-                      {"\n"}    <span className="text-indigo-400 font-semibold">for</span> day{" "}
-                      <span className="text-indigo-400 font-semibold">in</span> events:
-                      {"\n"}        streak = streak + <span className="text-emerald-400 font-semibold">1</span>{" "}
-                      <span className="text-indigo-400 font-semibold">if</span> day{" "}
-                      <span className="text-indigo-400 font-semibold">else</span>{" "}
-                      <span className="text-emerald-400 font-semibold">0</span>
+                      {"\n"}    streak = best = <span className="text-[#9DFF00] font-semibold">0</span>
+                      {"\n"}    <span className="text-[#9DFF00] font-semibold">for</span> day{" "}
+                      <span className="text-[#9DFF00] font-semibold">in</span> events:
+                      {"\n"}        streak = streak + <span className="text-[#9DFF00] font-semibold">1</span>{" "}
+                      <span className="text-[#9DFF00] font-semibold">if</span> day{" "}
+                      <span className="text-[#9DFF00] font-semibold">else</span>{" "}
+                      <span className="text-[#9DFF00] font-semibold">0</span>
                       {"\n"}        best = <span className="text-blue-400">max</span>(best, streak)
-                      {"\n"}    <span className="text-indigo-400 font-semibold">return</span> best
+                      {"\n"}    <span className="text-[#9DFF00] font-semibold">return</span> best
                     </code>
                   </pre>
 
@@ -391,14 +378,14 @@ export default function HomePage() {
                       disabled={isRunningCode}
                       className="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors"
                     >
-                      <Play className="w-3 h-3 text-emerald-400 fill-current" />
+                      <Play className="w-3 h-3 text-[#9DFF00] fill-current" />
                       <span>{isRunningCode ? "Running WASM..." : "Run (0ms)"}</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={handleLaunchStudent}
-                      className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                      className="px-3.5 py-1.5 rounded-lg bg-[#9DFF00] hover:bg-[#8CE600] text-black text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
                     >
                       <Check className="w-3 h-3 stroke-[3]" />
                       <span>Submit Solution</span>
@@ -412,7 +399,7 @@ export default function HomePage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-indigo-400" />
+                      <Sparkles className="w-4 h-4 text-[#9DFF00]" />
                       <span className="font-bold text-xs text-white">Dot AI Intelligence</span>
                     </div>
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -609,6 +596,73 @@ export default function HomePage() {
               <span>TPO Command</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Institutional Pricing & Pilot Section (id="pricing") */}
+      <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-slate-100 space-y-12">
+        <div className="text-center space-y-3 max-w-3xl mx-auto">
+          <span className="text-xs font-mono font-bold tracking-widest uppercase text-[#17251B] bg-[#9DFF00]/20 px-3 py-1 rounded-full border border-[#9DFF00]/40">
+            Institutional Deployment
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+            Zero-Waste Computing for Accredited Campuses
+          </h2>
+          <p className="text-sm text-slate-600">
+            Deploy in minutes with zero local server hardware requirements and $0 cloud compiler billing.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          {/* Pilot Tier */}
+          <div className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between space-y-6">
+            <div className="space-y-4">
+              <div className="inline-block text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700">
+                CAMPUS PILOT
+              </div>
+              <div className="text-3xl font-extrabold text-slate-900">Free / Pilot</div>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Ideal for department evaluation across BCA, B.Sc CS, and IT students.
+              </p>
+              <ul className="space-y-2 text-xs text-slate-600 pt-2 border-t border-slate-100">
+                <li className="flex items-center gap-2">✓ Up to 500 Active Student Accounts</li>
+                <li className="flex items-center gap-2">✓ Client-Side Pyodide WASM Lab (Zero Cost)</li>
+                <li className="flex items-center gap-2">✓ 10-Lesson Placement Curriculum Explorer</li>
+                <li className="flex items-center gap-2">✓ Verified ATS Placement Resume Generator</li>
+              </ul>
+            </div>
+            <button
+              onClick={handleLaunchStudent}
+              className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors"
+            >
+              Start Department Pilot
+            </button>
+          </div>
+
+          {/* Enterprise Institutional Tier */}
+          <div className="p-8 rounded-3xl bg-[#0F1412] text-white border border-[#1E2722] shadow-xl flex flex-col justify-between space-y-6 relative overflow-hidden">
+            <div className="space-y-4">
+              <div className="inline-block text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-[#9DFF00]/20 text-[#9DFF00] border border-[#9DFF00]/40">
+                ENTERPRISE ACCREDITATION
+              </div>
+              <div className="text-3xl font-extrabold text-white">Full Institutional</div>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Complete campus deployment with NAAC Criterion 5.2.1 Audit Engine and corporate recruitment simulator.
+              </p>
+              <ul className="space-y-2 text-xs text-slate-300 pt-2 border-t border-[#1C271E]">
+                <li className="flex items-center gap-2">✓ Unlimited Students & Campus Departments</li>
+                <li className="flex items-center gap-2">✓ NAAC Criterion 5.2.1 1-Click CSV Audit Exporter</li>
+                <li className="flex items-center gap-2">✓ Dual-Camera WebRTC Mobile QR Proctoring Suite</li>
+                <li className="flex items-center gap-2">✓ 5-Stage TPO Campus Recruitment Funnel</li>
+              </ul>
+            </div>
+            <Link
+              href="/signup"
+              className="w-full py-3 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs text-center transition-colors shadow-xs"
+            >
+              Request Institutional Onboarding
+            </Link>
           </div>
         </div>
       </section>
