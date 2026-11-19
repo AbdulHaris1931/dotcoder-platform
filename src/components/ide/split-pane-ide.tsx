@@ -10,6 +10,7 @@ import {
   TestCaseExecutionResult,
 } from "@/types/curriculum";
 import { CurriculumStore } from "@/lib/curriculum-store";
+import { useSidebar } from "@/components/shared/app-shell";
 import {
   Play,
   CheckCircle2,
@@ -30,6 +31,7 @@ import {
   ArrowRight,
   Maximize2,
   Minimize2,
+  Sidebar,
 } from "lucide-react";
 
 // Dynamically load Monaco Editor without SSR
@@ -52,6 +54,7 @@ interface SplitPaneIDEProps {
   onCodeChange?: (code: string, language: SupportedLanguage) => void;
   conceptNoteMarkdown?: string;
   initialLanguage?: SupportedLanguage;
+  topicTitle?: string;
 }
 
 export function SplitPaneIDE({
@@ -61,7 +64,9 @@ export function SplitPaneIDE({
   onCodeChange,
   conceptNoteMarkdown,
   initialLanguage = "python",
+  topicTitle,
 }: SplitPaneIDEProps) {
+  const { toggleSidebar, isSidebarOpen } = useSidebar();
   // Selected Language
   const [language, setLanguage] = useState<SupportedLanguage>(initialLanguage);
 
@@ -200,16 +205,30 @@ export function SplitPaneIDE({
   return (
     <div className="h-full w-full bg-[#0B0F17] text-slate-200 flex flex-col font-sans select-none overflow-hidden">
       {/* Top IDE Toolbar matching Screen 02 */}
-      <div className="h-12 border-b border-[#1E293B] bg-[#0E131F]/90 px-5 flex items-center justify-between flex-shrink-0 backdrop-blur-md">
-        {/* Left: Breadcrumbs matching Screen 02 */}
-        <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
-          <a href="/curriculum" className="hover:text-white transition-colors flex items-center gap-1">
-            <span>&larr; Practice</span>
-          </a>
-          <span className="text-slate-600">/</span>
-          <span className="text-slate-400">{problem.practice_stage_name || "Arrays"}</span>
-          <span className="text-slate-600">/</span>
-          <span className="text-slate-200 font-semibold">{problem.title}</span>
+      <div className="h-12 border-b border-[#1E293B] bg-[#0E131F]/90 px-4 sm:px-5 flex items-center justify-between flex-shrink-0 backdrop-blur-md">
+        {/* Left: Sidebar Expand/Collapse Toggle & Breadcrumbs matching Screen 02 */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#141B2D] hover:bg-[#1A2338] text-slate-300 hover:text-[#9DFF00] border border-[#1E293B] text-xs font-mono font-semibold transition-all shadow-xs active:scale-95 group cursor-pointer"
+            title="Expand Navigation Sidebar (⌘B)"
+          >
+            <Sidebar className="w-3.5 h-3.5 text-[#9DFF00]" />
+            <span className="text-[11px] font-sans font-bold text-slate-300 group-hover:text-white">
+              Menu
+            </span>
+          </button>
+
+          <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
+            <a href="/curriculum" className="hover:text-white transition-colors flex items-center gap-1">
+              <span>&larr; Practice</span>
+            </a>
+            <span className="text-slate-600">/</span>
+            <span className="text-slate-400">{topicTitle || problem.practice_stage_name || "Arrays"}</span>
+            <span className="text-slate-600">/</span>
+            <span className="text-slate-200 font-semibold truncate max-w-[140px] sm:max-w-xs">{problem.title}</span>
+          </div>
         </div>
 
         {/* Right: Language Selector & Run / Submit Controls matching Screen 02 */}
