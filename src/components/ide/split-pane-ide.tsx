@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import {
@@ -127,6 +127,40 @@ export function SplitPaneIDE({
 
   // Fullscreen / maximize editor state
   const [isEditorMaximized, setIsEditorMaximized] = useState<boolean>(false);
+
+  // Split pane resizing state: question area width percentage (reduced default to 36% for spacious editor)
+  const [leftWidthPercent, setLeftWidthPercent] = useState<number>(36);
+  const [isDraggingSplitter, setIsDraggingSplitter] = useState<boolean>(false);
+  const splitContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleSplitterMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDraggingSplitter(true);
+  };
+
+  useEffect(() => {
+    if (!isDraggingSplitter) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!splitContainerRef.current) return;
+      const rect = splitContainerRef.current.getBoundingClientRect();
+      const rawPercent = ((e.clientX - rect.left) / rect.width) * 100;
+      // Allow resizing between 20% and 50%
+      const clamped = Math.min(Math.max(rawPercent, 20), 50);
+      setLeftWidthPercent(clamped);
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingSplitter(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDraggingSplitter]);
 
   // Bookmark state
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
@@ -624,14 +658,22 @@ export function SplitPaneIDE({
           </button>
         </aside>
 
-        {/* =============================================================== */}
-        {/* 2B. LEFT WORKSPACE PANE (Problem Description, Examples & Meta)   */}
-        {/* =============================================================== */}
+        {/* Workspace Panes Container with Adjustable Splitter */}
         <div
-          className={`${
-            isEditorMaximized ? "hidden" : "w-1/2"
-          } flex flex-col border-r border-[#1E293B] bg-[#0B0F17] overflow-hidden`}
+          ref={splitContainerRef}
+          className={`flex-1 flex overflow-hidden ${
+            isDraggingSplitter ? "select-none cursor-col-resize" : ""
+          }`}
         >
+          {/* =============================================================== */}
+          {/* 2B. LEFT WORKSPACE PANE (Problem Description, Examples & Meta)   */}
+          {/* =============================================================== */}
+          <div
+            style={{ width: isEditorMaximized ? "0%" : `${leftWidthPercent}%` }}
+            className={`${
+              isEditorMaximized ? "hidden" : "flex"
+            } flex-col border-r border-[#1E293B] bg-[#0B0F17] overflow-hidden shrink-0`}
+          >
           {/* Problem Header Section */}
           <div className="p-6 pb-3 space-y-3.5 border-b border-[#1E293B]/80 flex-shrink-0">
             {/* Back link: <- Problem Set */}
@@ -1056,13 +1098,27 @@ export function SplitPaneIDE({
           </div>
         </div>
 
+        {/* Draggable Resizer Bar */}
+        {!isEditorMaximized && (
+          <div
+            onMouseDown={handleSplitterMouseDown}
+            onDoubleClick={() => setLeftWidthPercent(36)}
+            className="w-1.5 hover:w-2 bg-[#1E293B] hover:bg-[#9DFF00] cursor-col-resize transition-all z-10 relative group shrink-0"
+            title="Drag to resize question area (Double click to reset to 36%)"
+          >
+            <div className="absolute top-1/2 -translate-y-1/2 -left-1 w-3.5 h-10 rounded-full bg-slate-800/90 border border-slate-700 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              <div className="w-0.5 h-4 bg-slate-400 rounded-full" />
+            </div>
+          </div>
+        )}
+
         {/* =============================================================== */}
         {/* 2C. RIGHT WORKSPACE PANE (Editor & Testcases)                   */}
         {/* =============================================================== */}
         <div
           className={`${
-            isEditorMaximized ? "w-full" : "w-1/2"
-          } flex flex-col bg-[#0D1117] overflow-hidden`}
+            isEditorMaximized ? "w-full" : "flex-1"
+          } flex flex-col bg-[#0D1117] overflow-hidden min-w-0`}
         >
           {/* Top Editor Toolbar (Language, File Tab, Tools, Run & Submit) */}
           <div className="h-12 border-b border-[#1E293B] bg-[#0E131F] px-4 flex items-center justify-between flex-shrink-0">
@@ -1451,6 +1507,7 @@ export function SplitPaneIDE({
               </button>
             </div>
           </footer>
+        </div>
         </div>
       </div>
 

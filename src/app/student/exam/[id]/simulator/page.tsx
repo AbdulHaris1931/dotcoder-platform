@@ -425,8 +425,8 @@ function CompanyExamSimulatorContent() {
         {/* Section 3: Technical Coding Round */}
         {currentSectionIndex === 3 && activeCodingProb && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 h-[calc(100vh-135px)]">
-            {/* Left 5 Cols: Problem Description & Selector */}
-            <div className="lg:col-span-5 flex flex-col justify-between space-y-4 overflow-y-auto pr-1">
+            {/* Left 4 Cols: Problem Description & Selector (Reduced question area) */}
+            <div className="lg:col-span-4 flex flex-col justify-between space-y-4 overflow-y-auto pr-1">
               <div className="space-y-4">
                 {/* Problem Toggle Tabs */}
                 <div className="flex items-center gap-2 p-1.5 rounded-xl bg-[#161B22] border border-slate-800">
@@ -488,8 +488,8 @@ function CompanyExamSimulatorContent() {
               )}
             </div>
 
-            {/* Right 7 Cols: Monaco Code Canvas */}
-            <div className="lg:col-span-7 flex flex-col rounded-2xl border border-slate-800 bg-[#161B22] overflow-hidden">
+            {/* Right 8 Cols: Monaco Code Canvas (Expanded coding area) */}
+            <div className="lg:col-span-8 flex flex-col rounded-2xl border border-slate-800 bg-[#161B22] overflow-hidden">
               {/* Editor Toolbar */}
               <div className="h-11 border-b border-slate-800 bg-[#161B22] px-4 flex items-center justify-between">
                 <span className="text-xs font-mono text-slate-300 font-medium flex items-center gap-2">

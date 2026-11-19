@@ -93,6 +93,39 @@ export default function ProctoredExamRoomPage() {
   const [paletteFilter, setPaletteFilter] = useState<"ALL" | "MCQ" | "CODING">("ALL");
   const [isPaletteOpen, setIsPaletteOpen] = useState<boolean>(false);
   const [isEditorMaximized, setIsEditorMaximized] = useState<boolean>(false);
+  // Split pane resizing state: question area width percentage (reduced default to 36% for spacious editor)
+  const [leftWidthPercent, setLeftWidthPercent] = useState<number>(36);
+  const [isDraggingSplitter, setIsDraggingSplitter] = useState<boolean>(false);
+  const splitContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleSplitterMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDraggingSplitter(true);
+  };
+
+  useEffect(() => {
+    if (!isDraggingSplitter) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!splitContainerRef.current) return;
+      const rect = splitContainerRef.current.getBoundingClientRect();
+      const rawPercent = ((e.clientX - rect.left) / rect.width) * 100;
+      // Allow resizing between 20% and 50%
+      const clamped = Math.min(Math.max(rawPercent, 20), 50);
+      setLeftWidthPercent(clamped);
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingSplitter(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDraggingSplitter]);
   const [isBottomCollapsed, setIsBottomCollapsed] = useState<boolean>(false);
   const [activeBottomTab, setActiveBottomTab] = useState<"cases" | "results" | "console">("cases");
 
@@ -845,14 +878,22 @@ export default function ProctoredExamRoomPage() {
           </>
         )}
 
-        {/* =============================================================== */}
-        {/* 2B. LEFT WORKSPACE PANE (Question Statement & Formatting)       */}
-        {/* =============================================================== */}
+        {/* Workspace Panes Container with Adjustable Splitter */}
         <div
-          className={`${
-            isEditorMaximized ? "hidden" : "w-1/2"
-          } flex flex-col border-r border-[#1E293B] bg-[#0B0F17] overflow-hidden`}
+          ref={splitContainerRef}
+          className={`flex-1 flex overflow-hidden ${
+            isDraggingSplitter ? "select-none cursor-col-resize" : ""
+          }`}
         >
+          {/* =============================================================== */}
+          {/* 2B. LEFT WORKSPACE PANE (Question Statement & Formatting)       */}
+          {/* =============================================================== */}
+          <div
+            style={{ width: isEditorMaximized ? "0%" : `${leftWidthPercent}%` }}
+            className={`${
+              isEditorMaximized ? "hidden" : "flex"
+            } flex-col border-r border-[#1E293B] bg-[#0B0F17] overflow-hidden shrink-0`}
+          >
           {/* Subheader: Q. X of Y, Badges & Bookmark */}
           <div className="h-12 border-b border-[#1E293B] bg-[#0E131F] px-6 flex items-center justify-between text-xs flex-shrink-0">
             <div className="flex items-center gap-2.5">
@@ -965,13 +1006,27 @@ export default function ProctoredExamRoomPage() {
           </div>
         </div>
 
+        {/* Draggable Resizer Bar */}
+        {!isEditorMaximized && (
+          <div
+            onMouseDown={handleSplitterMouseDown}
+            onDoubleClick={() => setLeftWidthPercent(36)}
+            className="w-1.5 hover:w-2 bg-[#1E293B] hover:bg-[#9DFF00] cursor-col-resize transition-all z-10 relative group shrink-0"
+            title="Drag to resize question area (Double click to reset to 36%)"
+          >
+            <div className="absolute top-1/2 -translate-y-1/2 -left-1 w-3.5 h-10 rounded-full bg-slate-800/90 border border-slate-700 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              <div className="w-0.5 h-4 bg-slate-400 rounded-full" />
+            </div>
+          </div>
+        )}
+
         {/* =============================================================== */}
         {/* 2C. RIGHT WORKSPACE PANE (Coding IDE or MCQ Cards)               */}
         {/* =============================================================== */}
         <div
           className={`${
-            isEditorMaximized ? "w-full" : "w-1/2"
-          } flex flex-col bg-[#0D1117] overflow-hidden`}
+            isEditorMaximized ? "w-full" : "flex-1"
+          } flex flex-col bg-[#0D1117] overflow-hidden min-w-0`}
         >
           {currentProblem.type === "coding" ? (
             /* Coding Problem IDE */
@@ -1223,6 +1278,7 @@ export default function ProctoredExamRoomPage() {
               </button>
             )}
           </footer>
+        </div>
         </div>
       </div>
     </div>
