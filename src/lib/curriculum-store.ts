@@ -93,6 +93,18 @@ export class CurriculumStore {
   }
 
   // ─── Problems & Test Cases ───────────────────────────────────────
+  static getAllProblems(): CurriculumProblem[] {
+    const submissions = this.getSubmissions();
+    const solvedSet = new Set(
+      submissions.filter((s) => s.status === "Accepted").map((s) => s.problem_id)
+    );
+
+    return SEED_PROBLEMS.map((p) => ({
+      ...p,
+      is_solved: solvedSet.has(p.id) || p.slug === "optimal-two-sum-index-pairs",
+    }));
+  }
+
   static getProblemsForTopic(topicId: string): CurriculumProblem[] {
     const rawProblems = SEED_PROBLEMS.filter(
       (p) => p.topic_id === topicId && p.problem_type === "practice"

@@ -706,7 +706,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         isCodingWorkspace,
       }}
     >
-      <div className="min-h-screen bg-[#F4F7F4] text-slate-900 flex font-sans overflow-x-hidden">
+      <div
+        className={`min-h-screen ${
+          isCodingWorkspace ? "bg-[#0C1017] text-white overflow-hidden" : "bg-[#F4F7F4] text-slate-900 overflow-x-hidden"
+        } flex font-sans`}
+      >
         {/* ========================================================= */}
         {/* 1. CODING WORKSPACE MODE: Overlay Drawer when opened      */}
         {/* ========================================================= */}
@@ -765,8 +769,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Main Viewport Content Canvas */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#F4F7F4]">
-          <main className="flex-1 overflow-y-auto">{children}</main>
+        <div className={`flex-1 flex flex-col min-w-0 overflow-hidden ${isCodingWorkspace ? "bg-[#0C1017]" : "bg-[#F4F7F4]"}`}>
+          <main className={`flex-1 ${isCodingWorkspace ? "overflow-hidden" : "overflow-y-auto"}`}>{children}</main>
         </div>
 
         {/* Global Command Palette */}
