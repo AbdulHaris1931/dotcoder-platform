@@ -14,6 +14,7 @@ import { CurriculumStore } from "@/lib/curriculum-store";
 import { DataService } from "@/lib/supabase/db";
 import { runPythonCode } from "@/lib/pyodide-runner";
 import { useSidebar } from "@/components/shared/app-shell";
+import { usePageLoading } from "@/components/shared/global-loading-screen";
 import { MarkdownRenderer } from "@/components/shared/markdown-renderer";
 import {
   Play,
@@ -90,6 +91,7 @@ export function SplitPaneIDE({
 }: SplitPaneIDEProps) {
   const router = useRouter();
   const { toggleSidebar } = useSidebar();
+  const { setIsPageLoading } = usePageLoading();
 
   // All problems for pagination (e.g. Problem 1 of 10)
   const allProblems = useMemo(() => CurriculumStore.getAllProblems(), []);
@@ -216,6 +218,7 @@ export function SplitPaneIDE({
   // Handle problem navigation (Previous / Next)
   const handlePrevProblem = () => {
     if (currentIndex > 0) {
+      setIsPageLoading(true);
       const prev = allProblems[currentIndex - 1];
       router.push(`/practice/${prev.slug || prev.id}`);
     }
@@ -223,6 +226,7 @@ export function SplitPaneIDE({
 
   const handleNextProblem = () => {
     if (currentIndex < allProblems.length - 1) {
+      setIsPageLoading(true);
       const next = allProblems[currentIndex + 1];
       router.push(`/practice/${next.slug || next.id}`);
     }
@@ -505,7 +509,10 @@ export function SplitPaneIDE({
         {/* Left: Brand & Lab Pill */}
         <div className="flex items-center gap-3">
           <button
-            onClick={() => router.push("/curriculum")}
+            onClick={() => {
+              setIsPageLoading(true);
+              router.push("/curriculum");
+            }}
             className="flex items-center gap-2.5 hover:opacity-90 transition-opacity cursor-pointer"
           >
             <img
@@ -525,25 +532,37 @@ export function SplitPaneIDE({
         {/* Center: Top Navigation Links */}
         <nav className="hidden md:flex items-center gap-8 h-full">
           <button
-            onClick={() => router.push("/practice/two-sum")}
+            onClick={() => {
+              setIsPageLoading(true);
+              router.push("/practice/two-sum");
+            }}
             className="h-full flex items-center px-1 text-xs sm:text-sm font-semibold text-white border-b-2 border-[#9DFF00] transition-colors"
           >
             Practice
           </button>
           <button
-            onClick={() => router.push("/curriculum")}
+            onClick={() => {
+              setIsPageLoading(true);
+              router.push("/curriculum");
+            }}
             className="h-full flex items-center px-1 text-xs sm:text-sm font-medium text-slate-400 hover:text-white transition-colors"
           >
             Contests
           </button>
           <button
-            onClick={() => router.push("/student/exam/assessment-1")}
+            onClick={() => {
+              setIsPageLoading(true);
+              router.push("/student/exam/assessment-1");
+            }}
             className="h-full flex items-center px-1 text-xs sm:text-sm font-medium text-slate-400 hover:text-white transition-colors"
           >
             Assessments
           </button>
           <button
-            onClick={() => router.push("/student/drives")}
+            onClick={() => {
+              setIsPageLoading(true);
+              router.push("/student/drives");
+            }}
             className="h-full flex items-center px-1 text-xs sm:text-sm font-medium text-slate-400 hover:text-white transition-colors"
           >
             Interview Prep
@@ -613,7 +632,10 @@ export function SplitPaneIDE({
             {/* Home Icon */}
             <button
               type="button"
-              onClick={() => router.push("/curriculum")}
+              onClick={() => {
+                setIsPageLoading(true);
+                router.push("/curriculum");
+              }}
               className="p-2 rounded-lg text-slate-400 hover:text-[#9DFF00] hover:bg-white/5 transition-colors cursor-pointer"
               title="Curriculum & Topic List"
             >
@@ -681,7 +703,10 @@ export function SplitPaneIDE({
             {/* Back link: <- Problem Set */}
             <button
               type="button"
-              onClick={() => router.push("/curriculum")}
+              onClick={() => {
+                setIsPageLoading(true);
+                router.push("/curriculum");
+              }}
               className="inline-flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-white transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />

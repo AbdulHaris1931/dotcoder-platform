@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { UserProfile } from "@/types";
 import { CommandPalette } from "./command-palette";
 import { DotCoderLogo } from "./dotcoder-logo";
+import { usePageLoading } from "./global-loading-screen";
 import {
   LayoutDashboard,
   BookOpen,
@@ -51,6 +52,7 @@ export const useSidebar = () => useContext(SidebarContext);
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { setIsPageLoading } = usePageLoading();
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [isCmdKOpen, setIsCmdKOpen] = useState(false);
   const [isPersonaSwitcherOpen, setIsPersonaSwitcherOpen] = useState(false);
@@ -214,6 +216,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const activeItem = getActiveItem();
 
   const navigateTo = (path: string) => {
+    if (path !== pathname) {
+      setIsPageLoading(true);
+    }
     router.push(path);
     if (isCodingWorkspace) {
       setIsSidebarOpen(false);
@@ -221,6 +226,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   const handleSwitchPersona = (role: any, redirectPath: string) => {
+    setIsPageLoading(true);
     DemoStore.switchRole(role);
     setIsPersonaSwitcherOpen(false);
     router.push(redirectPath);
@@ -230,6 +236,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (pathname === "/student/dashboard") {
       document.getElementById("progress")?.scrollIntoView({ behavior: "smooth" });
     } else {
+      setIsPageLoading(true);
       router.push("/student/dashboard#progress");
       setTimeout(() => {
         document.getElementById("progress")?.scrollIntoView({ behavior: "smooth" });

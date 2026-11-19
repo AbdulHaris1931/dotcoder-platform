@@ -22,6 +22,7 @@ import {
   ProctorViolationLog,
 } from "@/types";
 import { MarkdownRenderer } from "@/components/shared/markdown-renderer";
+import { usePageLoading } from "@/components/shared/global-loading-screen";
 import {
   ShieldAlert,
   ShieldCheck,
@@ -55,6 +56,7 @@ type QuestionStatus = "not_visited" | "current" | "answered" | "marked_review";
 export default function ProctoredExamRoomPage() {
   const params = useParams();
   const router = useRouter();
+  const { setIsPageLoading } = usePageLoading();
   const examId = params.id as string;
 
   const [assessment, setAssessment] = useState<Assessment | null>(null);
@@ -539,8 +541,11 @@ export default function ProctoredExamRoomPage() {
 
             <button
               type="button"
-              onClick={() => router.push("/student/dashboard")}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs transition-all shadow-md active:scale-95"
+              onClick={() => {
+                setIsPageLoading(true);
+                router.push("/student/dashboard");
+              }}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs transition-all shadow-md active:scale-95 cursor-pointer"
             >
               <span>Return to Student Workspace</span>
               <ChevronRight className="w-4 h-4" />
