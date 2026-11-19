@@ -21,6 +21,7 @@ import {
   Layers,
   Sparkles,
   Lock,
+  ShieldCheck,
 } from "lucide-react";
 
 function CurriculumPageContent() {
@@ -252,14 +253,23 @@ function CurriculumPageContent() {
               </div>
             </div>
 
-            {/* Lime CTA Button */}
-            <button
-              onClick={() => router.push("/practice/two-sum")}
-              className="w-full py-3.5 px-4 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold text-xs sm:text-sm transition-all shadow-sm flex items-center justify-center gap-2 active:scale-[0.99]"
-            >
-              <span>Continue Learning</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            {/* Lime & Secondary CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-1">
+              <button
+                onClick={() => router.push("/practice/two-sum")}
+                className="flex-1 py-3 px-4 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold text-xs sm:text-sm transition-all shadow-sm flex items-center justify-center gap-2 active:scale-[0.99]"
+              >
+                <span>Continue Learning</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => router.push("/student/exam/assessment-1")}
+                className="py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs sm:text-sm border border-white/10 transition-all flex items-center justify-center gap-2 active:scale-[0.99]"
+              >
+                <ShieldCheck className="w-4 h-4 text-[#C4F82A]" />
+                <span>Take Module Assessment</span>
+              </button>
+            </div>
           </div>
 
           {/* Quick Problem List below the featured card */}

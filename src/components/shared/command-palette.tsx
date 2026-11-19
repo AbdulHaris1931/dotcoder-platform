@@ -189,7 +189,7 @@ export function CommandPalette({
           : "bg-rose-50 text-rose-700 border-rose-200",
       icon: Code2,
       action: () => {
-        router.push(`/student/lab/${p.slug}`);
+        router.push(`/practice/${p.slug || p.id}`);
         onClose();
       },
     })),

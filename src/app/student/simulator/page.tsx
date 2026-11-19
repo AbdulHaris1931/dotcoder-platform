@@ -176,7 +176,7 @@ export default function SimulatorPage() {
             {/* Bottom Lime Green Start Test CTA button matching Screen 04 */}
             <button
               type="button"
-              onClick={() => router.push(`/student/exam/assessment-1/simulator`)}
+              onClick={() => router.push(`/student/exam/assessment-1/simulator?company=${company.id}`)}
               className="w-full py-2.5 px-4 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-2xs active:scale-[0.98]"
             >
               <span>Start Test</span>

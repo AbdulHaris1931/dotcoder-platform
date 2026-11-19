@@ -33,9 +33,9 @@ export default function StudentResumePage() {
 
   const name = currentUser?.full_name || "Karthik S.";
   const department = currentUser?.department || "BCA";
-  const college = currentUser?.college_name || "Annai Vailankanni Arts and Science College";
+  const college = currentUser?.college_name || "Annai Vailankanni Arts and Science College, Thanjavur";
   const email = currentUser?.email || "karthik.bca@avc.edu.in";
-  const readiness = 78;
+  const readiness = currentUser?.readiness_score ? Math.round(currentUser.readiness_score) : 78;
 
   return (
     <div className="flex-1 p-8 sm:p-10 max-w-7xl mx-auto space-y-8 font-sans">

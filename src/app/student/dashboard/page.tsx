@@ -350,7 +350,7 @@ export default function StudentDashboardPage() {
                   return (
                     <button
                       key={p.id}
-                      onClick={() => router.push(`/student/lab/${p.slug}`)}
+                      onClick={() => router.push(`/practice/${p.slug || p.id}`)}
                       className="w-full grid grid-cols-12 items-center px-5 py-3.5 text-left hover:bg-slate-50 transition-colors group"
                     >
                       {/* Status */}

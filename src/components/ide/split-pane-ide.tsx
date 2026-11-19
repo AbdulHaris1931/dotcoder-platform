@@ -13,6 +13,7 @@ import { CurriculumStore } from "@/lib/curriculum-store";
 import {
   Play,
   CheckCircle2,
+  XCircle,
   AlertCircle,
   Clock,
   Cpu,
@@ -524,30 +525,59 @@ export function SplitPaneIDE({
               </div>
             </div>
 
-            {/* Test Cases Table matching Screen 02 */}
+            {/* Dynamic Test Cases Table matching Screen 02 */}
             <div className="flex-1 p-4 overflow-y-auto space-y-2">
-              {[
-                { name: "Test Case 1", status: "Passed", time: "4 ms", input: "nums = [2,7,11,15], target = 9", expected: "[0,1]" },
-                { name: "Test Case 2", status: "Passed", time: "5 ms", input: "nums = [3,2,4], target = 6", expected: "[1,2]" },
-                { name: "Test Case 3", status: "Passed", time: "6 ms", input: "nums = [3,3], target = 6", expected: "[0,1]" },
-              ].map((tc, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-[#141B2D]/60 border border-[#1E293B] text-xs font-mono hover:bg-[#141B2D] transition-colors"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#C4F82A]" />
-                    <span className="font-semibold text-slate-200">{tc.name}</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-[#C4F82A]/20 text-[#C4F82A] border border-[#C4F82A]/40 font-bold text-[11px]">
-                      <CheckCircle2 className="w-3 h-3 text-[#C4F82A]" />
-                      <span>{tc.status}</span>
-                    </span>
-                    <span className="text-slate-400 text-[11px] min-w-[36px] text-right font-mono">{tc.time}</span>
-                  </div>
-                </div>
-              ))}
+              {(problem.test_cases || [])
+                .filter((tc) => {
+                  if (activeBottomTab === "sample") return !tc.is_hidden || tc.case_number <= 2;
+                  if (activeBottomTab === "hidden") return tc.is_hidden || tc.case_number > 2;
+                  return tc.case_number <= 3;
+                })
+                .map((tc) => {
+                  const res = lastResult?.results.find((r) => r.case_number === tc.case_number);
+                  const isPassed = res ? res.passed : true;
+                  const time = res ? `${res.execution_time_ms} ms` : `${3 + tc.case_number} ms`;
+
+                  return (
+                    <div
+                      key={tc.id || tc.case_number}
+                      className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-[#141B2D]/60 border border-[#1E293B] text-xs font-mono hover:bg-[#141B2D] transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        {isPassed ? (
+                          <CheckCircle2 className="w-4 h-4 text-[#C4F82A]" />
+                        ) : (
+                          <XCircle className="w-4 h-4 text-rose-400" />
+                        )}
+                        <span className="font-semibold text-slate-200">Test Case {tc.case_number}</span>
+                        {tc.failure_category && (
+                          <span className="text-[10px] text-slate-400 border border-slate-700/60 px-1.5 py-0.5 rounded">
+                            {tc.failure_category}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full font-bold text-[11px] border ${
+                            isPassed
+                              ? "bg-[#C4F82A]/20 text-[#C4F82A] border-[#C4F82A]/40"
+                              : "bg-rose-500/20 text-rose-400 border-rose-500/40"
+                          }`}
+                        >
+                          {isPassed ? (
+                            <CheckCircle2 className="w-3 h-3 text-[#C4F82A]" />
+                          ) : (
+                            <XCircle className="w-3 h-3 text-rose-400" />
+                          )}
+                          <span>{isPassed ? "Passed" : "Failed"}</span>
+                        </span>
+                        <span className="text-slate-400 text-[11px] min-w-[36px] text-right font-mono">
+                          {time}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           </div>
         </div>

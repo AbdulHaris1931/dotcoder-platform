@@ -82,15 +82,32 @@ export default function AdminProblemManagementPage() {
           </p>
         </div>
 
-        {/* Lime Green Add Problem Button matching Screen 08 */}
-        <button
-          type="button"
-          onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold text-xs transition-all shadow-xs active:scale-[0.98]"
-        >
-          <Plus className="w-4 h-4 text-black stroke-[3]" />
-          <span>Add Problem</span>
-        </button>
+        {/* Top Actions: Problems/Assessments Switcher & Add Problem Button */}
+        <div className="flex items-center gap-3">
+          <div className="inline-flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+            <button
+              onClick={() => router.push("/admin/problems")}
+              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-900 shadow-2xs"
+            >
+              Problems
+            </button>
+            <button
+              onClick={() => router.push("/admin/assessments")}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-900"
+            >
+              Assessments
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowAddModal(true)}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#C4F82A] hover:bg-[#B5EA20] text-black font-bold text-xs transition-all shadow-xs active:scale-[0.98]"
+          >
+            <Plus className="w-4 h-4 text-black stroke-[3]" />
+            <span>Add Problem</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter Tabs matching Screen 08 */}

@@ -18,13 +18,20 @@ export default function StudentDrivesPage() {
     async function load() {
       const user = await DataService.getCurrentUser();
       setCurrentUser(user);
+      if (user) {
+        const apps = await DataService.getDriveApplications();
+        const myAppliedDriveIds = new Set(
+          apps.filter((a) => a.student_id === user.id).map((a) => a.drive_id)
+        );
+        setAppliedDrives(myAppliedDriveIds);
+      }
     }
     load();
   }, []);
 
   const drivesList = [
     {
-      id: "zoho-corp",
+      id: "33333333-0000-0000-0000-000000000001",
       name: "Zoho Corporation",
       role: "Software Developer Intern",
       eligibility: "Eligible: BCA, B.Sc CS, B.Sc IT, MCA",
@@ -35,7 +42,7 @@ export default function StudentDrivesPage() {
       logoText: "zoho",
     },
     {
-      id: "tcs-nqt",
+      id: "33333333-0000-0000-0000-000000000002",
       name: "TCS - NQT Hiring",
       role: "Entry Level - Multiple Roles",
       eligibility: "Eligible: All Departments",
@@ -46,7 +53,7 @@ export default function StudentDrivesPage() {
       logoText: "tcs",
     },
     {
-      id: "cognizant-genc",
+      id: "33333333-0000-0000-0000-000000000003",
       name: "Cognizant GenC",
       role: "Graduate Engineer Trainee",
       eligibility: "Eligible: BCA, B.Sc CS, MCA",
@@ -65,7 +72,9 @@ export default function StudentDrivesPage() {
     return true;
   });
 
-  const handleApply = (driveId: string, companyName: string) => {
+  const handleApply = async (driveId: string, companyName: string) => {
+    const studentId = currentUser?.id || "a0000000-0000-0000-0000-000000000002";
+    await DataService.applyToCampusDrive(driveId, studentId);
     setAppliedDrives((prev) => {
       const next = new Set(prev);
       next.add(driveId);

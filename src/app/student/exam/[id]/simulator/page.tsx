@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useEffect, useState, useRef, Suspense } from "react";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { DataService } from "@/lib/supabase/db";
 import { SEED_MCQS } from "@/lib/seed-mcqs";
@@ -37,10 +37,60 @@ const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ),
 });
 
-export default function CompanyExamSimulatorPage() {
+const COMPANY_CONFIGS: Record<
+  string,
+  {
+    name: string;
+    badge: string;
+    highProfile: string;
+    midProfile: string;
+  }
+> = {
+  "zoho": {
+    name: "Zoho Corporation Technical Assessment",
+    badge: "Product Track",
+    highProfile: "Zoho Software Craftsman (8.4 LPA)",
+    midProfile: "Member Technical Staff (6.5 LPA)",
+  },
+  "tcs-nqt": {
+    name: "TCS NQT National Simulator",
+    badge: "2026 Batch",
+    highProfile: "Digital Profile (7.5+ LPA)",
+    midProfile: "Ninja Profile (3.6 - 4.5 LPA)",
+  },
+  "cognizant-genc": {
+    name: "Cognizant GenC Recruitment Simulator",
+    badge: "GenC Track",
+    highProfile: "GenC Next (6.75 LPA)",
+    midProfile: "GenC Elevate (4.25 LPA)",
+  },
+  "infosys-sp": {
+    name: "Infosys Specialist Programmer Simulator",
+    badge: "Power Programmer",
+    highProfile: "Specialist Programmer (9.5 LPA)",
+    midProfile: "Digital Specialist Engineer (6.25 LPA)",
+  },
+  "wipro-elite": {
+    name: "Wipro Elite National Talent Hunt",
+    badge: "Elite Track",
+    highProfile: "Turbo Profile (6.5 LPA)",
+    midProfile: "Elite Profile (3.5 LPA)",
+  },
+  "hcl-techbee": {
+    name: "HCL TechBee & Graduate Simulator",
+    badge: "TechBee Track",
+    highProfile: "Lead Engineer Trainee (5.5 LPA)",
+    midProfile: "Graduate Engineer (3.6 LPA)",
+  },
+};
+
+function CompanyExamSimulatorContent() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const examId = params?.id as string;
+  const companyId = searchParams.get("company") || "tcs-nqt";
+  const company = COMPANY_CONFIGS[companyId] || COMPANY_CONFIGS["tcs-nqt"];
 
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [codingProblems, setCodingProblems] = useState<Problem[]>([]);
@@ -179,20 +229,19 @@ export default function CompanyExamSimulatorPage() {
     const totalScore = Math.round((quantScore + logicScore + codeScore) * 10) / 10;
     const maxScore = 5 + 5 + 10; // 20 marks
 
-    let profile: "Digital Profile (7.5+ LPA)" | "Ninja Profile (3.6 - 4.5 LPA)" | "Needs Re-Evaluation" =
-      "Needs Re-Evaluation";
-    if (totalScore >= 14) profile = "Digital Profile (7.5+ LPA)";
-    else if (totalScore >= 9) profile = "Ninja Profile (3.6 - 4.5 LPA)";
+    let profile = "Needs Re-Evaluation";
+    if (totalScore >= 14) profile = company.highProfile;
+    else if (totalScore >= 9) profile = company.midProfile;
 
     const res: SimulatorResult = {
-      candidate_name: currentUser?.full_name || "Adithya K. Sundaram",
-      roll_no: currentUser?.roll_no || "22CS001",
+      candidate_name: currentUser?.full_name || "Karthik S.",
+      roll_no: currentUser?.roll_no || "23BCA01",
       quant_score: quantScore,
       logic_score: logicScore,
       code_score: codeScore,
       total_score: totalScore,
       max_score: maxScore,
-      qualified_profile: profile,
+      qualified_profile: profile as any,
       completed_at: new Date().toLocaleTimeString(),
     };
 
@@ -221,7 +270,7 @@ export default function CompanyExamSimulatorPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-mono text-xs text-slate-500">
-        Booting TCS NQT Recruitment Simulator Environment...
+        Booting {company.name}...
       </div>
     );
   }
@@ -237,17 +286,17 @@ export default function CompanyExamSimulatorPage() {
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
             <span className="font-extrabold text-xs tracking-tight text-slate-900 flex items-center gap-1.5">
-              <span>TCS NQT National Simulator</span>
+              <span>{company.name}</span>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold border border-indigo-200">
-                2026 Batch
+                {company.badge}
               </span>
             </span>
           </div>
 
           <div className="hidden md:flex items-center gap-1.5 text-[11px] font-mono text-slate-500 border-l border-slate-200 pl-3">
-            <span>{currentUser?.full_name}</span>
+            <span>{currentUser?.full_name || "Karthik S."}</span>
             <span>•</span>
-            <span>{currentUser?.roll_no}</span>
+            <span>{currentUser?.roll_no || "23BCA01"}</span>
           </div>
         </div>
 
@@ -492,7 +541,7 @@ export default function CompanyExamSimulatorPage() {
                 <Trophy className="w-8 h-8" />
               </div>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                TCS NQT National Benchmark Complete
+                {company.name} Complete
               </h2>
               <p className="text-xs text-slate-500 font-mono">
                 Candidate: {finalResult.candidate_name} • Roll: {finalResult.roll_no}
@@ -570,5 +619,19 @@ export default function CompanyExamSimulatorPage() {
       {/* Floating Formula & Scratchpad Drawer */}
       <FormulaScratchpad />
     </div>
+  );
+}
+
+export default function CompanyExamSimulatorPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-mono text-xs text-slate-500">
+          Loading Recruitment Simulator...
+        </div>
+      }
+    >
+      <CompanyExamSimulatorContent />
+    </Suspense>
   );
 }
