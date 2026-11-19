@@ -617,18 +617,20 @@ export default function ProctoredExamRoomPage() {
       {/* 1. TOP GLOBAL NAVBAR (Matching DotLab Workspace Aesthetic)        */}
       {/* ================================================================= */}
       <header className="h-13 border-b border-[#1E293B] bg-[#0D1117] px-4 flex items-center justify-between flex-shrink-0 z-30">
-        {/* Left: Brand & DotExam Pill */}
+        {/* Left: Brand & Exam Pill */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-[#9DFF00] text-black flex items-center justify-center font-mono font-black text-xs shadow-sm">
-              &lt;/&gt;
-            </div>
+          <div className="flex items-center gap-2.5">
+            <img
+              src="/logo.png"
+              alt="EQLV CODE"
+              className="w-7 h-7 object-contain rounded-lg flex-shrink-0"
+            />
             <span className="text-base font-black tracking-tight text-white">
-              DotCoder
+              EQLV CODE
             </span>
           </div>
           <span className="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-[#9DFF00]/15 text-[#9DFF00] border border-[#9DFF00]/30 tracking-wide">
-            DotExam
+            Exam
           </span>
           <div className="hidden sm:block text-slate-500 text-xs font-mono">&bull;</div>
           <span className="hidden sm:inline text-xs font-semibold text-slate-300 truncate max-w-xs">

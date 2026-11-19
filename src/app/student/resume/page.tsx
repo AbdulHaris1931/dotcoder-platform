@@ -46,7 +46,7 @@ export default function StudentResumePage() {
             My Placement Resume
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            A verified, ATS-friendly resume with your DotCoder credentials.
+            A verified, ATS-friendly resume with your EQLV CODE credentials.
           </p>
         </div>
 
@@ -123,7 +123,7 @@ export default function StudentResumePage() {
                 <span>Verified Credential</span>
               </div>
               <p className="text-[10px] text-slate-500 leading-tight">
-                Authenticity cryptographically verified by DotCoder.
+                Authenticity cryptographically verified by EQLV CODE.
               </p>
               <a
                 href="/verify/AVASC-2026-BCA-23BCA01-92-A1K7"
@@ -177,7 +177,7 @@ export default function StudentResumePage() {
               <div className="space-y-2 text-xs text-slate-700 font-medium">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                  <span>Solved 500+ coding problems on DotCoder</span>
+                  <span>Solved 500+ coding problems on EQLV CODE</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />

@@ -502,21 +502,23 @@ export function SplitPaneIDE({
       {/* 1. TOP GLOBAL NAVBAR (Matching Provided Design)                    */}
       {/* ================================================================= */}
       <header className="h-13 border-b border-[#1E293B] bg-[#0D1117] px-4 flex items-center justify-between flex-shrink-0 z-30">
-        {/* Left: Brand & DotLab Pill */}
+        {/* Left: Brand & Lab Pill */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push("/curriculum")}
-            className="flex items-center gap-2 hover:opacity-90 transition-opacity"
+            className="flex items-center gap-2.5 hover:opacity-90 transition-opacity cursor-pointer"
           >
-            <div className="w-7 h-7 rounded-lg bg-[#9DFF00] text-black flex items-center justify-center font-mono font-black text-xs shadow-sm">
-              &lt;/&gt;
-            </div>
+            <img
+              src="/logo.png"
+              alt="EQLV CODE"
+              className="w-7 h-7 object-contain rounded-lg flex-shrink-0"
+            />
             <span className="text-base font-black tracking-tight text-white">
-              DotCoder
+              EQLV CODE
             </span>
           </button>
           <span className="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-[#9DFF00]/15 text-[#9DFF00] border border-[#9DFF00]/30 tracking-wide">
-            DotLab
+            Lab
           </span>
         </div>
 
@@ -1474,7 +1476,7 @@ export function SplitPaneIDE({
           {/* Bottom Right Footer: Notes, Solution, AI Star */}
           <footer className="h-10 border-t border-[#1E293B] bg-[#0B0F17] px-4 flex items-center justify-between text-xs text-slate-400 flex-shrink-0">
             <div className="text-[11px] font-mono text-slate-500">
-              DotLab Compiler Engine &bull; Zero-Latency Execution
+              EQLV Engine &bull; Zero-Latency Execution
             </div>
 
             <div className="flex items-center gap-4">

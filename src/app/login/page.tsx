@@ -166,7 +166,7 @@ function LoginForm() {
               <span className="text-xl">👋</span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-500">
-              Login to your DotCoder account.
+              Login to your EQLV CODE account.
             </p>
           </div>
 
@@ -315,7 +315,7 @@ function LoginForm() {
 
         {/* Footer */}
         <div className="text-center text-xs text-slate-400 pt-6">
-          © 2026 DotCoder, Inc. All rights reserved.
+          © 2026 EQLV CODE, Inc. All rights reserved.
         </div>
       </div>
     </div>
@@ -324,7 +324,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#F4F7F4] flex items-center justify-center text-xs">Loading DotCoder...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[#F4F7F4] flex items-center justify-center text-xs">Loading EQLV CODE...</div>}>
       <LoginForm />
     </Suspense>
   );

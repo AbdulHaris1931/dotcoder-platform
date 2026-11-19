@@ -42,13 +42,11 @@ export function Navbar() {
         <div className="flex items-center gap-6">
           <button
             onClick={() => router.push("/")}
-            className="flex items-center gap-2 font-bold text-slate-900 hover:opacity-90 transition-opacity"
+            className="flex items-center gap-2.5 font-bold text-slate-900 hover:opacity-90 transition-opacity"
           >
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-200">
-              <Code2 className="w-5 h-5" />
-            </div>
+            <img src="/logo.png" alt="EQLV CODE" className="w-8 h-8 object-contain rounded-lg" />
             <span className="text-lg tracking-tight font-extrabold bg-gradient-to-r from-indigo-700 to-indigo-500 bg-clip-text text-transparent">
-              DotCoder
+              EQLV CODE
             </span>
             <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono border border-slate-200">
               v2.6

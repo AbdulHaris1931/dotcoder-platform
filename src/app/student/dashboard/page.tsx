@@ -265,7 +265,7 @@ export default function StudentDashboardPage() {
                 </div>
                 <h2 className="text-lg font-bold text-slate-900 mt-1 flex items-center gap-2">
                   <BrainCircuit className="w-5 h-5 text-slate-800" />
-                  <span>DotCoder Skill Intelligence Vectors</span>
+                  <span>EQLV CODE Skill Intelligence Vectors</span>
                 </h2>
               </div>
 

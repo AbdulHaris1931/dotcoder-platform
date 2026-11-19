@@ -122,7 +122,7 @@ export default function SignupPage() {
               Create an account
             </h1>
             <p className="text-xs sm:text-sm text-slate-500">
-              Join Annai Vailankanni Arts and Science College on DotCoder.
+              Join Annai Vailankanni Arts and Science College on EQLV CODE.
             </p>
           </div>
 

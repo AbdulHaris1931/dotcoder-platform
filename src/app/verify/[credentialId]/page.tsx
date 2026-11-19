@@ -125,7 +125,7 @@ export default function PublicCredentialVerificationPage() {
     <div className="min-h-screen bg-[#0B0F17] text-slate-200 font-sans py-12 px-4 sm:px-6 flex flex-col items-center justify-center">
       {/* Top Brand Watermark */}
       <div className="mb-6 flex items-center gap-2 text-xs font-mono text-slate-400">
-        <span className="text-[#9DFF00] font-bold">&lt;/&gt; DotCoder</span>
+        <span className="text-[#9DFF00] font-bold flex items-center gap-1.5"><img src="/logo.png" alt="EQLV CODE" className="w-5 h-5 object-contain" /> EQLV CODE</span>
         <span>&bull;</span>
         <span>Public Credential Verification Registry</span>
       </div>
@@ -282,7 +282,7 @@ export default function PublicCredentialVerificationPage() {
         <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500">
           <div className="flex items-center gap-1.5">
             <FileCheck className="w-4 h-4 text-[#9DFF00]" />
-            <span>Official DotCoder &bull; AVASC Placement Telemetry Registry</span>
+            <span>Official EQLV CODE &bull; AVASC Placement Telemetry Registry</span>
           </div>
 
           <button

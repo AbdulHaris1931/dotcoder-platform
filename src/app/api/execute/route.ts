@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
         },
         {
           headers: {
-            "X-DotCoder-Engine": "SIMULATED_DEMO",
+            "X-EQLV-Engine": "SIMULATED_DEMO",
           },
         }
       );
@@ -272,7 +272,7 @@ export async function POST(req: NextRequest) {
       },
       {
         headers: {
-          "X-DotCoder-Engine": "SIMULATED_DEMO",
+          "X-EQLV-Engine": "SIMULATED_DEMO",
         },
       }
     );

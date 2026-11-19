@@ -287,10 +287,10 @@ function CompanyExamSimulatorContent() {
         {/* Left: Logo & Company Track */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="font-mono font-bold text-sm text-[#9DFF00]">&lt;/&gt;</span>
-            <span className="font-bold text-sm tracking-tight text-white">DotCoder</span>
+            <img src="/logo.png" alt="EQLV CODE" className="w-6 h-6 object-contain rounded flex-shrink-0" />
+            <span className="font-bold text-sm tracking-tight text-white">EQLV CODE</span>
             <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-[#9DFF00]/15 text-[#9DFF00] border border-[#9DFF00]/30">
-              DotExam
+              Exam
             </span>
           </div>
 

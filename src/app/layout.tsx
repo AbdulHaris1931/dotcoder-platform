@@ -6,9 +6,14 @@ import { AppShell } from "@/components/shared/app-shell";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "DotCoder | Enterprise Campus Placement, Coding Lab & Proctored Assessment SaaS",
+  title: "EQLV CODE | Enterprise Campus Placement, Coding Lab & Proctored Assessment SaaS",
   description:
     "Flagship coding lab, proctored examinations, and placement readiness platform designed for engineering and arts colleges.",
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/favicon.ico",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({

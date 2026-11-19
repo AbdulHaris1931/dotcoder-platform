@@ -259,7 +259,7 @@ export default function HomePage() {
                 <span className="w-3 h-3 rounded-full bg-[#FFBD2E] border border-[#DEA123]" />
                 <span className="w-3 h-3 rounded-full bg-[#27C93F] border border-[#1AAB29]" />
                 <span className="ml-3 text-xs font-mono text-slate-400 hidden sm:inline">
-                  DotCoder Studio — challenge.py
+                  EQLV CODE Studio — challenge.py
                 </span>
               </div>
 
@@ -717,7 +717,7 @@ export default function HomePage() {
         </div>
 
         <div className="border-t border-slate-800/80 py-6 text-center text-slate-500 text-xs">
-          © 2026 DotCoder, Inc. Crafted for campus engineering excellence.
+          © 2026 EQLV CODE, Inc. Crafted for campus engineering excellence.
         </div>
       </footer>
     </div>
