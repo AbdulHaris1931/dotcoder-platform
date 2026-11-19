@@ -1059,44 +1059,47 @@ export default function ProctoredExamRoomPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleCodeChange(
-                        currentProblem.starter_code_json?.python ||
-                          "def solve(nums, target):\n    # Write optimal logic here\n    pass\n"
-                      )
-                    }
-                    className="text-slate-400 hover:text-white text-xs flex items-center gap-1 px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
-                    title="Reset Boilerplate Code"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Reset</span>
-                  </button>
+                <div className="flex items-center gap-2.5">
+                  <div className="flex items-center bg-[#131926] border border-[#20293D] rounded-lg p-0.5 shadow-2xs">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleCodeChange(
+                          currentProblem.starter_code_json?.python ||
+                            "def solve(nums, target):\n    # Write optimal logic here\n    pass\n"
+                        )
+                      }
+                      className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                      title="Reset Boilerplate Code"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setIsEditorMaximized((m) => !m)}
-                    className="text-slate-400 hover:text-white text-xs flex items-center gap-1 px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
-                    title={isEditorMaximized ? "Restore Split View" : "Maximize Editor"}
-                  >
-                    {isEditorMaximized ? (
-                      <Minimize2 className="w-3.5 h-3.5" />
-                    ) : (
-                      <Maximize2 className="w-3.5 h-3.5" />
-                    )}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditorMaximized((m) => !m)}
+                      className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                      title={isEditorMaximized ? "Restore Split View" : "Maximize Editor"}
+                    >
+                      {isEditorMaximized ? (
+                        <Minimize2 className="w-3.5 h-3.5" />
+                      ) : (
+                        <Maximize2 className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="w-px h-5 bg-[#1E293B]" />
 
                   {/* Run Sample Case Button */}
                   <button
                     type="button"
                     onClick={handleTestExamCode}
                     disabled={isTestingCode}
-                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#1A2234] hover:bg-[#242F48] text-white border border-[#2B3954] text-xs font-semibold shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#1A2234] hover:bg-[#242F48] text-white border border-[#2B3954] text-xs font-semibold shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
                   >
                     <Play className="w-3 h-3 fill-current text-[#9DFF00]" />
-                    <span>{isTestingCode ? "Evaluating..." : "Run Sample Case"}</span>
+                    <span>{isTestingCode ? "Evaluating..." : "Run Test"}</span>
                   </button>
                 </div>
               </div>

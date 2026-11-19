@@ -1148,64 +1148,64 @@ export function SplitPaneIDE({
               </div>
             </div>
 
-            {/* Right: Reset, Settings, Maximize, Shortcuts, Run Code & Submit */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleResetCode}
-                className="text-slate-400 hover:text-white text-xs flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
-                title="Reset Editor Code"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span className="hidden xl:inline">Reset</span>
-              </button>
+            {/* Right: Icon-only Tools (Reset, Settings, Maximize, Shortcuts) + Run & Submit */}
+            <div className="flex items-center gap-2.5">
+              {/* Sleek Segmented Icon-Only Utility Bar */}
+              <div className="flex items-center bg-[#131926] border border-[#20293D] rounded-lg p-0.5 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={handleResetCode}
+                  className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                  title="Reset Code (Restore default boilerplate)"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setShowSettingsModal(true)}
-                className="text-slate-400 hover:text-white text-xs flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
-                title="Settings"
-              >
-                <Settings className="w-3.5 h-3.5" />
-                <span className="hidden xl:inline">Settings</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setShowSettingsModal(true)}
+                  className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                  title="Editor Settings (Font size, indentation)"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setIsEditorMaximized((m) => !m)}
-                className="text-slate-400 hover:text-white text-xs flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
-                title={isEditorMaximized ? "Restore Split View" : "Maximize Editor"}
-              >
-                {isEditorMaximized ? (
-                  <Minimize2 className="w-3.5 h-3.5" />
-                ) : (
-                  <Maximize2 className="w-3.5 h-3.5" />
-                )}
-                <span className="hidden xl:inline">
-                  {isEditorMaximized ? "Restore" : "Maximize"}
-                </span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEditorMaximized((m) => !m)}
+                  className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                  title={isEditorMaximized ? "Restore Split View" : "Maximize Editor"}
+                >
+                  {isEditorMaximized ? (
+                    <Minimize2 className="w-3.5 h-3.5" />
+                  ) : (
+                    <Maximize2 className="w-3.5 h-3.5" />
+                  )}
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setShowShortcutsModal(true)}
-                className="text-slate-400 hover:text-white text-xs flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
-                title="Keyboard Shortcuts"
-              >
-                <Command className="w-3.5 h-3.5" />
-                <span className="hidden xl:inline">Shortcuts</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setShowShortcutsModal(true)}
+                  className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                  title="Keyboard Shortcuts (⌘K)"
+                >
+                  <Command className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Vertical divider */}
+              <div className="w-px h-5 bg-[#1E293B]" />
 
               {/* Run Code Button */}
               <button
                 type="button"
                 onClick={handleRunCode}
                 disabled={isRunning || isSubmitting}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#1A2234] hover:bg-[#242F48] text-white border border-[#2B3954] text-xs font-semibold shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#1A2234] hover:bg-[#242F48] text-white border border-[#2B3954] text-xs font-semibold shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
                 title="Shortcut: Ctrl+Enter / ⌘Enter"
               >
                 <Play className="w-3 h-3 fill-current text-white" />
-                <span>{isRunning ? "Running..." : "Run Code"}</span>
+                <span>{isRunning ? "Running..." : "Run"}</span>
               </button>
 
               {/* Vibrant Lime Green Submit Button */}
