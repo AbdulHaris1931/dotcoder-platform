@@ -50,6 +50,8 @@ export default function SuperAdminLayout({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
   const [isVerifyingOwner, setIsVerifyingOwner] = useState(true);
+  const [ownerName, setOwnerName] = useState("Platform Owner");
+  const [ownerEmail, setOwnerEmail] = useState("owner@eqlv.edu.in");
 
   useEffect(() => {
     async function verifyOwnerAccess() {
@@ -71,10 +73,19 @@ export default function SuperAdminLayout({
         }
         return;
       }
+      if (user?.full_name) setOwnerName(user.full_name);
+      if (user?.email) setOwnerEmail(user.email);
       setIsVerifyingOwner(false);
     }
     verifyOwnerAccess();
   }, [router]);
+
+  const ownerInitials = ownerName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() || "")
+    .join("") || "SA";
 
   const handleSignOut = async () => {
     await performSignOut((url) => router.push(url));
@@ -154,11 +165,11 @@ export default function SuperAdminLayout({
 
           <div className="flex items-center gap-2 pl-2.5 border-l border-[#1E2C24]">
             <div className="w-8 h-8 rounded-lg bg-[#9DFF00]/15 border border-[#9DFF00]/30 flex items-center justify-center font-bold text-xs font-mono text-[#9DFF00]">
-              AH
+              {ownerInitials}
             </div>
             <div className="hidden lg:block text-left">
-              <div className="text-xs font-bold text-[#F4F7F5] leading-tight">Abdul Haris M</div>
-              <div className="text-[10px] font-mono text-[#99A9A0]">mmam92005@gmail.com</div>
+              <div className="text-xs font-bold text-[#F4F7F5] leading-tight">{ownerName}</div>
+              <div className="text-[10px] font-mono text-[#99A9A0]">{ownerEmail}</div>
             </div>
           </div>
 
@@ -208,6 +219,43 @@ export default function SuperAdminLayout({
                 );
               })}
             </nav>
+
+            {/* 1-Click Oversight Portal Switcher */}
+            <div className="pt-4 border-t border-[#1E2C24] px-3 space-y-2">
+              <div className="text-[10px] font-mono uppercase font-bold text-[#85998D] tracking-wider">
+                Oversight Portals
+              </div>
+              <div className="space-y-1 text-xs">
+                <Link
+                  href="/teacher/dashboard"
+                  className="flex items-center justify-between py-1.5 px-2 rounded-lg text-[#99A9A0] hover:text-[#F4F7F5] hover:bg-[#121B16]"
+                >
+                  <span>Teacher Portal</span>
+                  <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-sky-500/10 border border-sky-500/25 text-sky-300">Inspect</span>
+                </Link>
+                <Link
+                  href="/tpo/dashboard"
+                  className="flex items-center justify-between py-1.5 px-2 rounded-lg text-[#99A9A0] hover:text-[#F4F7F5] hover:bg-[#121B16]"
+                >
+                  <span>TPO Portal</span>
+                  <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/25 text-amber-300">Inspect</span>
+                </Link>
+                <Link
+                  href="/student/dashboard"
+                  className="flex items-center justify-between py-1.5 px-2 rounded-lg text-[#99A9A0] hover:text-[#F4F7F5] hover:bg-[#121B16]"
+                >
+                  <span>Student Portal</span>
+                  <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#9DFF00]/10 border border-[#9DFF00]/25 text-[#9DFF00]">Inspect</span>
+                </Link>
+                <Link
+                  href="/student/sql-lab"
+                  className="flex items-center justify-between py-1.5 px-2 rounded-lg text-[#99A9A0] hover:text-[#F4F7F5] hover:bg-[#121B16]"
+                >
+                  <span>SQL Lab (WASM)</span>
+                  <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/25 text-emerald-300">Lab</span>
+                </Link>
+              </div>
+            </div>
 
             {/* Normal Role Filter Shortcuts */}
             <div className="pt-4 border-t border-[#1E2C24] px-3 space-y-2">

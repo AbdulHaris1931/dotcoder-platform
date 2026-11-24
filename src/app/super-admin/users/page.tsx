@@ -208,6 +208,85 @@ function UsersTableContent() {
     setActiveActionMenuId(null);
   };
 
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isBulkBusy, setIsBulkBusy] = useState(false);
+
+  const toggleSelectUser = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAllOnPage = () => {
+    const selectable = paginatedUsers
+      .filter((u) => u.email?.toLowerCase() !== "mmam92005@gmail.com")
+      .map((u) => u.id);
+    const allSelected =
+      selectable.length > 0 && selectable.every((id) => selectedIds.includes(id));
+    if (allSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !selectable.includes(id)));
+    } else {
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...selectable])));
+    }
+  };
+
+  const handleBulkStatusUpdate = async (
+    nextStatus: "active" | "suspended" | "archived"
+  ) => {
+    if (selectedIds.length === 0) return;
+    setIsBulkBusy(true);
+    let updatedCount = 0;
+    for (const id of selectedIds) {
+      const target = users.find((u) => u.id === id);
+      if (!target) continue;
+      try {
+        await fetch(`/api/super-admin/users/${encodeURIComponent(id)}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ account_status: nextStatus }),
+        });
+      } catch {
+        // Fallback local update below
+      }
+      SuperAdminService.setUserStatus(id, nextStatus, `Bulk lifecycle action: ${nextStatus}`);
+      updatedCount++;
+    }
+    setSelectedIds([]);
+    setIsBulkBusy(false);
+    await loadData();
+    notify(`Bulk update applied: ${updatedCount} account(s) set to ${nextStatus}.`);
+  };
+
+  const handleExportUsersCsv = () => {
+    const source =
+      selectedIds.length > 0
+        ? users.filter((u) => selectedIds.includes(u.id))
+        : filteredUsers;
+    const headers = ["Name", "Email", "Role", "Department", "Roll No", "Status"];
+    const esc = (v: string | number | undefined) =>
+      `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const rows = source.map((u) =>
+      [
+        u.full_name,
+        u.email,
+        u.role,
+        u.department || "",
+        u.roll_no || "",
+        u.account_status || "active",
+      ]
+        .map(esc)
+        .join(",")
+    );
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `eqlv-users-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-5">
       {/* Toast Notification */}
@@ -356,12 +435,78 @@ function UsersTableContent() {
         </div>
       </div>
 
+      {/* Bulk Lifecycle Actions Bar */}
+      {(selectedIds.length > 0 || filteredUsers.length > 0) && (
+        <div className="px-4 py-2.5 rounded-2xl bg-[#0C120F] border border-[#1E2C24] flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+          <div className="text-[#99A9A0]">
+            {selectedIds.length > 0 ? (
+              <span className="text-[#9DFF00] font-bold">
+                {selectedIds.length} user(s) selected
+              </span>
+            ) : (
+              <span>Select checkboxes for bulk suspend, activate, or archive</span>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {selectedIds.length > 0 && (
+              <>
+                <button
+                  type="button"
+                  disabled={isBulkBusy}
+                  onClick={() => handleBulkStatusUpdate("active")}
+                  className="min-h-[28px] px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-bold cursor-pointer disabled:opacity-50"
+                >
+                  Bulk Activate
+                </button>
+                <button
+                  type="button"
+                  disabled={isBulkBusy}
+                  onClick={() => handleBulkStatusUpdate("suspended")}
+                  className="min-h-[28px] px-2.5 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 font-bold cursor-pointer disabled:opacity-50"
+                >
+                  Bulk Suspend
+                </button>
+                <button
+                  type="button"
+                  disabled={isBulkBusy}
+                  onClick={() => handleBulkStatusUpdate("archived")}
+                  className="min-h-[28px] px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-bold cursor-pointer disabled:opacity-50"
+                >
+                  Bulk Archive
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              onClick={handleExportUsersCsv}
+              className="min-h-[28px] px-3 py-1 rounded-lg bg-[#121B16] hover:bg-[#18241D] border border-[#2C4034] text-[#D5E0D9] hover:text-[#9DFF00] font-bold cursor-pointer"
+            >
+              Export CSV ({selectedIds.length > 0 ? selectedIds.length : filteredUsers.length})
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Main Table View */}
       <div className="rounded-2xl bg-[#0C120F] border border-[#1E2C24] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="bg-[#070B09] border-b border-[#1E2C24] text-[10px] font-mono uppercase text-[#99A9A0]">
+                <th className="py-3 pl-4 pr-2 w-10">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all users on page"
+                    checked={
+                      paginatedUsers.length > 0 &&
+                      paginatedUsers
+                        .filter((u) => u.email?.toLowerCase() !== "mmam92005@gmail.com")
+                        .every((u) => selectedIds.includes(u.id))
+                    }
+                    onChange={toggleSelectAllOnPage}
+                    className="rounded border-[#2C4034] bg-[#070B09] accent-[#9DFF00]"
+                  />
+                </th>
                 <th className="py-3 px-4 font-semibold">User</th>
                 <th className="py-3 px-3 font-semibold">Role</th>
                 <th className="py-3 px-3 font-semibold">Department</th>
@@ -410,6 +555,17 @@ function UsersTableContent() {
 
                   return (
                     <tr key={u.id} className="hover:bg-[#18241D]/50 transition-colors">
+                      <td className="py-3 pl-4 pr-2 w-10">
+                        {!isOwner && (
+                          <input
+                            type="checkbox"
+                            aria-label={`Select ${u.full_name}`}
+                            checked={selectedIds.includes(u.id)}
+                            onChange={() => toggleSelectUser(u.id)}
+                            className="rounded border-[#2C4034] bg-[#070B09] accent-[#9DFF00]"
+                          />
+                        )}
+                      </td>
                       {/* Name & Email */}
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2.5">

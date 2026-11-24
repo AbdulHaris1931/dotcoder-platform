@@ -57,6 +57,38 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [isCmdKOpen, setIsCmdKOpen] = useState(false);
   const [accessDeniedNotice, setAccessDeniedNotice] = useState(false);
+  const [idleMinutes, setIdleMinutes] = useState<number>(30);
+  const [broadcast, setBroadcast] = useState<{
+    enabled: boolean;
+    message: string;
+    target: "all" | "student" | "teacher" | "tpo";
+    severity: "info" | "warning" | "urgent";
+  } | null>(null);
+  const [broadcastDismissed, setBroadcastDismissed] = useState(false);
+
+  useEffect(() => {
+    if (!currentUser || currentUser.id === "guest") return;
+    fetch("/api/platform/governance", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.success && data.config) {
+          if (typeof data.config.idle_timeout_minutes === "number") {
+            setIdleMinutes(data.config.idle_timeout_minutes);
+          }
+          if (data.config.broadcast_enabled && data.config.broadcast_message) {
+            setBroadcast({
+              enabled: true,
+              message: data.config.broadcast_message,
+              target: data.config.broadcast_target || "all",
+              severity: data.config.broadcast_severity || "info",
+            });
+          } else {
+            setBroadcast(null);
+          }
+        }
+      })
+      .catch(() => {});
+  }, [currentUser]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -83,11 +115,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, [currentUser, pathname, router]);
 
-  // Shared-Lab Inactivity Auto-Sign-Out (30 minutes idle across tabs)
+  // Shared-Lab Inactivity Auto-Sign-Out (configurable via Super Admin Governance)
   useEffect(() => {
     if (!currentUser || typeof window === "undefined") return;
 
-    const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+    const IDLE_TIMEOUT_MS = idleMinutes * 60 * 1000;
     const ACTIVITY_KEY = "eqlv_last_activity_at";
 
     const markActive = () => {
@@ -125,7 +157,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       events.forEach((ev) => window.removeEventListener(ev, markActive));
       window.clearInterval(interval);
     };
-  }, [currentUser, router]);
+  }, [currentUser, router, idleMinutes]);
 
   useEffect(() => {
     async function fetchUser() {
@@ -781,8 +813,48 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
             </header>
           )}
+          {broadcast &&
+            broadcast.enabled &&
+            !broadcastDismissed &&
+            (broadcast.target === "all" ||
+              (broadcast.target === "student" && !isTeacher && !isTPO) ||
+              (broadcast.target === "teacher" && isTeacher) ||
+              (broadcast.target === "tpo" && isTPO)) && (
+              <div
+                role="status"
+                className={`px-4 py-2 text-xs font-mono flex items-center justify-between gap-3 border-b ${
+                  broadcast.severity === "urgent"
+                    ? "bg-rose-950/90 border-rose-500/40 text-rose-200"
+                    : broadcast.severity === "warning"
+                    ? "bg-amber-950/90 border-amber-500/40 text-amber-200"
+                    : "bg-[#121B16] border-[#9DFF00]/30 text-[#9DFF00]"
+                }`}
+              >
+                <span className="truncate">{broadcast.message}</span>
+                <button
+                  type="button"
+                  onClick={() => setBroadcastDismissed(true)}
+                  aria-label="Dismiss campus announcement"
+                  className="min-w-[24px] min-h-[24px] inline-flex items-center justify-center opacity-80 hover:opacity-100 cursor-pointer shrink-0"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
           <main id="main-content" className="flex-1 overflow-y-auto obsidian-workspace">{children}</main>
         </div>
+
+        {/* Floating Super Admin Oversight Return Pill */}
+        {isOwner && (
+          <button
+            type="button"
+            onClick={() => router.push("/super-admin/dashboard")}
+            className="fixed bottom-4 right-4 z-50 inline-flex items-center gap-2 min-h-[36px] px-4 py-2 rounded-full bg-[#9DFF00] hover:bg-[#8CE600] text-[#070B09] text-xs font-mono font-extrabold shadow-xl shadow-[#9DFF00]/25 transition-all cursor-pointer"
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span>Return to Super Admin</span>
+          </button>
+        )}
 
         {/* Global Access Restriction Notice */}
         {accessDeniedNotice && (

@@ -192,6 +192,33 @@ export default function SuperAdminDashboardPage() {
     },
   ];
 
+  const handleDownloadNaacReport = () => {
+    const generatedAt = new Date().toISOString();
+    const rows = [
+      ["NAAC Criterion 5.2.1 - Institutional Placement & Skill Audit", ""],
+      ["Generated At (UTC)", generatedAt],
+      ["Data Source Mode", dataMode === "live" ? "Live Supabase Cloud" : "Local Demo Enclave"],
+      ["Total Provisioned Accounts", String(metrics.totalUsers)],
+      ["Total Students", String(metrics.totalStudents)],
+      ["Total Mentors / Faculty", String(metrics.totalMentors)],
+      ["Total TPO / Placement Officers", String(metrics.totalTpos)],
+      ["Active Accounts", String(metrics.activeUsers)],
+      ["Inactive Accounts", String(metrics.inactiveUsers)],
+      ["Suspended Accounts", String(metrics.suspendedUsers)],
+      ["Recently Onboarded (Last 7 Days)", String(metrics.recentlyCreated)],
+    ];
+    const csv = rows
+      .map((r) => r.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `EQLV-NAAC-5.2.1-Executive-Report-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Welcome & Quick Actions Bar */}
@@ -212,6 +239,13 @@ export default function SuperAdminDashboardPage() {
 
         {/* Quick Action Buttons */}
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleDownloadNaacReport}
+            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-[#0C120F] hover:bg-[#121B16] border border-[#2C4034] hover:border-[#9DFF00]/50 text-[#D5E0D9] hover:text-[#9DFF00] transition-all flex items-center gap-1.5 font-mono cursor-pointer"
+          >
+            <span>NAAC 5.2.1 Report CSV</span>
+          </button>
           <Link
             href="/super-admin/users/import"
             className="px-3.5 py-2 rounded-xl text-xs font-bold bg-[#0C120F] hover:bg-[#121B16] border border-[#1E2C24] hover:border-[#9DFF00]/40 text-[#9DFF00] transition-all flex items-center gap-1.5 font-mono"
