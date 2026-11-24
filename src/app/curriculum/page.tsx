@@ -1,36 +1,18 @@
 "use client";
+import { ObsidianSelect } from "@/components/ui/obsidian-select";
 
-import React, { useState, useEffect, useMemo, Suspense } from "react";
+import React, { useState, useMemo, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { CurriculumStore } from "@/lib/curriculum-store";
-import { DataService } from "@/lib/supabase/db";
-import {
-  CurriculumLesson,
-  CurriculumModule,
-  CurriculumTopic,
-  CurriculumProblem,
-  BranchTag,
-} from "@/types/curriculum";
+import { BranchTag } from "@/types/curriculum";
 import {
   CheckCircle2,
   Circle,
   ArrowRight,
   ChevronRight,
-  Code2,
-  BookOpen,
   Box,
-  Layers,
-  Sparkles,
-  Lock,
   ShieldCheck,
   Search,
-  Filter,
-  GraduationCap,
-  Building,
-  Terminal,
-  ExternalLink,
-  ChevronDown,
 } from "lucide-react";
 
 type TabType = "Word Class" | "Modules" | "Topics" | "Problems";
@@ -44,7 +26,6 @@ function CurriculumPageContent() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("ALL");
   const [selectedCompany, setSelectedCompany] = useState<string>("ALL");
-  const [activeConceptTopic, setActiveConceptTopic] = useState<CurriculumTopic | null>(null);
 
   // 5 Core Modules matching Screen 01
   const flagshipModules = useMemo(() => [
@@ -170,33 +151,33 @@ function CurriculumPageContent() {
   }, [searchQuery, selectedDifficulty, selectedCompany]);
 
   return (
-    <div className="min-h-full bg-[#F4F7F4] text-slate-900 p-6 sm:p-10 space-y-8 font-sans">
-      {/* Top Header matching Screen 01 */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="min-h-full bg-[#070B09] text-[#F4F7F5] p-6 sm:p-10 space-y-8 font-sans">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1E2C24] pb-6">
         <div>
-          <div className="text-xs text-slate-500 font-medium mb-1 flex items-center gap-2">
+          <div className="text-xs text-[#99A9A0] font-medium mb-1.5 flex items-center gap-2 flex-wrap">
             <span>Learn</span>
-            <span className="text-slate-400">/</span>
-            <span className="text-slate-700 font-semibold">Curriculum</span>
-            <span className="text-slate-300">•</span>
-            <span className="text-xs font-mono font-bold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-full border border-emerald-300">
+            <span className="text-[#85998D]">/</span>
+            <span className="text-[#F4F7F5] font-semibold">Curriculum</span>
+            <span className="text-[#2C4034]">&bull;</span>
+            <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/25">
               AVASC Institutional Track
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#F4F7F5]">
             Learning Curriculum
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          <p className="text-xs sm:text-sm text-[#99A9A0] mt-1">
             A structured, placement-focused learning path for Annai Vailankanni Arts and Science College.
           </p>
         </div>
 
-        {/* Circular Progress Gauge (56% Complete) matching Screen 01 */}
-        <div className="flex items-center gap-3 bg-white p-3.5 px-5 rounded-2xl border border-slate-200/80 shadow-xs">
+        {/* Circular Progress Gauge (56% Complete) */}
+        <div className="flex items-center gap-3 bg-[#0C120F] p-3.5 px-5 rounded-2xl border border-[#1E2C24]">
           <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
             <svg className="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
               <path
-                className="text-slate-100"
+                className="text-[#121B16]"
                 strokeWidth="3.5"
                 stroke="currentColor"
                 fill="none"
@@ -212,29 +193,60 @@ function CurriculumPageContent() {
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
               />
             </svg>
-            <span className="absolute font-mono font-bold text-xs text-slate-900">
+            <span className="absolute font-mono font-bold text-xs text-[#F4F7F5] tabular-nums">
               56%
             </span>
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-900">56% Complete</div>
-            <div className="text-[11px] text-slate-500">28/50 Topics Solved</div>
+            <div className="text-xs font-bold text-[#F4F7F5] tabular-nums">56% Complete</div>
+            <div className="text-[11px] text-[#99A9A0] font-mono tabular-nums">28/50 Topics Solved</div>
           </div>
         </div>
       </div>
 
-      {/* Filter and Tab Bar matching Screen 01 */}
+      {/* MNC 300 Interview Master Curriculum Banner */}
+      <div className="p-5 sm:p-6 rounded-3xl bg-[#0C120F] text-[#F4F7F5] flex flex-col md:flex-row md:items-center justify-between gap-4 border border-[#1E2C24]">
+        <div className="space-y-1.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase bg-[#9DFF00] text-[#070B09]">
+              MNC 300 Interview Bank
+            </span>
+            <span className="text-xs text-[#99A9A0] font-mono">10 Sequential Units &bull; 100 Coding &bull; 200 MCQs</span>
+            <span className="text-[10px] font-mono text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/25">
+              Pass &ge; 75% to Unlock
+            </span>
+          </div>
+          <h3 className="font-display text-base sm:text-lg font-bold text-[#F4F7F5]">
+            TCS, Zoho, Infosys &amp; Cognizant Technical Screening Units
+          </h3>
+          <p className="text-xs text-[#99A9A0] max-w-2xl leading-relaxed">
+            Practice 100 verified coding problems and test your knowledge against 200 technical MCQs in 45-minute timed proctored exams with instant score tracking.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => router.push("/student/mnc-prep")}
+          className="px-5 py-2.5 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-[#070B09] font-extrabold text-xs transition-all flex items-center gap-1.5 shrink-0 self-start md:self-auto cursor-pointer"
+        >
+          <span>Explore 10 MNC Units</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Filter and Tab Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Pill Tabs matching Screen 01 */}
+        {/* Pill Tabs */}
         <div className="flex flex-wrap items-center gap-2">
           {(["Word Class", "Modules", "Topics", "Problems"] as const).map((tab) => (
             <button
+              type="button"
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === tab
-                  ? "bg-[#0F1412] text-white shadow-xs font-bold"
-                  : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200/80"
+                  ? "bg-[#9DFF00] text-[#070B09]"
+                  : "bg-[#0C120F] text-[#99A9A0] hover:text-[#F4F7F5] hover:bg-[#121B16] border border-[#1E2C24]"
               }`}
             >
               {tab}
@@ -244,7 +256,7 @@ function CurriculumPageContent() {
 
         {/* Department Track Selector */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 text-xs">
-          <span className="text-slate-400 font-medium px-1 text-[11px]">Track:</span>
+          <span className="text-[#85998D] font-mono px-1 text-[11px]">Track:</span>
           {[
             { id: "ALL", label: "All Tracks" },
             { id: "BCA", label: "BCA" },
@@ -253,12 +265,13 @@ function CurriculumPageContent() {
             { id: "MCA", label: "MCA" },
           ].map((b) => (
             <button
+              type="button"
               key={b.id}
               onClick={() => setSelectedBranch(b.id)}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-mono font-semibold transition-colors shrink-0 ${
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-mono font-semibold transition-colors shrink-0 cursor-pointer ${
                 selectedBranch === b.id
-                  ? "bg-slate-900 text-white font-bold"
-                  : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80"
+                  ? "bg-[#9DFF00] text-[#070B09] font-bold"
+                  : "bg-[#0C120F] text-[#99A9A0] hover:bg-[#121B16] hover:text-[#F4F7F5] border border-[#1E2C24]"
               }`}
             >
               {b.label}
@@ -267,9 +280,7 @@ function CurriculumPageContent() {
         </div>
       </div>
 
-      {/* =================================================================== */}
-      {/* TAB 1: WORD CLASS (Exact Screen 01 Mockup)                          */}
-      {/* =================================================================== */}
+      {/* TAB 1: WORD CLASS */}
       {activeTab === "Word Class" && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Column: Modules List (5 Modules) */}
@@ -277,81 +288,82 @@ function CurriculumPageContent() {
             {filteredFlagshipModules.map((mod) => {
               const isSelected = selectedModuleNumber === mod.number;
               return (
-                <div
+                <button
+                  type="button"
                   key={mod.number}
                   onClick={() => setSelectedModuleNumber(mod.number)}
-                  className={`p-4 rounded-2xl cursor-pointer transition-all border ${
+                  className={`w-full text-left p-4 rounded-2xl cursor-pointer transition-all border ${
                     isSelected
-                      ? "bg-white border-[#9DFF00] ring-2 ring-[#9DFF00]/40 shadow-sm"
-                      : "bg-white border-slate-200/80 hover:border-slate-300"
+                      ? "bg-[#121B16] border-[#9DFF00] ring-1 ring-[#9DFF00]/30"
+                      : "bg-[#0C120F] border-[#1E2C24] hover:border-[#2C4034]"
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="text-slate-400">
+                      <div className="text-[#85998D]">
                         {mod.completed ? (
-                          <CheckCircle2 className="w-5 h-5 text-emerald-500 fill-emerald-100" />
+                          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                         ) : isSelected ? (
                           <div className="w-5 h-5 rounded-full border-2 border-[#9DFF00] flex items-center justify-center">
-                            <div className="w-2 h-2 rounded-full bg-[#0F1412]" />
+                            <div className="w-2 h-2 rounded-full bg-[#9DFF00]" />
                           </div>
                         ) : (
-                          <Circle className="w-5 h-5 text-slate-300" />
+                          <Circle className="w-5 h-5 text-[#2C4034]" />
                         )}
                       </div>
                       <div>
-                        <div className="text-[11px] font-mono text-slate-400 font-medium">
+                        <div className="text-[11px] font-mono text-[#85998D] font-medium">
                           Module {mod.number}
                         </div>
-                        <div className="text-sm font-bold text-slate-900">
+                        <div className="text-sm font-bold text-[#F4F7F5]">
                           {mod.title}
                         </div>
                       </div>
                     </div>
 
-                    <div className="text-xs text-slate-400 font-mono">
+                    <div className="text-xs text-[#99A9A0] font-mono tabular-nums">
                       {mod.completed ? "10/10" : mod.number === 3 ? "6/10" : "0/10"}
                     </div>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
 
-          {/* Right Column: Featured Dark Card matching Screen 01 */}
+          {/* Right Column: Featured Obsidian Card */}
           <div className="lg:col-span-6">
-            <div className="bg-[#0F1412] text-white p-7 sm:p-8 rounded-3xl border border-[#1B241F] shadow-lg relative overflow-hidden space-y-6">
+            <div className="bg-[#0C120F] text-[#F4F7F5] p-7 sm:p-8 rounded-3xl border border-[#1E2C24] relative overflow-hidden space-y-6">
               {/* Top row with 3D Cube Icon */}
               <div className="flex items-start justify-between">
                 <div>
-                  <span className="inline-block px-3 py-1 rounded-full bg-[#1A231C] text-[#9DFF00] text-xs font-mono font-bold border border-[#2B3B2E]">
+                  <span className="inline-block px-3 py-1 rounded-full bg-[#9DFF00]/10 text-[#9DFF00] text-xs font-mono font-bold border border-[#9DFF00]/25">
                     Module {currentModule.number}
                   </span>
-                  <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mt-3">
+                  <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#F4F7F5] mt-3">
                     {currentModule.title}
                   </h2>
-                  <p className="text-xs sm:text-sm text-slate-400 mt-2 max-w-sm">
+                  <p className="text-xs sm:text-sm text-[#99A9A0] mt-2 max-w-sm leading-relaxed">
                     {currentModule.description}
                   </p>
                 </div>
 
                 {/* 3D Isometric Lime Green Cube graphic */}
-                <div className="w-20 h-20 rounded-2xl bg-[#162016] border border-[#2B3B2E] flex items-center justify-center text-[#9DFF00] shadow-inner shrink-0">
+                <div className="w-20 h-20 rounded-2xl bg-[#121B16] border border-[#2C4034] flex items-center justify-center text-[#9DFF00] shrink-0">
                   <Box className="w-10 h-10 stroke-[1.5]" />
                 </div>
               </div>
 
               {/* Progress Info */}
-              <div className="space-y-2 pt-2 border-t border-[#1C271E]">
-                <div className="flex items-center justify-between text-xs font-mono">
+              <div className="space-y-2 pt-2 border-t border-[#1E2C24]">
+                <div className="flex items-center justify-between text-xs font-mono tabular-nums">
                   <span className="text-[#9DFF00] font-bold">
                     {currentModule.number === 3 ? "60% Complete" : currentModule.completed ? "100% Complete" : "0% Complete"}
                   </span>
-                  <span className="text-slate-400">
+                  <span className="text-[#99A9A0]">
                     {currentModule.number === 3 ? "6/10 Topics" : currentModule.completed ? "10/10 Topics" : "0/10 Topics"}
                   </span>
                 </div>
-                <div className="w-full h-2 bg-[#1C271E] rounded-full overflow-hidden">
+                <div className="w-full h-2 bg-[#121B16] rounded-full overflow-hidden">
                   <div
                     className="h-full bg-[#9DFF00] rounded-full transition-all duration-500"
                     style={{
@@ -364,15 +376,17 @@ function CurriculumPageContent() {
               {/* Lime & Secondary CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-3 pt-1">
                 <button
+                  type="button"
                   onClick={() => router.push("/practice/two-sum")}
-                  className="flex-1 py-3 px-4 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs sm:text-sm transition-all shadow-sm flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer"
+                  className="flex-1 py-3 px-4 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-[#070B09] font-extrabold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer"
                 >
                   <span>Continue Learning</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
                 <button
+                  type="button"
                   onClick={() => router.push(`/student/exam/module-${currentModule.number}`)}
-                  className="py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs sm:text-sm border border-white/10 transition-all flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer"
+                  className="py-3 px-4 rounded-xl bg-[#121B16] hover:bg-[#18241D] text-[#F4F7F5] font-bold text-xs sm:text-sm border border-[#2C4034] transition-all flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer"
                 >
                   <ShieldCheck className="w-4 h-4 text-[#9DFF00]" />
                   <span>Take Module Assessment</span>
@@ -381,44 +395,45 @@ function CurriculumPageContent() {
             </div>
 
             {/* Quick Problem List below the featured card */}
-            <div className="mt-6 bg-white rounded-2xl border border-slate-200/80 p-5 space-y-3">
-              <div className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono flex items-center justify-between">
+            <div className="mt-6 bg-[#0C120F] rounded-2xl border border-[#1E2C24] p-5 space-y-3">
+              <div className="text-xs font-bold text-[#F4F7F5] uppercase tracking-wider font-mono flex items-center justify-between">
                 <span>Module {currentModule.number} Problem Pool (10)</span>
-                <span className="text-[11px] text-slate-500 font-normal">Click to launch DotLab</span>
+                <span className="text-[11px] text-[#99A9A0] font-normal">Click to launch DotLab</span>
               </div>
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-[#1E2C24]">
                 {topicsForCurrentModule.slice(0, 6).map((t, idx) => (
-                  <div
+                  <button
+                    type="button"
                     key={t.id}
                     onClick={() => router.push(`/practice/${t.problemId}`)}
-                    className="py-2.5 flex items-center justify-between hover:bg-slate-50 px-2 rounded-lg cursor-pointer transition-colors"
+                    className="w-full text-left py-2.5 flex items-center justify-between hover:bg-[#121B16] px-2 rounded-lg cursor-pointer transition-colors"
                   >
                     <div className="flex items-center gap-2.5">
-                      <span className="text-xs font-mono text-slate-400">0{idx + 1}</span>
-                      <span className="text-xs font-semibold text-slate-800">{t.title}</span>
+                      <span className="text-xs font-mono text-[#85998D] tabular-nums">0{idx + 1}</span>
+                      <span className="text-xs font-semibold text-[#F4F7F5]">{t.title}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono text-slate-400 font-medium">
+                      <span className="text-[10px] font-mono text-[#99A9A0] font-medium">
                         {t.company}
                       </span>
                       <span
                         className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold ${
                           t.difficulty === "Easy"
-                            ? "bg-emerald-50 text-emerald-700"
+                            ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/25"
                             : t.difficulty === "Medium"
-                            ? "bg-amber-50 text-amber-700"
-                            : "bg-rose-50 text-rose-700"
+                            ? "bg-amber-500/10 text-amber-300 border border-amber-500/25"
+                            : "bg-rose-500/10 text-rose-300 border border-rose-500/25"
                         }`}
                       >
                         {t.difficulty}
                       </span>
                       {t.solved ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                       ) : (
-                        <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                        <ChevronRight className="w-3.5 h-3.5 text-[#85998D]" />
                       )}
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
@@ -426,68 +441,68 @@ function CurriculumPageContent() {
         </div>
       )}
 
-      {/* =================================================================== */}
-      {/* TAB 2: FULL MODULES HIERARCHY (10 Lessons, 20 Modules)             */}
-      {/* =================================================================== */}
+      {/* TAB 2: FULL MODULES HIERARCHY */}
       {activeTab === "Modules" && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {allLessons.map((lesson) => (
               <div
                 key={lesson.id}
-                className="bg-white rounded-2xl border border-slate-200/80 p-5 space-y-4 hover:shadow-sm transition-all"
+                className="bg-[#0C120F] rounded-2xl border border-[#1E2C24] hover:border-[#2C4034] p-5 space-y-4 transition-all"
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#121B16] text-[#D5E0D9] border border-[#1E2C24]">
                       Lesson {lesson.lesson_number}
                     </span>
-                    <h3 className="text-sm font-bold text-slate-900 mt-2 line-clamp-1">
+                    <h3 className="font-display text-sm font-bold text-[#F4F7F5] mt-2 line-clamp-1">
                       {lesson.title}
                     </h3>
                   </div>
                   <span
                     className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold ${
                       lesson.track_type === "shared_core"
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                        : "bg-blue-50 text-blue-700 border border-blue-200"
+                        ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/25"
+                        : "bg-sky-500/10 text-sky-300 border border-sky-500/25"
                     }`}
                   >
                     {lesson.track_type === "shared_core" ? "Core" : "Specialization"}
                   </span>
                 </div>
 
-                <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                <p className="text-xs text-[#99A9A0] line-clamp-2 leading-relaxed">
                   {lesson.description}
                 </p>
 
                 {/* Sub-modules */}
-                <div className="space-y-2 pt-2 border-t border-slate-100">
+                <div className="space-y-2 pt-2 border-t border-[#1E2C24]">
                   {(lesson.modules || []).map((m) => (
-                    <div
+                    <button
+                      type="button"
                       key={m.id}
                       onClick={() => {
                         setSelectedModuleNumber(lesson.lesson_number);
                         setActiveTab("Word Class");
                       }}
-                      className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/60 cursor-pointer flex items-center justify-between text-xs transition-colors"
+                      className="w-full text-left p-2.5 rounded-xl bg-[#121B16] hover:bg-[#18241D] border border-[#1E2C24] cursor-pointer flex items-center justify-between text-xs transition-colors"
                     >
                       <div className="flex items-center gap-2">
-                        <Box className="w-3.5 h-3.5 text-slate-500" />
-                        <span className="font-semibold text-slate-800 line-clamp-1">
+                        <Box className="w-3.5 h-3.5 text-[#9DFF00]" />
+                        <span className="font-semibold text-[#F4F7F5] line-clamp-1">
                           {m.title}
                         </span>
                       </div>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    </div>
+                      <ChevronRight className="w-3.5 h-3.5 text-[#85998D] shrink-0" />
+                    </button>
                   ))}
                 </div>
 
-                <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1">
+                <div className="flex items-center justify-between text-[11px] font-mono text-[#85998D] pt-1">
                   <span>Branches: {lesson.branch_tags.slice(0, 3).join(", ")}</span>
                   <button
+                    type="button"
                     onClick={() => router.push("/practice/two-sum")}
-                    className="text-emerald-700 hover:text-emerald-800 font-bold flex items-center gap-1"
+                    className="text-[#9DFF00] hover:underline font-bold flex items-center gap-1 cursor-pointer"
                   >
                     <span>Practice</span>
                     <ArrowRight className="w-3 h-3" />
@@ -499,22 +514,20 @@ function CurriculumPageContent() {
         </div>
       )}
 
-      {/* =================================================================== */}
-      {/* TAB 3: TOPICS SYLLABUS                                              */}
-      {/* =================================================================== */}
+      {/* TAB 3: TOPICS SYLLABUS */}
       {activeTab === "Topics" && (
         <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 space-y-4">
+          <div className="bg-[#0C120F] rounded-2xl border border-[#1E2C24] p-6 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-base font-bold text-slate-900">
+                <h3 className="font-display text-base font-bold text-[#F4F7F5]">
                   Placement Readiness Topics Syllabus
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-[#99A9A0] mt-0.5">
                   Click any topic to read its 3-minute concept guide or jump directly to its practice challenges.
                 </p>
               </div>
-              <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-full">
+              <span className="text-xs font-mono font-bold text-[#D5E0D9] bg-[#121B16] border border-[#1E2C24] px-3 py-1 rounded-full">
                 50 Placement Topics
               </span>
             </div>
@@ -534,20 +547,20 @@ function CurriculumPageContent() {
               ].map((topic) => (
                 <div
                   key={topic.order}
-                  className="p-3.5 rounded-xl border border-slate-200/80 hover:border-slate-300 bg-white flex items-center justify-between gap-3 group transition-all"
+                  className="p-3.5 rounded-xl border border-[#1E2C24] hover:border-[#2C4034] bg-[#121B16] flex items-center justify-between gap-3 group transition-all"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="font-mono text-xs text-slate-400 font-bold shrink-0">
+                    <span className="font-mono text-xs text-[#85998D] font-bold shrink-0 tabular-nums">
                       {topic.order}
                     </span>
                     <div className="truncate">
-                      <h4 className="text-xs font-bold text-slate-900 group-hover:text-emerald-700 transition-colors truncate">
+                      <h4 className="text-xs font-bold text-[#F4F7F5] group-hover:text-[#9DFF00] transition-colors truncate">
                         {topic.title}
                       </h4>
-                      <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400 font-mono">
+                      <div className="flex items-center gap-2 mt-0.5 text-[10px] text-[#99A9A0] font-mono">
                         <span>Read: {topic.time}</span>
-                        <span>•</span>
-                        <span className={topic.diff === "Easy" ? "text-emerald-600 font-bold" : topic.diff === "Medium" ? "text-amber-600 font-bold" : "text-rose-600 font-bold"}>
+                        <span>&bull;</span>
+                        <span className={topic.diff === "Easy" ? "text-emerald-300 font-bold" : topic.diff === "Medium" ? "text-amber-300 font-bold" : "text-rose-300 font-bold"}>
                           {topic.diff}
                         </span>
                       </div>
@@ -556,11 +569,12 @@ function CurriculumPageContent() {
 
                   <div className="flex items-center gap-2 shrink-0">
                     {topic.solved && (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                     )}
                     <button
+                      type="button"
                       onClick={() => router.push(`/practice/${topic.code}`)}
-                      className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-black text-[#9DFF00] text-xs font-mono font-bold transition-colors cursor-pointer"
+                      className="px-2.5 py-1 rounded-lg bg-[#9DFF00] hover:bg-[#8CE600] text-[#070B09] text-xs font-mono font-bold transition-colors cursor-pointer"
                     >
                       Solve
                     </button>
@@ -572,57 +586,37 @@ function CurriculumPageContent() {
         </div>
       )}
 
-      {/* =================================================================== */}
-      {/* TAB 4: COMPLETE PROBLEM BANK                                        */}
-      {/* =================================================================== */}
+      {/* TAB 4: COMPLETE PROBLEM BANK */}
       {activeTab === "Problems" && (
         <div className="space-y-6">
           {/* Search & Filter Bar */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="bg-[#0C120F] p-4 rounded-2xl border border-[#1E2C24] flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="relative w-full md:w-96">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-[#85998D] absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
+                name="search"
+                aria-label="Search problem title, topic, company"
                 placeholder="Search problem title, topic, company..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900"
+                className="w-full pl-9 pr-4 py-2 bg-[#070B09] border border-[#1E2C24] rounded-xl text-xs text-[#F4F7F5] placeholder:text-[#85998D] focus:outline-none focus:border-[#9DFF00]"
               />
             </div>
 
             <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto">
-              <select
-                value={selectedDifficulty}
-                onChange={(e) => setSelectedDifficulty(e.target.value)}
-                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 cursor-pointer focus:outline-none"
-              >
-                <option value="ALL">All Difficulties</option>
-                <option value="Easy">Easy</option>
-                <option value="Medium">Medium</option>
-                <option value="Hard">Hard</option>
-              </select>
+              <ObsidianSelect value={String(selectedDifficulty)} onChange={(val) => setSelectedDifficulty(val)} options={[{ value: "ALL", label: "All Difficulties" }, { value: "Easy", label: "Easy" }, { value: "Medium", label: "Medium" }, { value: "Hard", label: "Hard" }]} buttonClassName="px-3 py-2 bg-[#070B09] border border-[#1E2C24] rounded-xl text-xs font-semibold text-[#F4F7F5] cursor-pointer focus:outline-none focus:border-[#9DFF00]" />
 
-              <select
-                value={selectedCompany}
-                onChange={(e) => setSelectedCompany(e.target.value)}
-                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 cursor-pointer focus:outline-none"
-              >
-                <option value="ALL">All Companies</option>
-                <option value="Zoho">Zoho</option>
-                <option value="TCS">TCS / TCS Digital</option>
-                <option value="Infosys">Infosys</option>
-                <option value="Cognizant">Cognizant</option>
-                <option value="Amazon">Amazon</option>
-              </select>
+              <ObsidianSelect value={String(selectedCompany)} onChange={(val) => setSelectedCompany(val)} options={[{ value: "ALL", label: "All Companies" }, { value: "Zoho", label: "Zoho" }, { value: "TCS", label: "TCS / TCS Digital" }, { value: "Infosys", label: "Infosys" }, { value: "Cognizant", label: "Cognizant" }, { value: "Amazon", label: "Amazon" }]} buttonClassName="px-3 py-2 bg-[#070B09] border border-[#1E2C24] rounded-xl text-xs font-semibold text-[#F4F7F5] cursor-pointer focus:outline-none focus:border-[#9DFF00]" />
             </div>
           </div>
 
           {/* Problem Table */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
+          <div className="bg-[#0C120F] rounded-2xl border border-[#1E2C24] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/75 text-[11px] font-mono text-slate-500 uppercase tracking-wider">
+                  <tr className="border-b border-[#1E2C24] bg-[#121B16] text-[11px] font-mono text-[#99A9A0] uppercase tracking-wider">
                     <th className="py-3 px-5">Status</th>
                     <th className="py-3 px-5">Problem Title</th>
                     <th className="py-3 px-5">Topic</th>
@@ -631,49 +625,50 @@ function CurriculumPageContent() {
                     <th className="py-3 px-5 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-xs">
+                <tbody className="divide-y divide-[#1E2C24] text-xs">
                   {problemBank.map((prob) => (
                     <tr
                       key={prob.id}
-                      className="hover:bg-slate-50/80 transition-colors"
+                      className="hover:bg-[#121B16]/70 transition-colors"
                     >
                       <td className="py-3.5 px-5">
                         {prob.solved ? (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                         ) : (
-                          <Circle className="w-4 h-4 text-slate-300" />
+                          <Circle className="w-4 h-4 text-[#2C4034]" />
                         )}
                       </td>
                       <td className="py-3.5 px-5">
-                        <span className="font-bold text-slate-900 hover:text-emerald-700 cursor-pointer">
+                        <span className="font-bold text-[#F4F7F5] hover:text-[#9DFF00] cursor-pointer">
                           {prob.title}
                         </span>
                       </td>
-                      <td className="py-3.5 px-5 font-mono text-slate-600">
+                      <td className="py-3.5 px-5 font-mono text-[#99A9A0]">
                         {prob.topic}
                       </td>
                       <td className="py-3.5 px-5">
                         <span
                           className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
                             prob.difficulty === "Easy"
-                              ? "bg-emerald-50 text-emerald-700"
+                              ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/25"
                               : prob.difficulty === "Medium"
-                              ? "bg-amber-50 text-amber-700"
-                              : "bg-rose-50 text-rose-700"
+                              ? "bg-amber-500/10 text-amber-300 border border-amber-500/25"
+                              : "bg-rose-500/10 text-rose-300 border border-rose-500/25"
                           }`}
                         >
                           {prob.difficulty}
                         </span>
                       </td>
                       <td className="py-3.5 px-5">
-                        <span className="px-2 py-0.5 bg-slate-100 rounded-md font-mono text-[10px] text-slate-700 font-semibold">
+                        <span className="px-2 py-0.5 bg-[#121B16] border border-[#1E2C24] rounded-md font-mono text-[10px] text-[#D5E0D9] font-semibold">
                           {prob.company}
                         </span>
                       </td>
                       <td className="py-3.5 px-5 text-right">
                         <button
+                          type="button"
                           onClick={() => router.push(`/practice/${prob.slug}`)}
-                          className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-black text-[#9DFF00] font-mono text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                          className="px-3 py-1.5 rounded-lg bg-[#9DFF00] hover:bg-[#8CE600] text-[#070B09] font-mono text-xs font-bold transition-all active:scale-95 cursor-pointer"
                         >
                           Solve &rarr;
                         </button>
@@ -694,7 +689,7 @@ export default function CurriculumPage() {
   return (
     <Suspense
       fallback={
-        <div className="p-8 text-xs text-slate-500 font-mono">
+        <div className="p-8 text-xs text-[#99A9A0] font-mono">
           Loading Curriculum Explorer...
         </div>
       }

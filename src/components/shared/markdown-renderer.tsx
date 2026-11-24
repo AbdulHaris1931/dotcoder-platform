@@ -17,10 +17,10 @@ export function MarkdownRenderer({ content, className = "" }: MarkdownRendererPr
     const parts: React.ReactNode[] = [];
     const regex = /(`[^`]+`|\*\*[^*]+\*\*)/g;
     let lastIdx = 0;
-    let match;
 
-    while ((match = regex.exec(text)) !== null) {
-      if (match.index > lastIdx) {
+    const matches = Array.from(text.matchAll(regex));
+    for (const match of matches) {
+      if (match.index !== undefined && match.index > lastIdx) {
         parts.push(text.substring(lastIdx, match.index));
       }
       const token = match[0];
@@ -40,7 +40,9 @@ export function MarkdownRenderer({ content, className = "" }: MarkdownRendererPr
           </strong>
         );
       }
-      lastIdx = regex.lastIndex;
+      if (match.index !== undefined) {
+        lastIdx = match.index + token.length;
+      }
     }
 
     if (lastIdx < text.length) {

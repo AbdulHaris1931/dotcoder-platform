@@ -3,9 +3,7 @@ import {
   CurriculumModule,
   CurriculumTopic,
   CurriculumProblem,
-  CurriculumTestCase,
   ModuleAssessment,
-  AssessmentMCQ,
 } from "@/types/curriculum";
 
 // ============================================================================

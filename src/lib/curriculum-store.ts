@@ -3,9 +3,7 @@ import {
   CurriculumModule,
   CurriculumTopic,
   CurriculumProblem,
-  CurriculumTestCase,
   ModuleAssessment,
-  AssessmentMCQ,
   ProblemSubmissionResult,
   TestCaseExecutionResult,
   AssessmentAttemptResult,
@@ -19,6 +17,7 @@ import {
   SEED_PROBLEMS,
   SEED_ASSESSMENTS,
 } from "./curriculum-data";
+import { DemoStore } from "./demo-store";
 
 const STORAGE_KEYS = {
   SUBMISSIONS: "dotcoder_curriculum_submissions",
@@ -30,6 +29,26 @@ const STORAGE_KEYS = {
 const isClient = typeof window !== "undefined";
 
 export class CurriculumStore {
+  private static getSubmissionsKey(): string {
+    if (!isClient) return STORAGE_KEYS.SUBMISSIONS;
+    try {
+      const u = DemoStore.getCurrentUser();
+      return u?.id ? `${STORAGE_KEYS.SUBMISSIONS}_${u.id}` : STORAGE_KEYS.SUBMISSIONS;
+    } catch {
+      return STORAGE_KEYS.SUBMISSIONS;
+    }
+  }
+
+  private static getAttemptsKey(): string {
+    if (!isClient) return STORAGE_KEYS.ASSESSMENT_ATTEMPTS;
+    try {
+      const u = DemoStore.getCurrentUser();
+      return u?.id ? `${STORAGE_KEYS.ASSESSMENT_ATTEMPTS}_${u.id}` : STORAGE_KEYS.ASSESSMENT_ATTEMPTS;
+    } catch {
+      return STORAGE_KEYS.ASSESSMENT_ATTEMPTS;
+    }
+  }
+
   // ─── Lessons & Hierarchy ─────────────────────────────────────────
   static getLessons(branchFilter?: BranchTag | "ALL"): CurriculumLesson[] {
     const lessons = SEED_LESSONS.map((l) => ({
@@ -122,12 +141,28 @@ export class CurriculumStore {
     return SEED_PROBLEMS;
   }
 
+  private static problemIndexMap: Map<string, CurriculumProblem> | null = null;
+
+  private static getProblemIndex(): Map<string, CurriculumProblem> {
+    if (!this.problemIndexMap) {
+      const map = new Map<string, CurriculumProblem>();
+      SEED_PROBLEMS.forEach((p) => {
+        map.set(p.id.toLowerCase(), p);
+        map.set(p.slug.toLowerCase(), p);
+      });
+      this.problemIndexMap = map;
+    }
+    return this.problemIndexMap;
+  }
+
   static getProblemById(problemId: string): CurriculumProblem | null {
     if (!problemId) return null;
     const cleanId = problemId.trim().toLowerCase();
+    const index = this.getProblemIndex();
 
-    // 1. Direct match by id or slug
-    let prob = SEED_PROBLEMS.find((p) => p.id === problemId || p.slug.toLowerCase() === cleanId);
+    // 1. O(1) Instant Cache Lookup
+    let prob = index.get(cleanId);
+    if (prob) return prob;
 
     // 2. Common aliases
     if (!prob) {
@@ -187,7 +222,7 @@ export class CurriculumStore {
     if (!isClient) return;
     const existing = this.getSubmissions();
     existing.unshift(submission);
-    localStorage.setItem(STORAGE_KEYS.SUBMISSIONS, JSON.stringify(existing.slice(0, 50)));
+    localStorage.setItem(this.getSubmissionsKey(), JSON.stringify(existing.slice(0, 50)));
   }
 
   static getAssessmentForModule(moduleId: string): ModuleAssessment | null {
@@ -217,7 +252,7 @@ export class CurriculumStore {
   static getSubmissions(problemId?: string): ProblemSubmissionResult[] {
     if (!isClient) return [];
     try {
-      const data = localStorage.getItem(STORAGE_KEYS.SUBMISSIONS);
+      const data = localStorage.getItem(this.getSubmissionsKey());
       if (!data) return [];
       const list: ProblemSubmissionResult[] = JSON.parse(data);
       if (problemId) {
@@ -307,7 +342,7 @@ export class CurriculumStore {
     if (isClient && isFinalSubmit) {
       const existing = this.getSubmissions();
       existing.unshift(submissionResult);
-      localStorage.setItem(STORAGE_KEYS.SUBMISSIONS, JSON.stringify(existing.slice(0, 50)));
+      localStorage.setItem(this.getSubmissionsKey(), JSON.stringify(existing.slice(0, 50)));
     }
 
     return submissionResult;
@@ -402,10 +437,10 @@ export class CurriculumStore {
 
     if (isClient) {
       try {
-        const stored = localStorage.getItem(STORAGE_KEYS.ASSESSMENT_ATTEMPTS);
+        const stored = localStorage.getItem(this.getAttemptsKey());
         const list: AssessmentAttemptResult[] = stored ? JSON.parse(stored) : [];
         list.unshift(attemptResult);
-        localStorage.setItem(STORAGE_KEYS.ASSESSMENT_ATTEMPTS, JSON.stringify(list));
+        localStorage.setItem(this.getAttemptsKey(), JSON.stringify(list));
       } catch (e) {
         console.error("Failed to save assessment attempt:", e);
       }

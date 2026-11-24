@@ -12,14 +12,141 @@ import {
 } from "@/types";
 import {
   CurriculumLesson,
-  CurriculumModule,
-  CurriculumTopic,
   CurriculumProblem,
   ProblemSubmissionResult,
   BranchTag,
   SupportedLanguage,
+  FailureCategory,
 } from "@/types/curriculum";
 import { SEED_DRIVES, SEED_DRIVE_APPLICATIONS } from "@/lib/seed-drives";
+
+interface DbTestCaseRecord {
+  id: string;
+  problem_id: string;
+  input: string;
+  expected_output: string;
+  is_hidden: boolean;
+}
+
+interface DbProblemRecord {
+  id: string;
+  title: string;
+  slug: string;
+  difficulty: "Easy" | "Medium" | "Hard";
+  company_tags?: string[];
+  type?: "coding" | "mcq";
+  description_md: string;
+  starter_code_json?: Record<string, string>;
+  mcq_options_json?: string[];
+  correct_option?: string;
+  is_public?: boolean;
+  test_cases?: DbTestCaseRecord[];
+}
+
+interface DbAssessmentRecord {
+  id: string;
+  title: string;
+  description?: string;
+  target_college: string;
+  duration_minutes?: number;
+  is_proctored?: boolean;
+  is_active?: boolean;
+  created_at: string;
+}
+
+interface DbSubmissionRecord {
+  id: string;
+  assessment_id: string;
+  user_id: string;
+  problem_id: string;
+  language: SupportedLanguage;
+  source_code: string;
+  status: Submission["status"];
+  passed_cases: number;
+  total_cases: number;
+  score: string | number;
+  tab_switches?: number;
+  submitted_at: string;
+}
+
+interface DbCampusDriveRecord {
+  id: string;
+  company_name: string;
+  company_logo?: string;
+  role_title: string;
+  ctc_range: string;
+  location?: string;
+  min_readiness_score?: number | string;
+  allowed_departments?: string[];
+  max_backlogs?: number;
+  drive_date: string;
+  application_deadline: string;
+  status?: CampusDrive["status"];
+  description?: string;
+  applicant_count?: number;
+}
+
+interface DbDriveAppRecord {
+  id: string;
+  drive_id: string;
+  student_id: string;
+  stage: DriveApplication["stage"];
+  notes?: string;
+  applied_at: string;
+  profiles: UserProfile;
+  campus_drives: CampusDrive;
+}
+
+interface DbCurriculumTopicRecord {
+  id: string;
+  module_id: string;
+  topic_order: number;
+  title: string;
+  concept_markdown: string;
+}
+
+interface DbCurriculumModuleRecord {
+  id: string;
+  lesson_id: string;
+  module_number: number;
+  title: string;
+  unlock_threshold: number;
+  curriculum_topics?: DbCurriculumTopicRecord[];
+}
+
+interface DbCurriculumLessonRecord {
+  id: string;
+  lesson_number: number;
+  title: string;
+  description: string;
+  track_type: CurriculumLesson["track_type"];
+  branch_tags?: BranchTag[];
+  curriculum_modules?: DbCurriculumModuleRecord[];
+}
+
+interface DbCurriculumTestCaseRecord {
+  id: string;
+  problem_id: string;
+  case_number: number;
+  input_data: string;
+  expected_output: string;
+  is_hidden: boolean;
+  failure_category?: string;
+}
+
+interface DbCurriculumSubmissionRecord {
+  id: string;
+  problem_id: string;
+  status: ProblemSubmissionResult["status"];
+  passed_test_cases: number;
+  total_test_cases: number;
+  runtime_ms: number;
+  memory_kb: number;
+  test_results?: ProblemSubmissionResult["results"];
+  submitted_at: string;
+  submitted_code: string;
+  language: SupportedLanguage;
+}
 
 export class DataService {
   /**
@@ -32,11 +159,6 @@ export class DataService {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          // If a demo persona was specifically switched or set, honor it
-          if (demoUser && demoUser.email && demoUser.email !== user.email) {
-            return demoUser;
-          }
-
           const { data: profile } = await supabase
             .from("profiles")
             .select("*")
@@ -44,10 +166,10 @@ export class DataService {
             .single();
 
           if (profile) {
-            return {
+            const resolved: UserProfile = {
               id: profile.id,
-              email: profile.email || user.email,
-              full_name: profile.full_name,
+              email: profile.email || user.email || "",
+              full_name: profile.full_name || "Campus User",
               role: profile.role,
               college_name: profile.college_name || "Annai Vailankanni Arts and Science College, Thanjavur",
               roll_no: profile.roll_no || "GEN-" + profile.id.slice(0, 6),
@@ -57,6 +179,11 @@ export class DataService {
               problems_solved: profile.problems_solved || 0,
               created_at: profile.created_at,
             };
+            // Keep DemoStore synchronized with authoritative Supabase session (never let stale localStorage override JWT)
+            if (!demoUser || demoUser.id !== resolved.id || demoUser.email !== resolved.email) {
+              DemoStore.setCurrentUser(resolved);
+            }
+            return resolved;
           }
         }
       } catch (err) {
@@ -79,7 +206,7 @@ export class DataService {
           .order("created_at", { ascending: true });
 
         if (!probErr && problemsData && problemsData.length > 0) {
-          return problemsData.map((p: any) => ({
+          return (problemsData as unknown as DbProblemRecord[]).map((p) => ({
             id: p.id,
             title: p.title,
             slug: p.slug,
@@ -91,7 +218,7 @@ export class DataService {
             mcq_options_json: p.mcq_options_json,
             correct_option: p.correct_option,
             is_public: p.is_public ?? true,
-            test_cases: (p.test_cases || []).map((tc: any) => ({
+            test_cases: (p.test_cases || []).map((tc) => ({
               id: tc.id,
               problem_id: tc.problem_id,
               input: tc.input,
@@ -160,9 +287,10 @@ export class DataService {
         }
 
         return { success: true };
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Failed to insert problem into Supabase:", err);
-        return { success: false, error: err.message || "Failed to create problem" };
+        const errorMsg = err instanceof Error ? err.message : "Failed to create problem";
+        return { success: false, error: errorMsg };
       }
     }
 
@@ -195,13 +323,14 @@ export class DataService {
         let query = supabase.from("assessments").select("*").eq("is_active", true);
 
         if (collegeName && collegeName !== "ALL") {
-          query = query.or(`target_college.eq.ALL,target_college.eq.${collegeName}`);
+          query = query.in("target_college", ["ALL", collegeName]);
         }
 
         const { data, error } = await query;
-        if (!error && data && data.length > 0) {
+        if (!error && Array.isArray(data)) {
+          if (data.length === 0) return [];
           const problems = await this.getProblems();
-          return data.map((a: any) => ({
+          return (data as unknown as DbAssessmentRecord[]).map((a) => ({
             id: a.id,
             title: a.title,
             description: a.description || "",
@@ -243,8 +372,8 @@ export class DataService {
         });
         if (error) throw error;
         return { success: true };
-      } catch (err: any) {
-        return { success: false, error: err.message };
+      } catch (err: unknown) {
+        return { success: false, error: err instanceof Error ? err.message : String(err) };
       }
     }
     return { success: true };
@@ -347,13 +476,13 @@ export class DataService {
     const supabase = createClient();
     if (supabase) {
       try {
-        let query = supabase.from("profiles").select("*");
+        let query = supabase.from("profiles").select("*").eq("role", "student");
         if (collegeFilter && collegeFilter !== "ALL") {
           query = query.eq("college_name", collegeFilter);
         }
 
         const { data, error } = await query.order("readiness_score", { ascending: false });
-        if (!error && data && data.length > 0) {
+        if (!error && Array.isArray(data)) {
           return data.map((p) => ({
             id: p.id,
             email: p.email,
@@ -381,6 +510,47 @@ export class DataService {
   }
 
   /**
+   * Fetch all registered faculty / mentors (with optional college filtering)
+   */
+  static async getTeachers(collegeFilter?: string): Promise<UserProfile[]> {
+    const supabase = createClient();
+    if (supabase) {
+      try {
+        let query = supabase.from("profiles").select("*").in("role", ["teacher", "mentor"]);
+        if (collegeFilter && collegeFilter !== "ALL") {
+          query = query.eq("college_name", collegeFilter);
+        }
+
+        const { data, error } = await query.order("full_name", { ascending: true });
+        if (!error && Array.isArray(data)) {
+          return data.map((p) => ({
+            id: p.id,
+            email: p.email,
+            full_name: p.full_name,
+            role: p.role,
+            college_name: p.college_name || "",
+            roll_no: p.roll_no || "FAC-" + p.id.slice(0, 4),
+            department: p.department || "Computer Science",
+            batch_year: p.batch_year || new Date().getFullYear(),
+            readiness_score: Number(p.readiness_score) || 0,
+            problems_solved: p.problems_solved || 0,
+            created_at: p.created_at,
+          }));
+        }
+      } catch (err) {
+        console.warn("Supabase getTeachers failed, falling back to DemoStore:", err);
+      }
+    }
+
+    const allUsers = DemoStore.getAllUsers();
+    const result = allUsers.filter((u) => u.role === "teacher");
+    if (collegeFilter && collegeFilter !== "ALL") {
+      return result.filter((t) => t.college_name === collegeFilter);
+    }
+    return result;
+  }
+
+  /**
    * Fetch all submissions (with optional college filtering)
    */
   static async getSubmissions(collegeFilter?: string): Promise<Submission[]> {
@@ -393,8 +563,8 @@ export class DataService {
         }
 
         const { data, error } = await query.order("submitted_at", { ascending: false });
-        if (!error && data && data.length > 0) {
-          return data.map((sub: any) => ({
+        if (!error && Array.isArray(data)) {
+          return (data as unknown as (DbSubmissionRecord & { problems?: { title?: string } })[]).map((sub) => ({
             id: sub.id,
             assessment_id: sub.assessment_id,
             user_id: sub.user_id,
@@ -420,9 +590,27 @@ export class DataService {
   }
 
   /**
-   * Fetch active campus recruitment drives
+   * Helper to retrieve locally persisted dynamic campus drives
+   */
+  static getLocalCampusDrives(): CampusDrive[] {
+    if (typeof window === "undefined") return [];
+    try {
+      const stored = localStorage.getItem("eqlv_campus_drives");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return [];
+  }
+
+  /**
+   * Fetch active campus recruitment drives (combining cloud + local dynamic drives)
    */
   static async getCampusDrives(): Promise<CampusDrive[]> {
+    const localDrives = this.getLocalCampusDrives();
+    let baseDrives: CampusDrive[] = SEED_DRIVES;
+
     const supabase = createClient();
     if (supabase) {
       try {
@@ -431,8 +619,8 @@ export class DataService {
           .select("*")
           .order("drive_date", { ascending: true });
 
-        if (!error && data && data.length > 0) {
-          return data.map((d: any) => ({
+        if (!error && Array.isArray(data)) {
+          baseDrives = (data as unknown as DbCampusDriveRecord[]).map((d) => ({
             id: d.id,
             company_name: d.company_name,
             company_logo: d.company_logo,
@@ -450,20 +638,51 @@ export class DataService {
           }));
         }
       } catch (err) {
-        console.warn("Supabase getCampusDrives failed, using SEED_DRIVES:", err);
+        console.warn("Supabase getCampusDrives failed, using local/seed drives:", err);
       }
     }
-    return SEED_DRIVES;
+
+    // Merge local drives at the top, avoiding duplicates
+    const combined = [...localDrives];
+    baseDrives.forEach((bd) => {
+      if (!combined.some((cd) => cd.id === bd.id || (cd.company_name === bd.company_name && cd.role_title === bd.role_title))) {
+        combined.push(bd);
+      }
+    });
+
+    return combined;
   }
 
   /**
-   * Create a new campus drive
+   * Create a new campus drive (persists locally & broadcasts event)
    */
-  static async createCampusDrive(drive: Omit<CampusDrive, "id" | "applicant_count">): Promise<{ success: boolean; error?: string }> {
+  static async createCampusDrive(drive: Omit<CampusDrive, "id" | "applicant_count">): Promise<{ success: boolean; drive?: CampusDrive; error?: string }> {
+    const newDrive: CampusDrive = {
+      ...drive,
+      id: `drive-${Date.now()}`,
+      applicant_count: 0,
+    };
+
+    // 1. Immediately persist locally so UI is 100% reactive
+    if (typeof window !== "undefined") {
+      try {
+        const existing = this.getLocalCampusDrives();
+        const updated = [newDrive, ...existing.filter((d) => d.id !== newDrive.id)];
+        localStorage.setItem("eqlv_campus_drives", JSON.stringify(updated));
+        window.dispatchEvent(new Event("eqlv_drives_updated"));
+      } catch (err) {
+        console.warn("Could not cache drive locally:", err);
+      }
+    }
+
+    // Update in-memory SEED_DRIVES
+    SEED_DRIVES.unshift(newDrive);
+
+    // 2. Sync to Supabase in background if available
     const supabase = createClient();
     if (supabase) {
       try {
-        const { error } = await supabase.from("campus_drives").insert({
+        await supabase.from("campus_drives").insert({
           company_name: drive.company_name,
           role_title: drive.role_title,
           ctc_range: drive.ctc_range,
@@ -476,14 +695,12 @@ export class DataService {
           status: drive.status,
           description: drive.description,
         });
-        if (error) throw error;
-        return { success: true };
-      } catch (err: any) {
-        return { success: false, error: err.message };
+      } catch (err: unknown) {
+        console.warn("Background Supabase drive insert notice:", err);
       }
     }
-    SEED_DRIVES.unshift({ ...drive, id: `drive-${Date.now()}`, applicant_count: 0 });
-    return { success: true };
+
+    return { success: true, drive: newDrive };
   }
 
   /**
@@ -497,8 +714,8 @@ export class DataService {
         if (driveId) query = query.eq("drive_id", driveId);
 
         const { data, error } = await query;
-        if (!error && data && data.length > 0) {
-          return data.map((a: any) => ({
+        if (!error && Array.isArray(data)) {
+          return (data as unknown as DbDriveAppRecord[]).map((a) => ({
             id: a.id,
             drive_id: a.drive_id,
             student_id: a.student_id,
@@ -510,25 +727,84 @@ export class DataService {
           }));
         }
       } catch (err) {
-        console.warn("Supabase getDriveApplications failed, using SEED_DRIVE_APPLICATIONS:", err);
+        console.warn("Supabase getDriveApplications failed, using local/seed fallback:", err);
       }
     }
-    return SEED_DRIVE_APPLICATIONS.map((a) => ({ ...a }));
+
+    // Check localStorage fallback for client-side persistence
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("eqlv_drive_applications");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const list = driveId ? parsed.filter((a: DriveApplication) => a.drive_id === driveId) : parsed;
+            return list;
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    const seedList = SEED_DRIVE_APPLICATIONS.map((a) => ({ ...a }));
+    return driveId ? seedList.filter((a) => a.drive_id === driveId) : seedList;
   }
 
   /**
    * 1-Click Apply to Campus Drive
    */
   static async applyToCampusDrive(driveId: string, studentId: string): Promise<{ success: boolean; error?: string }> {
-    const existing = SEED_DRIVE_APPLICATIONS.find((a) => a.drive_id === driveId && a.student_id === studentId);
-    if (!existing) {
-      SEED_DRIVE_APPLICATIONS.push({
-        id: `44444444-0000-0000-0000-${Date.now().toString().slice(-12)}`,
+    if (!driveId || !studentId) {
+      return { success: false, error: "Missing driveId or studentId" };
+    }
+
+    let apps: DriveApplication[] = [];
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("eqlv_drive_applications");
+        if (stored) apps = JSON.parse(stored);
+      } catch {
+        // ignore
+      }
+    }
+    if (apps.length === 0) {
+      apps = [...SEED_DRIVE_APPLICATIONS];
+    }
+
+    const existingIdx = apps.findIndex((a) => a.drive_id === driveId && a.student_id === studentId);
+    if (existingIdx === -1) {
+      const newApp: DriveApplication = {
+        id: `app-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         drive_id: driveId,
         student_id: studentId,
         stage: "Applied",
         applied_at: new Date().toISOString(),
-      });
+      };
+      apps.push(newApp);
+      SEED_DRIVE_APPLICATIONS.push(newApp);
+    }
+
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("eqlv_drive_applications", JSON.stringify(apps));
+        // Increment applicant_count on target drive
+        const drivesRaw = localStorage.getItem("eqlv_campus_drives");
+        if (drivesRaw) {
+          const drives = JSON.parse(drivesRaw);
+          if (Array.isArray(drives)) {
+            const driveIdx = drives.findIndex((d: CampusDrive) => d.id === driveId);
+            if (driveIdx >= 0) {
+              drives[driveIdx].applicant_count = (drives[driveIdx].applicant_count || 0) + 1;
+              localStorage.setItem("eqlv_campus_drives", JSON.stringify(drives));
+            }
+          }
+        }
+        window.dispatchEvent(new Event("eqlv_applications_updated"));
+        window.dispatchEvent(new Event("eqlv_drives_updated"));
+      } catch {
+        // ignore
+      }
     }
 
     const supabase = createClient();
@@ -539,7 +815,7 @@ export class DataService {
           student_id: studentId,
           stage: "Applied",
         });
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.warn("Supabase applyToCampusDrive notice:", err);
       }
     }
@@ -564,7 +840,7 @@ export class DataService {
           .from("drive_applications")
           .update({ stage: newStage })
           .eq("id", appId);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.warn("Supabase updateApplicationStage notice:", err);
       }
     }
@@ -597,20 +873,20 @@ export class DataService {
 
         const { data, error } = await query;
         if (!error && data && data.length > 0) {
-          const lessons: CurriculumLesson[] = data.map((l: any) => ({
+          const lessons: CurriculumLesson[] = (data as unknown as DbCurriculumLessonRecord[]).map((l) => ({
             id: l.id,
             lesson_number: l.lesson_number,
             title: l.title,
             description: l.description,
             track_type: l.track_type,
             branch_tags: l.branch_tags || [],
-            modules: (l.curriculum_modules || []).map((m: any) => ({
+            modules: (l.curriculum_modules || []).map((m) => ({
               id: m.id,
               lesson_id: m.lesson_id,
-              module_number: m.module_number,
+              module_number: (m.module_number as 1 | 2) || 1,
               title: m.title,
               unlock_threshold: m.unlock_threshold,
-              topics: (m.curriculum_topics || []).map((t: any) => ({
+              topics: (m.curriculum_topics || []).map((t) => ({
                 id: t.id,
                 module_id: t.module_id,
                 topic_order: t.topic_order,
@@ -624,7 +900,7 @@ export class DataService {
             return lessons;
           }
           return lessons.filter(
-            (l) => l.track_type === "shared_core" || l.branch_tags.includes(branchFilter as any)
+            (l) => l.track_type === "shared_core" || (branchFilter && l.branch_tags.includes(branchFilter as BranchTag))
           );
         }
       } catch (err) {
@@ -641,11 +917,12 @@ export class DataService {
     const supabase = createClient();
     if (supabase) {
       try {
-        const { data, error } = await supabase
+        const isUuid =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+        const query = supabase
           .from("curriculum_problems")
-          .select("*, curriculum_test_cases(*)")
-          .or(`slug.eq.${slug},id.eq.${slug}`)
-          .single();
+          .select("*, curriculum_test_cases(*)");
+        const { data, error } = await (isUuid ? query.eq("id", slug) : query.eq("slug", slug)).maybeSingle();
 
         if (!error && data) {
           return {
@@ -661,14 +938,14 @@ export class DataService {
             boilerplate_code: data.boilerplate_code || {},
             hints: data.hints || {},
             company_tags: data.company_tags || [],
-            test_cases: (data.curriculum_test_cases || []).map((tc: any) => ({
+            test_cases: ((data.curriculum_test_cases || []) as unknown as DbCurriculumTestCaseRecord[]).map((tc) => ({
               id: tc.id,
               problem_id: tc.problem_id,
               case_number: tc.case_number,
               input_data: tc.input_data,
               expected_output: tc.expected_output,
               is_hidden: tc.is_hidden,
-              failure_category: tc.failure_category,
+              failure_category: (tc.failure_category as FailureCategory) || "logic",
             })),
           };
         }
@@ -732,8 +1009,8 @@ export class DataService {
           .eq("user_id", userId)
           .order("submitted_at", { ascending: false });
 
-        if (!error && data && data.length > 0) {
-          return data.map((s: any) => ({
+        if (!error && Array.isArray(data)) {
+          return (data as unknown as DbCurriculumSubmissionRecord[]).map((s) => ({
             submission_id: s.id,
             problem_id: s.problem_id,
             status: s.status,

@@ -37,3 +37,9 @@ pnpm-debug.log*
 *.tmp
 *.temp
 *.tsbuildinfo
+
+# Internal planning & security audit notes (keep local)
+SUPER_ADMIN_ARCHITECTURE.md
+SUPER_ADMIN_AUDIT.md
+SUPER_ADMIN_IMPLEMENTATION_PLAN.md
+SUPER_ADMIN_SECURITY_PLAN.md

@@ -1,4 +1,4 @@
-import { SupportedLanguage } from "./curriculum";
+import type { SupportedLanguage } from "./curriculum";
 
 export type ProctorViolationType = "tab_switch" | "fullscreen_exit" | "blur" | "shortcut_attempt";
 
@@ -60,6 +60,26 @@ export interface AssessmentAttempt {
   integrityEvents: ProctorIntegrityEvent[];
 }
 
+export interface SubmissionTestCase {
+  id?: string;
+  input?: string;
+  input_data?: string;
+  expected_output?: string;
+  expectedOutput?: string;
+  is_hidden?: boolean;
+  isHidden?: boolean;
+}
+
+export interface SubmissionProblemDefinition {
+  id: string;
+  title?: string;
+  type?: "coding" | "mcq";
+  correct_option?: string;
+  mcq_options_json?: string[];
+  explanation?: string;
+  test_cases?: SubmissionTestCase[];
+}
+
 export interface AssessmentSubmissionPayload {
   assessmentId: string;
   assessmentTitle: string;
@@ -72,10 +92,11 @@ export interface AssessmentSubmissionPayload {
   tabSwitches: number;
   answers: Record<string, QuestionSubmissionAnswer>;
   integrityEvents: ProctorIntegrityEvent[];
+  questions?: SubmissionProblemDefinition[];
 }
 
 export interface AssessmentSubmissionResponse {
   success: boolean;
-  attempt: AssessmentAttempt;
+  attempt?: AssessmentAttempt;
   message?: string;
 }

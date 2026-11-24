@@ -1,24 +1,16 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { AssessmentService } from "@/lib/services/assessment-service";
 import { AssessmentAttempt } from "@/types/assessment-attempt";
 import {
   ShieldCheck,
-  CheckCircle2,
-  Award,
-  Clock,
   FileCheck,
-  Building2,
   Copy,
-  ExternalLink,
-  ArrowRight,
-  Sparkles,
   Download,
-  AlertTriangle,
-  QrCode,
 } from "lucide-react";
 
 export default function PublicCredentialVerificationPage() {
@@ -112,7 +104,7 @@ export default function PublicCredentialVerificationPage() {
 
   if (isValidating || !attempt) {
     return (
-      <div className="min-h-screen bg-[#0B0F17] flex items-center justify-center font-mono text-xs text-slate-400">
+      <div className="min-h-screen bg-[#070B09] flex items-center justify-center font-mono text-xs text-[#99A9A0]">
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-[#9DFF00] animate-pulse" />
           <span>Verifying cryptographic accreditation signature...</span>
@@ -122,10 +114,22 @@ export default function PublicCredentialVerificationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0B0F17] text-slate-200 font-sans py-12 px-4 sm:px-6 flex flex-col items-center justify-center">
+    <div className="min-h-screen bg-[#070B09] text-[#F4F7F5] font-sans py-12 px-4 sm:px-6 flex flex-col items-center justify-center">
       {/* Top Brand Watermark */}
-      <div className="mb-6 flex items-center gap-2 text-xs font-mono text-slate-400">
-        <span className="text-[#9DFF00] font-bold flex items-center gap-1.5"><img src="/logo.png" alt="EQLV CODE" className="w-5 h-5 object-contain" /> EQLV CODE</span>
+      <div className="mb-6 flex items-center gap-2 text-xs font-mono text-[#99A9A0]">
+        <span className="font-bold flex items-center gap-1.5 text-xs">
+          <Image
+            src="/logo.png"
+            alt="EQLV CODE"
+            width={20}
+            height={20}
+            className="w-5 h-5 object-contain"
+          />
+          <span className="inline-flex items-baseline gap-1">
+            <span className="font-display font-bold tracking-tight text-[#F4F7F5]">EQLV</span>
+            <span className="font-mono font-bold tracking-wider text-[11px] text-[#9DFF00]">CODE</span>
+          </span>
+        </span>
         <span>&bull;</span>
         <span>Public Credential Verification Registry</span>
       </div>
@@ -133,25 +137,25 @@ export default function PublicCredentialVerificationPage() {
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-2xl w-full bg-[#121824] border border-[#1E293B] rounded-3xl p-6 sm:p-10 shadow-2xl space-y-8"
+        className="max-w-2xl w-full bg-[#0C120F] border border-[#1E2C24] rounded-3xl p-6 sm:p-10 shadow-2xl space-y-8"
       >
         {/* Verification Success Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#1E293B]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#1E2C24]">
           <div className="flex items-start gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0 shadow-xs">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center justify-center shrink-0 shadow-xs">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#9DFF00] text-black">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#9DFF00] text-[#070B09]">
                   AUTHENTIC CREDENTIAL
                 </span>
-                <span className="text-xs font-mono text-slate-400">NAAC 5.2.1 COMPLIANT</span>
+                <span className="text-xs font-mono text-[#99A9A0]">NAAC 5.2.1 COMPLIANT</span>
               </div>
-              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-1">
+              <h1 className="text-xl sm:text-2xl font-display font-bold text-[#F4F7F5] tracking-tight mt-1">
                 Verified Skill Accreditation
               </h1>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-[#99A9A0] mt-0.5">
                 Official accreditation issued by {attempt.collegeName}
               </p>
             </div>
@@ -160,7 +164,7 @@ export default function PublicCredentialVerificationPage() {
           <div className="text-left sm:text-right shrink-0">
             <button
               onClick={handleDownloadProof}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#1E293B] bg-[#161F30] hover:bg-[#1E2B45] text-slate-300 text-xs font-semibold transition-colors shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#1E2C24] bg-[#121B16] hover:bg-[#18241D] text-[#D5E0D9] hover:text-[#F4F7F5] text-xs font-semibold transition-colors shadow-xs"
             >
               <Download className="w-3.5 h-3.5 text-[#9DFF00]" />
               <span>Print Proof</span>
@@ -169,27 +173,27 @@ export default function PublicCredentialVerificationPage() {
         </div>
 
         {/* Candidate & Institutional Details */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 rounded-2xl bg-[#161F30] border border-[#22314E] text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 rounded-2xl bg-[#121B16] border border-[#2C4034] text-xs">
           <div className="space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#99A9A0] font-mono">
               Candidate
             </span>
-            <div className="text-base font-bold text-white">
+            <div className="text-base font-display font-bold text-[#F4F7F5]">
               {attempt.studentName}
             </div>
-            <div className="text-slate-400 font-mono">
+            <div className="text-[#99A9A0] font-mono tabular-nums">
               Roll No: {attempt.rollNo} &bull; {attempt.department} (Batch {attempt.batchYear})
             </div>
           </div>
 
           <div className="space-y-1 sm:text-right">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#99A9A0] font-mono">
               Institution
             </span>
-            <div className="font-bold text-white">
+            <div className="font-bold text-[#F4F7F5]">
               Annai Vailankanni Arts and Science College
             </div>
-            <div className="text-slate-400 font-mono">
+            <div className="text-[#99A9A0] font-mono">
               Thanjavur, Tamil Nadu &bull; Code: AVASC-TNJ
             </div>
           </div>
@@ -197,11 +201,11 @@ export default function PublicCredentialVerificationPage() {
 
         {/* Key Competency Benchmarks */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="p-4 rounded-2xl bg-[#161F30] border border-[#22314E] text-center">
-            <div className="text-[10px] text-slate-400 uppercase font-semibold font-mono">
+          <div className="p-4 rounded-2xl bg-[#121B16] border border-[#2C4034] text-center">
+            <div className="text-[10px] text-[#99A9A0] uppercase font-semibold font-mono">
               Assessment Score
             </div>
-            <div className="text-2xl font-black text-white font-mono mt-1">
+            <div className="text-2xl font-black text-[#F4F7F5] font-mono tabular-nums mt-1">
               {attempt.score}%
             </div>
             <span className="text-[10px] font-bold text-[#9DFF00]">
@@ -209,26 +213,26 @@ export default function PublicCredentialVerificationPage() {
             </span>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#161F30] border border-[#22314E] text-center">
-            <div className="text-[10px] text-slate-400 uppercase font-semibold font-mono">
+          <div className="p-4 rounded-2xl bg-[#121B16] border border-[#2C4034] text-center">
+            <div className="text-[10px] text-[#99A9A0] uppercase font-semibold font-mono">
               Anti-Cheat Score
             </div>
-            <div className="text-2xl font-black text-emerald-400 font-mono mt-1">
+            <div className="text-2xl font-black text-emerald-400 font-mono tabular-nums mt-1">
               {attempt.antiCheatScore}%
             </div>
-            <span className="text-[10px] text-slate-400">
+            <span className="text-[10px] text-[#99A9A0]">
               {attempt.tabSwitchCount === 0 ? "Zero Violations" : `${attempt.tabSwitchCount} Flags Logged`}
             </span>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#161F30] border border-[#22314E] text-center">
-            <div className="text-[10px] text-slate-400 uppercase font-semibold font-mono">
+          <div className="p-4 rounded-2xl bg-[#121B16] border border-[#2C4034] text-center">
+            <div className="text-[10px] text-[#99A9A0] uppercase font-semibold font-mono">
               Placement Readiness
             </div>
-            <div className="text-2xl font-black text-white font-mono mt-1">
+            <div className="text-2xl font-black text-[#F4F7F5] font-mono tabular-nums mt-1">
               88%
             </div>
-            <span className="text-[10px] text-purple-400 font-bold">
+            <span className="text-[10px] text-emerald-400 font-bold">
               TIER 1 QUALIFIED
             </span>
           </div>
@@ -236,20 +240,20 @@ export default function PublicCredentialVerificationPage() {
 
         {/* Skill Vector Breakdown */}
         <div className="space-y-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-[#99A9A0] font-mono">
             Verified Competency Evaluation
           </h3>
           <div className="space-y-2 text-xs">
             {attempt.gradingDetails.map((gd, idx) => (
               <div
                 key={gd.questionId || idx}
-                className="p-3.5 rounded-xl bg-[#161F30] border border-[#22314E] flex items-center justify-between"
+                className="p-3.5 rounded-xl bg-[#121B16] border border-[#2C4034] flex items-center justify-between"
               >
                 <div>
-                  <div className="font-bold text-white">{gd.questionTitle}</div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">{gd.feedback}</div>
+                  <div className="font-bold text-[#F4F7F5]">{gd.questionTitle}</div>
+                  <div className="text-[11px] text-[#99A9A0] mt-0.5">{gd.feedback}</div>
                 </div>
-                <div className="font-mono font-bold px-2.5 py-1 rounded bg-[#1A2338] text-white">
+                <div className="font-mono tabular-nums font-bold px-2.5 py-1 rounded bg-[#0C120F] border border-[#1E2C24] text-[#F4F7F5]">
                   {gd.awardedScore} / {gd.maxScore} pts
                 </div>
               </div>
@@ -258,28 +262,28 @@ export default function PublicCredentialVerificationPage() {
         </div>
 
         {/* Cryptographic Verification Hash & Timestamp */}
-        <div className="p-4 rounded-2xl bg-[#0E131F] border border-[#1E293B] space-y-2 text-xs font-mono">
-          <div className="flex items-center justify-between text-slate-400">
+        <div className="p-4 rounded-2xl bg-[#070B09] border border-[#1E2C24] space-y-2 text-xs font-mono">
+          <div className="flex items-center justify-between text-[#99A9A0]">
             <span>Cryptographic Verification Hash:</span>
             <button
               onClick={handleCopyHash}
-              className="hover:text-white flex items-center gap-1 text-[11px]"
+              className="hover:text-[#F4F7F5] flex items-center gap-1 text-[11px]"
             >
               <Copy className="w-3 h-3 text-[#9DFF00]" />
               <span>{copied ? "Copied!" : "Copy"}</span>
             </button>
           </div>
-          <div className="p-2.5 rounded-xl bg-[#141B2D] border border-[#1E293B] text-slate-200 text-xs font-bold truncate select-all">
+          <div className="p-2.5 rounded-xl bg-[#121B16] border border-[#1E2C24] text-[#F4F7F5] text-xs font-bold truncate select-all">
             {attempt.accreditationHash}
           </div>
-          <div className="flex justify-between text-[11px] text-slate-500 pt-1">
+          <div className="flex justify-between text-[11px] text-[#85998D] pt-1">
             <span>Digital Signature: SHA256-RSA Verified</span>
-            <span>Recorded: {new Date(attempt.submittedAt).toLocaleDateString()}</span>
+            <span className="tabular-nums">Recorded: {new Date(attempt.submittedAt).toLocaleDateString()}</span>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500">
+        <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#85998D]">
           <div className="flex items-center gap-1.5">
             <FileCheck className="w-4 h-4 text-[#9DFF00]" />
             <span>Official EQLV CODE &bull; AVASC Placement Telemetry Registry</span>

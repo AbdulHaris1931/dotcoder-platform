@@ -238,13 +238,8 @@ def solve():
     nums = list(map(int, lines[0].split()))
     target = int(lines[1])
     
-    seen = {}
-    for i, num in enumerate(nums):
-        complement = target - num
-        if complement in seen:
-            print(f"{seen[complement]} {i}")
-            return
-        seen[num] = i
+    # Write your solution here to find two indices that add up to target
+    pass
 
 if __name__ == "__main__":
     solve()
@@ -260,25 +255,19 @@ public class Main {
         for (int i = 0; i < parts.length; i++) nums[i] = Integer.parseInt(parts[i]);
         if (!sc.hasNextInt()) return;
         int target = sc.nextInt();
-        Map<Integer, Integer> map = new HashMap<>();
-        for (int i = 0; i < nums.length; i++) {
-            int complement = target - nums[i];
-            if (map.containsKey(complement)) {
-                System.out.println(map.get(complement) + " " + i);
-                return;
-            }
-            map.put(nums[i], i);
-        }
+        
+        // Write your solution here
     }
 }
 `,
       cpp: `#include <iostream>
 #include <vector>
 #include <sstream>
-#include <unordered_map>
 using namespace std;
 
 int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
     string line;
     if (!getline(cin, line)) return 0;
     stringstream ss(line);
@@ -287,15 +276,8 @@ int main() {
     while (ss >> val) nums.push_back(val);
     int target;
     if (!(cin >> target)) return 0;
-    unordered_map<int, int> mp;
-    for (int i = 0; i < (int)nums.size(); i++) {
-        int complement = target - nums[i];
-        if (mp.count(complement)) {
-            cout << mp[complement] << " " << i << endl;
-            return 0;
-        }
-        mp[nums[i]] = i;
-    }
+    
+    // Write your solution here
     return 0;
 }
 `,
@@ -315,14 +297,8 @@ int main() {
     }
     int target;
     if (scanf("%d", &target) != 1) return 0;
-    for (int i = 0; i < n; i++) {
-        for (int j = i + 1; j < n; j++) {
-            if (nums[i] + nums[j] == target) {
-                printf("%d %d\\n", i, j);
-                return 0;
-            }
-        }
-    }
+    
+    // Write your solution here
     return 0;
 }
 `,
@@ -395,15 +371,8 @@ Given a string \`s\`, find the length of the longest substring without repeating
 
 def solve():
     s = sys.stdin.read().rstrip("\\r\\n")
-    char_map = {}
-    left = 0
-    max_len = 0
-    for right, c in enumerate(s):
-        if c in char_map and char_map[c] >= left:
-            left = char_map[c] + 1
-        char_map[c] = right
-        max_len = max(max_len, right - left + 1)
-    print(max_len)
+    # Write your solution here to find the length of longest substring without repeating characters
+    pass
 
 if __name__ == "__main__":
     solve()
@@ -414,40 +383,22 @@ public class Main {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         String s = sc.hasNextLine() ? sc.nextLine().replaceAll("[\\\\r\\\\n]", "") : "";
-        Map<Character, Integer> map = new HashMap<>();
-        int left = 0, maxLen = 0;
-        for (int right = 0; right < s.length(); right++) {
-            char c = s.charAt(right);
-            if (map.containsKey(c) && map.get(c) >= left) {
-                left = map.get(c) + 1;
-            }
-            map.put(c, right);
-            maxLen = Math.max(maxLen, right - left + 1);
-        }
-        System.out.println(maxLen);
+        // Write your solution here
     }
 }
 `,
       cpp: `#include <iostream>
 #include <string>
-#include <unordered_map>
-#include <algorithm>
 using namespace std;
 
 int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
     string s;
     if (!getline(cin, s)) { cout << 0 << endl; return 0; }
     while (!s.empty() && (s.back() == '\\r' || s.back() == '\\n')) s.pop_back();
-    unordered_map<char, int> mp;
-    int left = 0, maxLen = 0;
-    for (int right = 0; right < (int)s.size(); right++) {
-        if (mp.count(s[right]) && mp[s[right]] >= left) {
-            left = mp[s[right]] + 1;
-        }
-        mp[s[right]] = right;
-        maxLen = max(maxLen, right - left + 1);
-    }
-    cout << maxLen << endl;
+    
+    // Write your solution here
     return 0;
 }
 `,
@@ -460,17 +411,8 @@ int main() {
     int n = strlen(s);
     while (n > 0 && (s[n-1] == '\\n' || s[n-1] == '\\r')) n--;
     s[n] = '\\0';
-    int last[256];
-    for (int i = 0; i < 256; i++) last[i] = -1;
-    int left = 0, maxLen = 0;
-    for (int right = 0; right < n; right++) {
-        unsigned char c = (unsigned char)s[right];
-        if (last[c] >= left) left = last[c] + 1;
-        last[c] = right;
-        int cur = right - left + 1;
-        if (cur > maxLen) maxLen = cur;
-    }
-    printf("%d\\n", maxLen);
+    
+    // Write your solution here
     return 0;
 }
 `,
@@ -540,18 +482,8 @@ Print \`true\` if valid, else \`false\`.
 
 def solve():
     s = sys.stdin.read().strip()
-    stack = []
-    pairs = {')': '(', '}': '{', ']': '['}
-    for c in s:
-        if c in pairs.values():
-            stack.append(c)
-        elif c in pairs:
-            if not stack or stack.pop() != pairs[c]:
-                print("false")
-                return
-        else:
-            continue
-    print("true" if not stack else "false")
+    # Write your solution here to check if parentheses are balanced (print "true" or "false")
+    pass
 
 if __name__ == "__main__":
     solve()
@@ -562,44 +494,21 @@ public class Main {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         String s = sc.hasNext() ? sc.next().trim() : "";
-        Stack<Character> stack = new Stack<>();
-        for (char c : s.toCharArray()) {
-            if (c == '(' || c == '{' || c == '[') stack.push(c);
-            else if (c == ')') {
-                if (stack.isEmpty() || stack.pop() != '(') { System.out.println("false"); return; }
-            } else if (c == '}') {
-                if (stack.isEmpty() || stack.pop() != '{') { System.out.println("false"); return; }
-            } else if (c == ']') {
-                if (stack.isEmpty() || stack.pop() != '[') { System.out.println("false"); return; }
-            }
-        }
-        System.out.println(stack.isEmpty() ? "true" : "false");
+        // Write your solution here
     }
 }
 `,
       cpp: `#include <iostream>
-#include <stack>
 #include <string>
 using namespace std;
 
 int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
     string s;
     if (!(cin >> s)) { cout << "true" << endl; return 0; }
-    stack<char> st;
-    for (char c : s) {
-        if (c == '(' || c == '{' || c == '[') st.push(c);
-        else if (c == ')') {
-            if (st.empty() || st.top() != '(') { cout << "false" << endl; return 0; }
-            st.pop();
-        } else if (c == '}') {
-            if (st.empty() || st.top() != '{') { cout << "false" << endl; return 0; }
-            st.pop();
-        } else if (c == ']') {
-            if (st.empty() || st.top() != '[') { cout << "false" << endl; return 0; }
-            st.pop();
-        }
-    }
-    cout << (st.empty() ? "true" : "false") << endl;
+    
+    // Write your solution here
     return 0;
 }
 `,
@@ -609,21 +518,8 @@ int main() {
 int main() {
     char s[10000];
     if (scanf("%s", s) != 1) { printf("true\\n"); return 0; }
-    char stack[10000];
-    int top = -1;
-    for (int i = 0; s[i] != '\\0'; i++) {
-        char c = s[i];
-        if (c == '(' || c == '{' || c == '[') {
-            stack[++top] = c;
-        } else if (c == ')') {
-            if (top < 0 || stack[top--] != '(') { printf("false\\n"); return 0; }
-        } else if (c == '}') {
-            if (top < 0 || stack[top--] != '{') { printf("false\\n"); return 0; }
-        } else if (c == ']') {
-            if (top < 0 || stack[top--] != '[') { printf("false\\n"); return 0; }
-        }
-    }
-    printf("%s\\n", top == -1 ? "true" : "false");
+    
+    // Write your solution here
     return 0;
 }
 `,
@@ -696,26 +592,8 @@ def solve():
         print(0)
         return
     h = list(map(int, line.split()))
-    if not h:
-        print(0)
-        return
-    left, right = 0, len(h) - 1
-    max_l, max_r = 0, 0
-    ans = 0
-    while left < right:
-        if h[left] <= h[right]:
-            if h[left] >= max_l:
-                max_l = h[left]
-            else:
-                ans += max_l - h[left]
-            left += 1
-        else:
-            if h[right] >= max_r:
-                max_r = h[right]
-            else:
-                ans += max_r - h[right]
-            right -= 1
-    print(ans)
+    # Write your solution here to compute total trapped rain water
+    pass
 
 if __name__ == "__main__":
     solve()
@@ -729,20 +607,8 @@ public class Main {
         String[] parts = sc.nextLine().trim().split("\\\\s+");
         int[] h = new int[parts.length];
         for (int i = 0; i < parts.length; i++) h[i] = Integer.parseInt(parts[i]);
-        int left = 0, right = h.length - 1;
-        int maxL = 0, maxR = 0, ans = 0;
-        while (left < right) {
-            if (h[left] <= h[right]) {
-                if (h[left] >= maxL) maxL = h[left];
-                else ans += maxL - h[left];
-                left++;
-            } else {
-                if (h[right] >= maxR) maxR = h[right];
-                else ans += maxR - h[right];
-                right--;
-            }
-        }
-        System.out.println(ans);
+        
+        // Write your solution here
     }
 }
 `,
@@ -752,26 +618,16 @@ public class Main {
 using namespace std;
 
 int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
     string line;
     if (!getline(cin, line)) { cout << 0 << endl; return 0; }
     stringstream ss(line);
     vector<int> h;
     int val;
     while (ss >> val) h.push_back(val);
-    int left = 0, right = (int)h.size() - 1;
-    int maxL = 0, maxR = 0, ans = 0;
-    while (left < right) {
-        if (h[left] <= h[right]) {
-            if (h[left] >= maxL) maxL = h[left];
-            else ans += maxL - h[left];
-            left++;
-        } else {
-            if (h[right] >= maxR) maxR = h[right];
-            else ans += maxR - h[right];
-            right--;
-        }
-    }
-    cout << ans << endl;
+    
+    // Write your solution here
     return 0;
 }
 `,
@@ -789,20 +645,8 @@ int main() {
         h[n++] = atoi(tok);
         tok = strtok(NULL, " \\t\\r\\n");
     }
-    int left = 0, right = n - 1;
-    int maxL = 0, maxR = 0, ans = 0;
-    while (left < right) {
-        if (h[left] <= h[right]) {
-            if (h[left] >= maxL) maxL = h[left];
-            else ans += maxL - h[left];
-            left++;
-        } else {
-            if (h[right] >= maxR) maxR = h[right];
-            else ans += maxR - h[right];
-            right--;
-        }
-    }
-    printf("%d\\n", ans);
+    
+    // Write your solution here
     return 0;
 }
 `,
@@ -878,17 +722,8 @@ def solve():
     nums = list(map(int, lines[0].split()))
     target = int(lines[1])
     
-    cur_sum = 0
-    left = 0
-    for right, val in enumerate(nums):
-        cur_sum += val
-        while cur_sum > target and left <= right:
-            cur_sum -= nums[left]
-            left += 1
-        if cur_sum == target:
-            print(f"{left + 1} {right + 1}")
-            return
-    print("-1")
+    # Write your solution here to find 1-based start and end indices of subarray summing to target
+    pass
 
 if __name__ == "__main__":
     solve()
@@ -904,18 +739,8 @@ public class Main {
         for (int i = 0; i < parts.length; i++) nums[i] = Integer.parseInt(parts[i]);
         if (!sc.hasNextInt()) { System.out.println("-1"); return; }
         int target = sc.nextInt();
-        int curSum = 0, left = 0;
-        for (int right = 0; right < nums.length; right++) {
-            curSum += nums[right];
-            while (curSum > target && left <= right) {
-                curSum -= nums[left++];
-            }
-            if (curSum == target) {
-                System.out.println((left + 1) + " " + (right + 1));
-                return;
-            }
-        }
-        System.out.println("-1");
+        
+        // Write your solution here
     }
 }
 `,
@@ -925,6 +750,8 @@ public class Main {
 using namespace std;
 
 int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
     string line;
     if (!getline(cin, line)) { cout << -1 << endl; return 0; }
     stringstream ss(line);
@@ -933,16 +760,8 @@ int main() {
     while (ss >> val) nums.push_back(val);
     int target;
     if (!(cin >> target)) { cout << -1 << endl; return 0; }
-    int curSum = 0, left = 0;
-    for (int right = 0; right < (int)nums.size(); right++) {
-        curSum += nums[right];
-        while (curSum > target && left <= right) curSum -= nums[left++];
-        if (curSum == target) {
-            cout << (left + 1) << " " << (right + 1) << endl;
-            return 0;
-        }
-    }
-    cout << -1 << endl;
+    
+    // Write your solution here
     return 0;
 }
 `,
@@ -962,16 +781,8 @@ int main() {
     }
     int target;
     if (scanf("%d", &target) != 1) { printf("-1\\n"); return 0; }
-    int cur = 0, left = 0;
-    for (int right = 0; right < n; right++) {
-        cur += nums[right];
-        while (cur > target && left <= right) cur -= nums[left++];
-        if (cur == target) {
-            printf("%d %d\\n", left + 1, right + 1);
-            return 0;
-        }
-    }
-    printf("-1\\n");
+    
+    // Write your solution here
     return 0;
 }
 `,
@@ -1047,12 +858,8 @@ def solve():
     coins = list(map(int, lines[0].split()))
     amount = int(lines[1])
     
-    dp = [float('inf')] * (amount + 1)
-    dp[0] = 0
-    for coin in coins:
-        for x in range(coin, amount + 1):
-            dp[x] = min(dp[x], dp[x - coin] + 1)
-    print(dp[amount] if dp[amount] != float('inf') else -1)
+    # Write your solution here to find minimum coins required to make up amount, or -1
+    pass
 
 if __name__ == "__main__":
     solve()
@@ -1068,25 +875,19 @@ public class Main {
         for (int i = 0; i < parts.length; i++) coins[i] = Integer.parseInt(parts[i]);
         if (!sc.hasNextInt()) return;
         int amount = sc.nextInt();
-        int[] dp = new int[amount + 1];
-        Arrays.fill(dp, amount + 1);
-        dp[0] = 0;
-        for (int coin : coins) {
-            for (int x = coin; x <= amount; x++) {
-                dp[x] = Math.min(dp[x], dp[x - coin] + 1);
-            }
-        }
-        System.out.println(dp[amount] > amount ? -1 : dp[amount]);
+        
+        // Write your solution here
     }
 }
 `,
       cpp: `#include <iostream>
 #include <vector>
 #include <sstream>
-#include <algorithm>
 using namespace std;
 
 int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
     string line;
     if (!getline(cin, line)) return 0;
     stringstream ss(line);
@@ -1095,14 +896,8 @@ int main() {
     while (ss >> c) coins.push_back(c);
     int amount;
     if (!(cin >> amount)) return 0;
-    vector<int> dp(amount + 1, amount + 1);
-    dp[0] = 0;
-    for (int coin : coins) {
-        for (int x = coin; x <= amount; x++) {
-            dp[x] = min(dp[x], dp[x - coin] + 1);
-        }
-    }
-    cout << (dp[amount] > amount ? -1 : dp[amount]) << endl;
+    
+    // Write your solution here
     return 0;
 }
 `,
@@ -1122,17 +917,8 @@ int main() {
     }
     int amount;
     if (scanf("%d", &amount) != 1) return 0;
-    int *dp = (int*)malloc((amount + 1) * sizeof(int));
-    for (int i = 0; i <= amount; i++) dp[i] = amount + 1;
-    dp[0] = 0;
-    for (int i = 0; i < n; i++) {
-        int coin = coins[i];
-        for (int x = coin; x <= amount; x++) {
-            if (dp[x - coin] + 1 < dp[x]) dp[x] = dp[x - coin] + 1;
-        }
-    }
-    printf("%d\\n", dp[amount] > amount ? -1 : dp[amount]);
-    free(dp);
+    
+    // Write your solution here
     return 0;
 }
 `,
@@ -1209,15 +995,9 @@ def solve():
     for i in range(1, n + 1):
         if i < len(lines):
             intervals.append(list(map(int, lines[i].split())))
-    intervals.sort(key=lambda x: x[0])
-    merged = []
-    for interval in intervals:
-        if not merged or merged[-1][1] < interval[0]:
-            merged.append(interval)
-        else:
-            merged[-1][1] = max(merged[-1][1], interval[1])
-    for s, e in merged:
-        print(f"{s} {e}")
+            
+    # Write your solution here to merge overlapping intervals and print each as "start end"
+    pass
 
 if __name__ == "__main__":
     solve()
@@ -1234,70 +1014,39 @@ public class Main {
             intervals[i][0] = sc.nextInt();
             intervals[i][1] = sc.nextInt();
         }
-        Arrays.sort(intervals, (a, b) -> Integer.compare(a[0], b[0]));
-        List<int[]> merged = new ArrayList<>();
-        for (int[] cur : intervals) {
-            if (merged.isEmpty() || merged.get(merged.size() - 1)[1] < cur[0]) {
-                merged.add(cur);
-            } else {
-                merged.get(merged.size() - 1)[1] = Math.max(merged.get(merged.size() - 1)[1], cur[1]);
-            }
-        }
-        for (int[] inter : merged) {
-            System.out.println(inter[0] + " " + inter[1]);
-        }
+        
+        // Write your solution here
     }
 }
 `,
       cpp: `#include <iostream>
 #include <vector>
-#include <algorithm>
 using namespace std;
 
 int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
     int n;
     if (!(cin >> n)) return 0;
     vector<pair<int, int>> intervals(n);
     for (int i = 0; i < n; i++) cin >> intervals[i].first >> intervals[i].second;
-    sort(intervals.begin(), intervals.end());
-    vector<pair<int, int>> merged;
-    for (auto &cur : intervals) {
-        if (merged.empty() || merged.back().second < cur.first) {
-            merged.push_back(cur);
-        } else {
-            merged.back().second = max(merged.back().second, cur.second);
-        }
-    }
-    for (auto &p : merged) cout << p.first << " " << p.second << endl;
+    
+    // Write your solution here
     return 0;
 }
 `,
       c: `#include <stdio.h>
 #include <stdlib.h>
 
-typedef struct { int start; int end; } Interval;
-
-int compare(const void *a, const void *b) {
-    return ((Interval*)a)->start - ((Interval*)b)->start;
-}
-
 int main() {
     int n;
     if (scanf("%d", &n) != 1) return 0;
-    Interval *arr = (Interval*)malloc(n * sizeof(Interval));
-    for (int i = 0; i < n; i++) scanf("%d %d", &arr[i].start, &arr[i].end);
-    qsort(arr, n, sizeof(Interval), compare);
-    Interval *merged = (Interval*)malloc(n * sizeof(Interval));
-    int m = 0;
+    int intervals[10000][2];
     for (int i = 0; i < n; i++) {
-        if (m == 0 || merged[m - 1].end < arr[i].start) {
-            merged[m++] = arr[i];
-        } else {
-            if (arr[i].end > merged[m - 1].end) merged[m - 1].end = arr[i].end;
-        }
+        scanf("%d %d", &intervals[i][0], &intervals[i][1]);
     }
-    for (int i = 0; i < m; i++) printf("%d %d\\n", merged[i].start, merged[i].end);
-    free(arr); free(merged);
+    
+    // Write your solution here
     return 0;
 }
 `,
@@ -1373,14 +1122,9 @@ def solve():
     if not line:
         return
     nums = list(map(int, line.split()))
-    left, right = 0, len(nums) - 1
-    while left < right:
-        mid = (left + right) // 2
-        if nums[mid] > nums[mid + 1]:
-            right = mid
-        else:
-            left = mid + 1
-    print(left)
+    
+    # Write your solution here to find any peak element index in O(log n) time
+    pass
 
 if __name__ == "__main__":
     solve()
@@ -1394,13 +1138,8 @@ public class Main {
         String[] parts = sc.nextLine().trim().split("\\\\s+");
         int[] nums = new int[parts.length];
         for (int i = 0; i < parts.length; i++) nums[i] = Integer.parseInt(parts[i]);
-        int left = 0, right = nums.length - 1;
-        while (left < right) {
-            int mid = (left + right) / 2;
-            if (nums[mid] > nums[mid + 1]) right = mid;
-            else left = mid + 1;
-        }
-        System.out.println(left);
+        
+        // Write your solution here
     }
 }
 `,
@@ -1410,19 +1149,16 @@ public class Main {
 using namespace std;
 
 int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
     string line;
     if (!getline(cin, line)) return 0;
     stringstream ss(line);
     vector<int> nums;
     int val;
     while (ss >> val) nums.push_back(val);
-    int left = 0, right = (int)nums.size() - 1;
-    while (left < right) {
-        int mid = (left + right) / 2;
-        if (nums[mid] > nums[mid + 1]) right = mid;
-        else left = mid + 1;
-    }
-    cout << left << endl;
+    
+    // Write your solution here
     return 0;
 }
 `,
@@ -1440,13 +1176,8 @@ int main() {
         nums[n++] = atoi(tok);
         tok = strtok(NULL, " \\t\\r\\n");
     }
-    int left = 0, right = n - 1;
-    while (left < right) {
-        int mid = (left + right) / 2;
-        if (nums[mid] > nums[mid + 1]) right = mid;
-        else left = mid + 1;
-    }
-    printf("%d\\n", left);
+    
+    // Write your solution here
     return 0;
 }
 `,
@@ -1695,5 +1426,37 @@ export const SEED_SUBMISSIONS: Submission[] = [
     tab_switches: 3, // Flagged violation
     submitted_at: new Date(Date.now() - 3600000).toISOString(),
     problem_title: SEED_PROBLEMS[0].title,
+  },
+  {
+    id: "sub-004",
+    assessment_id: SEED_ASSESSMENT.id,
+    user_id: SEED_STUDENTS[3].id, // Divya Bharathi K.
+    problem_id: SEED_PROBLEMS[0].id,
+    language: "python",
+    source_code: "def solve(nums, target):\n    seen = {}\n    for i, n in enumerate(nums):\n        if target - n in seen:\n            return [seen[target - n], i]\n        seen[n] = i\n    return []",
+    status: "Accepted",
+    passed_cases: 4,
+    total_cases: 5,
+    score: 80,
+    execution_time_ms: 110,
+    tab_switches: 0,
+    submitted_at: new Date(Date.now() - 2400000).toISOString(),
+    problem_title: SEED_PROBLEMS[0].title,
+  },
+  {
+    id: "sub-005",
+    assessment_id: SEED_ASSESSMENT.id,
+    user_id: SEED_STUDENTS[0].id, // Karthik S.
+    problem_id: SEED_PROBLEMS[1].id,
+    language: "python",
+    source_code: "def lengthOfLongestSubstring(s: str) -> int:\n    char_map = {}\n    left = max_len = 0\n    for right, c in enumerate(s):\n        if c in char_map and char_map[c] >= left:\n            left = char_map[c] + 1\n        char_map[c] = right\n        max_len = max(max_len, right - left + 1)\n    return max_len",
+    status: "Accepted",
+    passed_cases: 5,
+    total_cases: 5,
+    score: 100,
+    execution_time_ms: 95,
+    tab_switches: 0,
+    submitted_at: new Date(Date.now() - 1800000).toISOString(),
+    problem_title: SEED_PROBLEMS[1].title,
   },
 ];

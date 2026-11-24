@@ -2,11 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import { motion } from "framer-motion";
 import {
-  Smartphone,
-  ShieldCheck,
-  Video,
   Mic,
   Battery,
   AlertCircle,
@@ -19,12 +15,22 @@ export default function MobileProctoringCompanionPage() {
   const examId = params?.id as string;
 
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [streamActive, setStreamActive] = useState(false);
+  const [, setStreamActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [micLevel, setMicLevel] = useState(15);
 
   useEffect(() => {
+    let cancelled = false;
+    let activeStream: MediaStream | null = null;
+
     async function startCamera() {
+      if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+        if (!cancelled) {
+          setCameraError("Camera API is unavailable in this browser context.");
+        }
+        return;
+      }
+
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
@@ -35,30 +41,45 @@ export default function MobileProctoringCompanionPage() {
           audio: true,
         });
 
+        if (cancelled) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+
+        activeStream = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           setStreamActive(true);
         }
-      } catch (err: any) {
-        console.warn("Mobile camera permission issue:", err);
-        setCameraError(
-          "Camera access was not granted or environment camera is unavailable on this device."
-        );
+      } catch {
+        if (!cancelled) {
+          setCameraError(
+            "Camera access was not granted or environment camera is unavailable on this device."
+          );
+        }
       }
     }
 
-    startCamera();
+    void startCamera();
 
     // Simulated ambient sound level indicator
     const audioInterval = setInterval(() => {
-      setMicLevel(Math.floor(Math.random() * 20) + 10);
+      if (!cancelled) {
+        setMicLevel(Math.floor(Math.random() * 20) + 10);
+      }
     }, 1500);
 
+    const currentVideo = videoRef.current;
     return () => {
+      cancelled = true;
       clearInterval(audioInterval);
-      if (videoRef.current && videoRef.current.srcObject) {
-        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+      if (activeStream) {
+        activeStream.getTracks().forEach((t) => t.stop());
+      }
+      if (currentVideo && currentVideo.srcObject) {
+        const tracks = (currentVideo.srcObject as MediaStream).getTracks();
         tracks.forEach((t) => t.stop());
+        currentVideo.srcObject = null;
       }
     };
   }, []);
@@ -85,15 +106,16 @@ export default function MobileProctoringCompanionPage() {
       </header>
 
       {/* Main Camera Viewfinder with Overlay Guidelines */}
-      <main className="flex-1 flex flex-col justify-center my-4 relative rounded-2xl overflow-hidden bg-[#111114] border border-white/[0.15]">
+      <main className="flex-1 flex flex-col justify-center my-4 relative rounded-2xl overflow-hidden bg-[#0C120F] border border-[#1E2C24]">
         {cameraError ? (
           <div className="p-6 text-center space-y-3">
             <AlertCircle className="w-10 h-10 text-amber-400 mx-auto" />
             <h3 className="text-sm font-bold text-white">Camera Permission Needed</h3>
             <p className="text-xs text-slate-400 leading-relaxed font-sans">{cameraError}</p>
             <button
+              type="button"
               onClick={() => window.location.reload()}
-              className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold inline-flex items-center gap-1.5"
+              className="px-4 py-2 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-[#070B09] text-xs font-bold inline-flex items-center gap-1.5 transition-colors"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               <span>Retry Permission</span>

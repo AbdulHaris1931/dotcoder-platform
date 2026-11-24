@@ -12,7 +12,7 @@ export default function PracticeRedirectPage() {
   }, [router]);
 
   return (
-    <div className="h-screen w-full bg-[#0B0F17] text-white flex items-center justify-center font-mono text-xs">
+    <div className="h-screen w-full bg-[#070B09] text-[#F4F7F5] flex items-center justify-center font-mono text-xs">
       <div className="flex items-center gap-2">
         <span className="w-2 h-2 rounded-full bg-[#9DFF00] animate-pulse" />
         <span>Loading DotLab Coding Workspace...</span>

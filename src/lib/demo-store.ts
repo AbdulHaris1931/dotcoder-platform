@@ -20,8 +20,6 @@ import {
   ALL_SEED_USERS,
   SEED_PROBLEMS,
   SEED_MCQS,
-  SEED_ASSESSMENT,
-  SEED_SUBMISSIONS,
 } from "./seed-data";
 import { AssessmentRegistry } from "./assessment-registry";
 
@@ -48,6 +46,20 @@ function notifyListeners() {
   });
 }
 
+// Cross-tab reactive synchronization
+if (isClient) {
+  window.addEventListener("storage", (event) => {
+    if (
+      event.key &&
+      (Object.values(STORAGE_KEYS).includes(event.key) ||
+        event.key.startsWith("eqlv_") ||
+        event.key.startsWith("dotcoder_"))
+    ) {
+      notifyListeners();
+    }
+  });
+}
+
 export function subscribeToDemoStore(listener: Listener): () => void {
   listeners.add(listener);
   return () => {
@@ -55,26 +67,60 @@ export function subscribeToDemoStore(listener: Listener): () => void {
   };
 }
 
+const GUEST_FALLBACK_USER: UserProfile = {
+  id: "guest",
+  full_name: "Campus User",
+  email: "",
+  role: "student",
+  college_name: "",
+  roll_no: "",
+  department: "",
+  batch_year: new Date().getFullYear(),
+  readiness_score: 0,
+  problems_solved: 0,
+  created_at: new Date().toISOString(),
+};
+
 export class DemoStore {
-  // Current active user
+  // Current active user (never auto-logs into a mock test student)
   static getCurrentUser(): UserProfile {
-    if (!isClient) return SEED_STUDENTS[0];
+    if (!isClient) return GUEST_FALLBACK_USER;
     const stored = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
     if (stored) {
       try {
-        return JSON.parse(stored) as UserProfile;
+        const parsed = JSON.parse(stored);
+        if (parsed && typeof parsed === "object" && parsed.id) {
+          return parsed as UserProfile;
+        }
       } catch {
         // fallback
       }
     }
-    // Default to first student
-    localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(SEED_STUDENTS[0]));
-    return SEED_STUDENTS[0];
+    return GUEST_FALLBACK_USER;
   }
 
-  static setCurrentUser(user: UserProfile): void {
+  static setCurrentUser(user: UserProfile | null): void {
     if (!isClient) return;
-    localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+    if (user && user.id) {
+      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+      try {
+        document.cookie = `eqlv_demo_user=${encodeURIComponent(JSON.stringify(user))}; path=/; max-age=86400; SameSite=Lax`;
+      } catch {}
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+      try {
+        document.cookie = "eqlv_demo_user=; path=/; max-age=0; SameSite=Lax";
+      } catch {}
+    }
+    notifyListeners();
+  }
+
+  static signOut(): void {
+    if (!isClient) return;
+    localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+    try {
+      document.cookie = "eqlv_demo_user=; path=/; max-age=0; SameSite=Lax";
+    } catch {}
     notifyListeners();
   }
 
@@ -103,8 +149,111 @@ export class DemoStore {
     return targetUser;
   }
 
+  static getProvisionedUsers(): UserProfile[] {
+    if (!isClient) return [];
+    try {
+      const raw = localStorage.getItem("eqlv_provisioned_users_v1");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed as UserProfile[];
+      }
+    } catch {
+      // ignore
+    }
+    return [];
+  }
+
   static getAllUsers(): UserProfile[] {
-    return ALL_SEED_USERS;
+    // 100% clean slate by default: zero built-in mock seed users
+    const seedIds = new Set(ALL_SEED_USERS.map((u) => u.id));
+    const provisioned = this.getProvisionedUsers().filter((u) => !seedIds.has(u.id));
+    const map = new Map<string, UserProfile>();
+
+    // Provisioned real users only
+    for (const u of provisioned) {
+      map.set(u.id, u);
+      if (u.email) map.set(u.email.toLowerCase().trim(), u);
+    }
+
+    // Custom added students
+    if (isClient) {
+      try {
+        const customStuds = localStorage.getItem(STORAGE_KEYS.STUDENTS);
+        if (customStuds) {
+          const parsed = JSON.parse(customStuds);
+          if (Array.isArray(parsed)) {
+            for (const u of parsed) {
+              map.set(u.id, u);
+              if (u.email) map.set(u.email.toLowerCase().trim(), u);
+            }
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    const uniqueById = new Map<string, UserProfile>();
+    Array.from(map.values()).forEach((u) => {
+      uniqueById.set(u.id, u);
+    });
+    return Array.from(uniqueById.values());
+  }
+
+  static findUser(identifier: string): UserProfile | undefined {
+    if (!identifier) return undefined;
+    const clean = identifier.trim();
+    const lower = clean.toLowerCase();
+    const upper = clean.toUpperCase();
+
+    // Check Sovereign Super Admin Owner
+    if (
+      lower === "mmam92005@gmail.com" ||
+      lower === "owner@eqlv.code" ||
+      lower === "owner" ||
+      lower === "c8d50800-aae2-42b6-84a7-f10241621c5a" ||
+      lower === "usr-super-admin-owner"
+    ) {
+      return {
+        id: "c8d50800-aae2-42b6-84a7-f10241621c5a",
+        email: "mmam92005@gmail.com",
+        full_name: "Abdul Haris M",
+        role: "super_admin",
+        college_name: "EQLV CODE Platform Master",
+        roll_no: "OWNER-01",
+        department: "Platform Engineering",
+        batch_year: 2026,
+        readiness_score: 100,
+        problems_solved: 999,
+        created_at: new Date().toISOString(),
+      };
+    }
+
+    const all = this.getAllUsers();
+
+    // 1. Exact ID match
+    const byId = all.find((u) => u.id === clean);
+    if (byId) return byId;
+
+    // 2. Email match (case-insensitive)
+    const byEmail = all.find((u) => u.email && u.email.toLowerCase().trim() === lower);
+    if (byEmail) return byEmail;
+
+    // 3. Roll Number match (case-insensitive)
+    const byRoll = all.find(
+      (u) => u.roll_no && u.roll_no.toUpperCase().trim() === upper
+    );
+    if (byRoll) return byRoll;
+
+    // 4. Username match (prefix before @ in email)
+    const byUsername = all.find((u) => {
+      if (!u.email) return false;
+      const prefix = u.email.split("@")[0].toLowerCase();
+      return prefix === lower;
+    });
+    if (byUsername) return byUsername;
+
+    return undefined;
   }
 
   static getDepartments(): Department[] {
@@ -116,27 +265,25 @@ export class DemoStore {
   }
 
   static getUserByEmail(email: string): UserProfile | undefined {
-    const clean = email.toLowerCase().trim();
-    const matched = ALL_SEED_USERS.find((u) => u.email?.toLowerCase() === clean);
-    if (matched) return matched;
-    // Check custom added students
-    const students = this.getStudents();
-    return students.find((s) => s.email?.toLowerCase() === clean);
+    return this.findUser(email);
   }
 
   // Students list
   static getStudents(): UserProfile[] {
-    if (!isClient) return SEED_STUDENTS;
-    const stored = localStorage.getItem(STORAGE_KEYS.STUDENTS);
-    if (stored) {
-      try {
-        return JSON.parse(stored) as UserProfile[];
-      } catch {
-        // fallback
-      }
-    }
-    localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify(SEED_STUDENTS));
-    return SEED_STUDENTS;
+    const all = this.getAllUsers();
+    return all.filter((u) => u.role === "student");
+  }
+
+  // Faculty / Teachers list
+  static getTeachers(): UserProfile[] {
+    const all = this.getAllUsers();
+    return all.filter((u) => u.role === "teacher" || (u.role as string) === "mentor");
+  }
+
+  // Placement Officers / Admins list
+  static getTpos(): UserProfile[] {
+    const all = this.getAllUsers();
+    return all.filter((u) => u.role === "tpo" || u.role === "admin");
   }
 
   static addStudents(
@@ -168,7 +315,8 @@ export class DemoStore {
         batch_year: student.batch_year,
         role: "student",
         college_name: SEED_ORGANIZATION.name,
-        readiness_score: Math.floor(Math.random() * 35) + 60, // Realistic initial readiness 60-95
+        readiness_score: 0, // Fresh records start at 0% readiness
+        problems_solved: 0,
         email: student.email,
         created_at: new Date().toISOString(),
       });
@@ -183,6 +331,12 @@ export class DemoStore {
     }
 
     return { added: validToAdd.length, duplicates };
+  }
+
+  static saveStudents(students: UserProfile[]): void {
+    if (!isClient) return;
+    localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify(students));
+    notifyListeners();
   }
 
   // Problems
@@ -206,19 +360,34 @@ export class DemoStore {
     return AssessmentRegistry.getAssessment("assessment-1");
   }
 
-  // Submissions
+  // Submissions (100% clean slate by default — zero mock submissions)
   static getSubmissions(): Submission[] {
-    if (!isClient) return SEED_SUBMISSIONS;
+    if (!isClient) return [];
+    const seedIds = new Set(ALL_SEED_USERS.map((u) => u.id));
     const stored = localStorage.getItem(STORAGE_KEYS.SUBMISSIONS);
     if (stored) {
       try {
-        return JSON.parse(stored) as Submission[];
+        const parsed = JSON.parse(stored) as Submission[];
+        if (Array.isArray(parsed)) {
+          return parsed.filter((s) => !seedIds.has(s.user_id));
+        }
       } catch {
         // fallback
       }
     }
-    localStorage.setItem(STORAGE_KEYS.SUBMISSIONS, JSON.stringify(SEED_SUBMISSIONS));
-    return SEED_SUBMISSIONS;
+    return [];
+  }
+
+  /**
+   * Purge all mock seed students and dummy submissions for a 100% clean college launch
+   */
+  static purgeTestData(): void {
+    if (!isClient) return;
+    localStorage.setItem("eqlv_test_users_purged_v1", "true");
+    const seedIds = new Set(ALL_SEED_USERS.map((u) => u.id));
+    const currentSubs = this.getSubmissions().filter((s) => !seedIds.has(s.user_id));
+    localStorage.setItem(STORAGE_KEYS.SUBMISSIONS, JSON.stringify(currentSubs));
+    notifyListeners();
   }
 
   static recordSubmission(submissionData: Omit<Submission, "id" | "submitted_at">): Submission {

@@ -2,13 +2,26 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
-import { AuthShowcasePanel } from "@/components/auth/auth-showcase-panel";
-import { DotCoderLogo } from "@/components/shared/dotcoder-logo";
 import { DemoStore } from "@/lib/demo-store";
-import { SEED_TPO } from "@/lib/seed-data";
-import { createClient } from "@/lib/supabase/client";
-import { ArrowRight, Mail, Lock, Eye, EyeOff, AlertTriangle } from "lucide-react";
+import { UserCredentialsService } from "@/lib/services/user-credentials";
+import { SuperAdminService } from "@/lib/services/super-admin-service";
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import { UserProfile } from "@/types";
+import {
+  ArrowRight,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  AlertTriangle,
+  ShieldAlert,
+  ShieldCheck,
+  Code2,
+  BarChart3,
+  Briefcase,
+} from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();
@@ -17,314 +30,453 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [showForgotHint, setShowForgotHint] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const isRestricted = searchParams.get("notice") === "registration_restricted";
 
+  // Enforce pure dark background on html and body to eliminate any white space leakage
   useEffect(() => {
-    if (searchParams.get("tab") === "signup") {
-      router.replace("/signup");
-    }
-  }, [searchParams, router]);
+    setIsHydrated(true);
+    const prevHtmlBg = document.documentElement.style.backgroundColor;
+    const prevBodyBg = document.body.style.backgroundColor;
+    const prevBodyOverflowX = document.body.style.overflowX;
+    const prevHtmlOverflowX = document.documentElement.style.overflowX;
+
+    document.documentElement.style.backgroundColor = "#070B09";
+    document.body.style.backgroundColor = "#070B09";
+    document.documentElement.style.overflowX = "hidden";
+    document.body.style.overflowX = "hidden";
+
+    return () => {
+      document.documentElement.style.backgroundColor = prevHtmlBg;
+      document.body.style.backgroundColor = prevBodyBg;
+      document.documentElement.style.overflowX = prevHtmlOverflowX;
+      document.body.style.overflowX = prevBodyOverflowX;
+    };
+  }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg(null);
 
-    const supabase = createClient();
-    if (supabase) {
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+    const cleanIdentifier = email.trim();
+    const cleanPassword = password.trim();
 
-        if (error) throw error;
-
-        if (data.user) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", data.user.id)
-            .single();
-
-          if (profile) {
-            DemoStore.setCurrentUser({
-              id: profile.id,
-              email: data.user.email || profile.email || "",
-              full_name: profile.full_name || "Campus User",
-              role: profile.role || "student",
-              college_name: profile.college_name || "Annai Vailankanni Arts and Science College, Thanjavur",
-              roll_no: profile.roll_no || "",
-              department: profile.department || "",
-              batch_year: profile.batch_year || 2026,
-              readiness_score: Number(profile.readiness_score) || 0,
-              problems_solved: profile.problems_solved || 0,
-              created_at: profile.created_at,
-            });
-          }
-
-          if (profile?.role === "teacher") {
-            router.push("/teacher/dashboard");
-          } else if (profile?.role === "recruiter") {
-            router.push("/recruiter/dashboard");
-          } else if (profile?.role === "tpo") {
-            router.push("/tpo/dashboard");
-          } else if (profile?.role === "admin" || profile?.role === "super_admin") {
-            router.push("/admin/dashboard");
-          } else {
-            router.push("/student/dashboard");
-          }
-          return;
-        }
-      } catch (err: any) {
-        // If Supabase auth fails (e.g. institutional test accounts not provisioned in cloud auth),
-        // gracefully fall through to DemoStore local fallback for verified seed personas
-        const demoUser = DemoStore.getUserByEmail(email);
-        if (!demoUser && password !== "Password@123") {
-          setErrorMsg(err.message || "Invalid email or password.");
-          setLoading(false);
-          return;
-        }
-      }
+    if (!cleanIdentifier || !cleanPassword) {
+      setErrorMsg("Please enter your email or roll number, and password.");
+      setLoading(false);
+      return;
     }
 
-    // Local fallback sign-in
-    setTimeout(() => {
-      setLoading(false);
-      const matchedUser = DemoStore.getUserByEmail(email);
-      if (matchedUser) {
-        DemoStore.setCurrentUser(matchedUser);
-        if (matchedUser.role === "teacher") {
+    // 1. Live Production Mode: Strict Supabase Auth (NEVER fall back to unsigned demo cookies)
+    const supabase = createClient();
+    if (supabase && isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: cleanIdentifier,
+          password: cleanPassword,
+        });
+
+        if (error || !data?.user) {
+          setLoading(false);
+          setErrorMsg(
+            error?.message || "Invalid email or password. Please check your institutional credentials."
+          );
+          return;
+        }
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", data.user.id)
+          .single();
+
+        const accountStatus = String(profile?.account_status || "active").toLowerCase();
+        if (accountStatus === "suspended" || accountStatus === "archived") {
+          await supabase.auth.signOut();
+          setLoading(false);
+          setErrorMsg(
+            "Your account has been suspended or archived. Please contact your institution administrator."
+          );
+          return;
+        }
+
+        const appMetaRole =
+          typeof data.user.app_metadata?.role === "string"
+            ? data.user.app_metadata.role.trim().toLowerCase()
+            : null;
+        const resolvedRole = (profile?.role || appMetaRole || "student").toLowerCase();
+
+        // Clear any stale local demo cookie so server middleware strictly uses Supabase JWT
+        document.cookie = "eqlv_demo_user=; path=/; max-age=0; SameSite=Lax";
+
+        if (profile) {
+          DemoStore.setCurrentUser({
+            id: profile.id,
+            email: data.user.email || profile.email || "",
+            full_name: profile.full_name || "Campus User",
+            role: resolvedRole as UserProfile["role"],
+            college_name: profile.college_name || "",
+            roll_no: profile.roll_no || "",
+            department: profile.department || "",
+            batch_year: profile.batch_year || new Date().getFullYear(),
+            readiness_score: Number(profile.readiness_score) || 0,
+            problems_solved: profile.problems_solved || 0,
+            created_at: profile.created_at,
+          });
+        }
+
+        if (resolvedRole === "super_admin") {
+          router.push("/super-admin/dashboard");
+        } else if (resolvedRole === "teacher" || resolvedRole === "mentor") {
           router.push("/teacher/dashboard");
-        } else if (matchedUser.role === "recruiter") {
-          router.push("/recruiter/dashboard");
-        } else if (matchedUser.role === "tpo") {
+        } else if (resolvedRole === "tpo" || resolvedRole === "admin") {
           router.push("/tpo/dashboard");
-        } else if (matchedUser.role === "admin" || matchedUser.role === "super_admin") {
-          router.push("/admin/dashboard");
+        } else if (resolvedRole === "recruiter") {
+          router.push("/recruiter/dashboard");
         } else {
           router.push("/student/dashboard");
         }
         return;
+      } catch (err: unknown) {
+        setLoading(false);
+        setErrorMsg(
+          err instanceof Error
+            ? err.message
+            : "Unable to reach authentication server. Please try again."
+        );
+        return;
+      }
+    }
+
+    // 2. Local Demo Mode ONLY (when Supabase env vars are not configured)
+    setTimeout(() => {
+      setLoading(false);
+
+      const authResult = UserCredentialsService.verifyCredentials(cleanIdentifier, cleanPassword);
+
+      if (!authResult.valid || !authResult.user) {
+        setErrorMsg(
+          authResult.error || "Invalid login credentials. Please check your username/email and password."
+        );
+        return;
       }
 
-      const lower = email.toLowerCase();
-      if (lower.includes("teacher") || lower.includes("faculty")) {
-        DemoStore.switchRole("teacher");
+      const user = authResult.user;
+
+      try {
+        SuperAdminService.recordUserSignIn(user.id);
+      } catch {}
+
+      DemoStore.setCurrentUser(user);
+      document.cookie = `eqlv_demo_user=${encodeURIComponent(JSON.stringify(user))}; path=/; max-age=86400; SameSite=Lax`;
+
+      const role = user.role?.toLowerCase();
+      if (role === "super_admin") {
+        router.push("/super-admin/dashboard");
+      } else if (role === "teacher" || role === "mentor") {
         router.push("/teacher/dashboard");
-      } else if (lower.includes("recruiter") || lower.includes("talent")) {
-        DemoStore.switchRole("recruiter");
-        router.push("/recruiter/dashboard");
-      } else if (lower.includes("tpo")) {
-        DemoStore.switchRole("tpo");
+      } else if (role === "tpo" || role === "admin") {
         router.push("/tpo/dashboard");
-      } else if (lower.includes("admin")) {
-        DemoStore.switchRole("admin");
-        router.push("/admin/dashboard");
+      } else if (role === "recruiter") {
+        router.push("/recruiter/dashboard");
       } else {
-        DemoStore.switchRole("student");
         router.push("/student/dashboard");
       }
-    }, 400);
+    }, 350);
   };
 
   return (
-    <div className="min-h-screen w-full flex bg-[#F4F7F4] font-sans text-slate-900">
-      {/* Left Code Showcase Panel (Desktop) matching Screen 10 */}
-      <AuthShowcasePanel />
-
-      {/* Right Form Panel matching Screen 10 */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-between p-6 sm:p-12 lg:p-16 overflow-y-auto bg-white">
-        {/* Top Header / Switcher */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="lg:hidden">
-            <DotCoderLogo size="md" theme="light" />
-          </div>
-          <div className="ml-auto inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200">
-            <button
-              type="button"
-              className="px-4 py-1.5 rounded-lg text-xs font-bold bg-[#0F1412] text-white shadow-xs"
-            >
-              Login
-            </button>
-            <Link
-              href="/signup"
-              className="px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
-            >
-              Sign Up
-            </Link>
-          </div>
-        </div>
-
-        {/* Center Auth Card */}
-        <div className="w-full max-w-[420px] mx-auto my-auto space-y-6">
-          <div className="space-y-1.5">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
-              <span>Welcome Back</span>
-              <span className="text-xl">👋</span>
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500">
-              Login to your EQLV CODE account.
-            </p>
-          </div>
-
-          {errorMsg && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
-              <span>{errorMsg}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSignIn} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Email or Username
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
-                <input
-                  type="text"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@avc.edu.in or karthik.bca@avc.edu.in"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#F8FAF8] border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#9DFF00] focus:border-slate-800 transition-all font-medium"
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-semibold text-slate-700">
-                  Password
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setShowForgotHint((prev) => !prev)}
-                  className="text-xs text-slate-400 hover:text-slate-700 transition-colors"
-                >
-                  Forgot Password?
-                </button>
-              </div>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter Password@123"
-                  className="w-full pl-10 pr-10 py-3 rounded-xl bg-[#F8FAF8] border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#9DFF00] focus:border-slate-800 transition-all font-medium"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              {showForgotHint && (
-                <div className="mt-2 p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-sans leading-relaxed flex items-start justify-between gap-2 animate-in fade-in">
-                  <span>💡 For institutional test accounts, all passwords are pre-set to <strong>Password@123</strong>. For college SSO recovery, contact your Placement Cell coordinator.</span>
-                  <button type="button" onClick={() => setShowForgotHint(false)} className="text-emerald-700 hover:text-emerald-900 font-bold text-xs">✕</button>
-                </div>
-              )}
-            </div>
-
-            {/* Neon Lime Primary CTA matching Screen 10 */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full mt-2 py-3.5 px-4 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs sm:text-sm transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 active:scale-[0.99]"
-            >
-              <span>{loading ? "Authenticating..." : "Login"}</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </form>
-
-          {/* Quick-select test accounts for Annai Vailankanni Arts and Science College */}
-          <div className="pt-2 border-t border-slate-100">
-            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2 flex items-center justify-between">
-              <span>AVASC Test Accounts</span>
-              <span className="font-mono text-[10px] text-slate-400">Password@123</span>
-            </div>
-            <div className="grid grid-cols-2 gap-1.5">
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail("karthik.bca@avc.edu.in");
-                  setPassword("Password@123");
-                }}
-                className="text-left px-2.5 py-1.5 rounded-lg border border-slate-200 hover:border-slate-400 bg-slate-50 hover:bg-slate-100 transition-all text-xs"
-              >
-                <div className="font-semibold text-slate-800 text-[11px] truncate">Karthik S.</div>
-                <div className="text-[10px] text-slate-500 truncate">Student (BCA)</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail("teacher@avc.edu.in");
-                  setPassword("Password@123");
-                }}
-                className="text-left px-2.5 py-1.5 rounded-lg border border-slate-200 hover:border-slate-400 bg-slate-50 hover:bg-slate-100 transition-all text-xs"
-              >
-                <div className="font-semibold text-slate-800 text-[11px] truncate">Dr. S. Meenakshi</div>
-                <div className="text-[10px] text-slate-500 truncate">Teacher / Mentor</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail("tpo@avc.edu.in");
-                  setPassword("Password@123");
-                }}
-                className="text-left px-2.5 py-1.5 rounded-lg border border-slate-200 hover:border-slate-400 bg-slate-50 hover:bg-slate-100 transition-all text-xs"
-              >
-                <div className="font-semibold text-slate-800 text-[11px] truncate">Prof. R. Anandhan</div>
-                <div className="text-[10px] text-slate-500 truncate">Placement Officer</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail("recruiter@zoho.com");
-                  setPassword("Password@123");
-                }}
-                className="text-left px-2.5 py-1.5 rounded-lg border border-slate-200 hover:border-slate-400 bg-slate-50 hover:bg-slate-100 transition-all text-xs"
-              >
-                <div className="font-semibold text-slate-800 text-[11px] truncate">Kavitha R.</div>
-                <div className="text-[10px] text-slate-500 truncate">Recruiter (Zoho)</div>
-              </button>
-            </div>
-          </div>
-
-          {/* Switcher */}
-          <div className="text-center pt-2">
-            <span className="text-xs text-slate-500">
-              Don&apos;t have an account?{" "}
-            </span>
-            <Link
-              href="/signup"
-              className="text-xs font-bold text-slate-900 hover:underline"
-            >
-              Sign Up
-            </Link>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="text-center text-xs text-slate-400 pt-6">
-          © 2026 EQLV CODE, Inc. All rights reserved.
+    <div id="login-page-root" className="min-h-screen w-full max-w-full bg-[#070B09] text-white flex flex-col justify-between font-sans relative overflow-x-hidden select-none">
+      {/* Subtle Focused Obsidian Spotlight - Zero Muddy Olive Spread */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none bg-obsidian-grid bg-obsidian-radial">
+        <div className="absolute bottom-0 left-0 w-full h-36 overflow-hidden opacity-25">
+          <svg viewBox="0 0 1200 200" preserveAspectRatio="none" className="w-full h-full text-[#9DFF00]">
+            <path
+              d="M0,160 C300,80 600,220 1200,100 L1200,200 L0,200 Z"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.25"
+              strokeOpacity="0.28"
+            />
+          </svg>
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* TOP HEADER: Brand Emblem & Secure Access Pill                             */}
+      {/* ========================================================================= */}
+      <header className="relative z-20 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 pt-5 pb-2 flex items-center justify-between">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Link href="/" className="inline-flex items-center gap-2.5 min-h-[38px] group">
+            <Image
+              src="/logo.png"
+              alt="EQLV CODE"
+              width={32}
+              height={32}
+              priority
+              className="w-8 h-8 object-contain rounded-xl flex-shrink-0 ring-1 ring-white/10"
+            />
+            <span className="inline-flex items-baseline gap-1.5 text-lg sm:text-xl">
+              <span className="font-display font-bold tracking-tight text-white">
+                EQLV
+              </span>
+              <span className="font-mono font-bold tracking-wider text-sm sm:text-base text-[#9DFF00]">
+                CODE
+              </span>
+            </span>
+          </Link>
+
+          <div className="hidden sm:block w-px h-5 bg-[#1E2C24]" />
+
+          <div className="hidden md:flex items-center gap-1.5 text-[11px] font-mono tracking-wider text-[#A3B4AA] font-semibold uppercase">
+            <span>INSTITUTIONAL WORKSPACE</span>
+          </div>
+        </div>
+
+        {/* Right: Secure Access Badge */}
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0C120F] border border-[#1E2C24] text-xs font-mono font-bold text-[#9DFF00]">
+          <ShieldCheck className="w-3.5 h-3.5 text-[#9DFF00]" />
+          <span>Secure Access</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-[#9DFF00] animate-pulse" />
+        </div>
+      </header>
+
+      {/* ========================================================================= */}
+      {/* MAIN TWO-COLUMN SPLIT (MOBILE-FIRST LOGIN CARD ON TOP)                    */}
+      {/* ========================================================================= */}
+      <main id="main-content" className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 my-auto flex-1 flex items-center">
+        <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
+          {/* LEFT COLUMN (order-2 on mobile so login card appears FIRST above the fold) */}
+          <div className="order-2 lg:order-1 lg:col-span-7 min-w-0 flex flex-col justify-between space-y-6 lg:space-y-8">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6 sm:gap-4 lg:gap-5">
+              {/* Main Headline - Space Grotesk Display */}
+              <div className="space-y-3 shrink-0 max-w-xs text-center sm:text-left">
+                <h1 className="font-display text-4xl sm:text-5xl lg:text-[48px] xl:text-[56px] font-bold tracking-[-0.04em] text-[#F4F7F5] leading-[1.03]">
+                  Code
+                  <br />
+                  Learn
+                  <br />
+                  Assess
+                  <br />
+                  <span className="text-[#9DFF00]">Get Hired.</span>
+                </h1>
+                <div className="w-12 h-1 bg-[#9DFF00] rounded-full mx-auto sm:mx-0" />
+                <p className="text-xs sm:text-sm text-[#A3B4AA] font-medium max-w-[260px] pt-0.5 leading-relaxed mx-auto sm:mx-0">
+                  A complete coding lab and placement readiness platform for colleges.
+                </p>
+              </div>
+
+              {/* 3D Perspective Laptop Visual */}
+              <div className="relative w-full max-w-[260px] sm:max-w-[320px] lg:max-w-[330px] xl:max-w-[390px] shrink-0 flex items-center justify-center">
+                <Image
+                  src="/login-laptop-hero.webp"
+                  alt="EQLV CODE Platform Workspace"
+                  width={905}
+                  height={728}
+                  priority
+                  className="w-full h-auto object-contain drop-shadow-[0_24px_48px_rgba(0,0,0,0.95)]"
+                />
+              </div>
+            </div>
+
+            {/* 3 Feature Pillars (Fixed Duplicate Icon Bug) */}
+            <div className="grid grid-cols-3 gap-3 sm:gap-5 pt-4 border-t border-[#1E2C24] max-w-lg mx-auto sm:mx-0 w-full">
+              <div className="space-y-1">
+                <div className="text-[#9DFF00] flex items-center gap-1.5">
+                  <Code2 className="w-4 h-4" />
+                </div>
+                <div className="text-xs font-bold text-[#F4F7F5] leading-tight">
+                  Practice Coding
+                </div>
+                <div className="text-[11px] text-[#85998D] font-medium">
+                  Real MNC suites
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <div className="text-[#9DFF00] flex items-center gap-1.5">
+                  <BarChart3 className="w-4 h-4" />
+                </div>
+                <div className="text-xs font-bold text-[#F4F7F5] leading-tight">
+                  Track Progress
+                </div>
+                <div className="text-[11px] text-[#85998D] font-medium">
+                  6D skill telemetry
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <div className="text-[#9DFF00] flex items-center gap-1.5">
+                  <Briefcase className="w-4 h-4" />
+                </div>
+                <div className="text-xs font-bold text-[#F4F7F5] leading-tight">
+                  Get Placed
+                </div>
+                <div className="text-[11px] text-[#85998D] font-medium">
+                  Verified readiness
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN: Precision Obsidian Floating Login Card (order-1 on mobile!) */}
+          <div className="order-1 lg:order-2 lg:col-span-5 min-w-0 flex justify-center lg:justify-end">
+            <div className="w-full max-w-[408px] xl:max-w-[432px] bg-[#0C120F]/95 backdrop-blur-xl rounded-3xl p-6 sm:p-8 xl:p-9 shadow-[0_1px_0_0_rgba(255,255,255,0.07)_inset,0_28px_70px_-15px_rgba(0,0,0,0.95)] border border-[#24352B] text-[#F4F7F5] flex flex-col justify-between space-y-5">
+              {/* Top Card Logo with Underline Accent */}
+              <div className="text-center space-y-2">
+                <div className="inline-flex items-center gap-2.5 select-none justify-center">
+                  <Image
+                    src="/logo.png"
+                    alt="EQLV CODE"
+                    width={32}
+                    height={32}
+                    priority
+                    className="w-8 h-8 object-contain rounded-xl flex-shrink-0 ring-1 ring-white/10"
+                  />
+                  <span className="inline-flex items-baseline gap-1.5 text-xl">
+                    <span className="font-display font-bold tracking-tight text-white">
+                      EQLV
+                    </span>
+                    <span className="font-mono font-bold tracking-wider text-base text-[#9DFF00]">
+                      CODE
+                    </span>
+                  </span>
+                </div>
+                <div className="w-10 h-1 bg-[#9DFF00] rounded-full mx-auto" />
+
+                <div className="pt-2 space-y-1">
+                  <h2 className="font-display text-2xl sm:text-[26px] font-bold tracking-tight text-[#F4F7F5]">
+                    Welcome Back
+                  </h2>
+                  <p className="text-xs sm:text-sm text-[#A3B4AA] font-medium">
+                    Sign in to your institutional EQLV CODE workspace
+                  </p>
+                </div>
+              </div>
+
+              {/* Restricted Banner */}
+              {isRestricted && (
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-start gap-2">
+                  <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                  <span className="text-[11px] leading-relaxed">
+                    Accounts are provisioned exclusively by the platform Super Admin.
+                  </span>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {errorMsg && (
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
+
+              {/* Form */}
+              <form method="post" onSubmit={handleSignIn} className="space-y-3.5 pt-1">
+                {/* Email / Username Input */}
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-[#85998D] absolute left-4 top-3.5 pointer-events-none" />
+                  <input
+                    type="text"
+                    name="email"
+                    aria-label="Institutional Email Address"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Email or Username"
+                    className="w-full pl-11 pr-4 py-3 min-h-[46px] rounded-xl bg-[#070B09] border border-[#1E2C24] text-sm text-[#F4F7F5] placeholder:text-[#85998D] focus:outline-none focus:ring-2 focus:ring-[#9DFF00]/40 focus:border-[#9DFF00] transition-all font-medium"
+                  />
+                </div>
+
+                {/* Password Input */}
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-[#85998D] absolute left-4 top-3.5 pointer-events-none" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    aria-label="Password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your Password"
+                    className="w-full pl-11 pr-12 py-3 min-h-[46px] rounded-xl bg-[#070B09] border border-[#1E2C24] text-sm text-[#F4F7F5] placeholder:text-[#85998D] focus:outline-none focus:ring-2 focus:ring-[#9DFF00]/40 focus:border-[#9DFF00] transition-all font-medium"
+                  />
+                  <button
+                    type="button"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-1.5 top-1 w-9 h-9 flex items-center justify-center rounded-lg text-[#85998D] hover:text-[#F4F7F5] hover:bg-[#121B16] transition-colors cursor-pointer"
+                    title={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                <div className="flex justify-end">
+                  <Link
+                    href="/forgot-password"
+                    className="inline-flex items-center min-h-[36px] px-1 text-xs font-semibold text-[#A3B4AA] hover:text-[#9DFF00] transition-colors"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+
+                {/* Crisp Specular Lime Login Button */}
+                <button
+                  type="submit"
+                  disabled={!isHydrated || loading}
+                  className="w-full py-3.5 min-h-[48px] rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-[#070B09] font-extrabold text-sm sm:text-base shadow-[0_1px_0_0_rgba(255,255,255,0.45)_inset,0_10px_28px_-10px_rgba(157,255,0,0.55)] transition-all flex items-center justify-center gap-2 active:scale-[0.98] cursor-pointer disabled:opacity-50"
+                >
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 rounded-full border-2 border-[#070B09] border-t-transparent animate-spin" />
+                      <span>Signing in...</span>
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5 font-black">
+                      <span>Portal Login</span>
+                      <ArrowRight className="w-4 h-4 stroke-[3]" />
+                    </span>
+                  )}
+                </button>
+              </form>
+
+              {/* Bottom Card Footer: Security Badge & Copyright */}
+              <div className="pt-2 text-center space-y-2.5 border-t border-[#1E2C24]">
+                <div className="flex items-center justify-center gap-1.5 text-xs font-mono font-semibold text-[#A3B4AA] pt-1">
+                  <ShieldCheck className="w-4 h-4 text-[#9DFF00]" />
+                  <span>Secure &amp; Private Access</span>
+                </div>
+                <div className="text-[11px] text-[#85998D] font-medium">
+                  &copy; 2026 EQLV CODE. All rights reserved.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Subtle accessible footer */}
+      <footer className="relative z-10 py-3.5 text-center text-xs text-[#85998D] font-mono">
+        EQLV CODE &bull; Enterprise Campus Placement Platform
+      </footer>
     </div>
   );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#F4F7F4] flex items-center justify-center text-xs">Loading EQLV CODE...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#070B09] flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-[#9DFF00] border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
       <LoginForm />
     </Suspense>
   );

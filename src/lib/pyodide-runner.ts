@@ -1,15 +1,45 @@
 // Client-side Pyodide WebAssembly Runner with 5.0s Execution Watchdog
 // Zero-latency, $0-cost Python execution in the browser with infinite loop protection
 
+export interface PyodideInterface {
+  runPythonAsync: (code: string) => Promise<unknown>;
+  setStdin?: (options: { stdin: () => string }) => void;
+  globals: {
+    get: (key: string) => string | undefined;
+    set: (key: string, value: unknown) => void;
+  };
+  [key: string]: unknown;
+}
+
 declare global {
   interface Window {
-    loadPyodide?: (config: { indexURL: string }) => Promise<any>;
-    pyodideInstance?: any;
-    pyodideLoadingPromise?: Promise<any>;
+    loadPyodide?: (config: { indexURL: string }) => Promise<PyodideInterface>;
+    pyodideInstance?: PyodideInterface;
+    pyodideLoadingPromise?: Promise<PyodideInterface>;
+    define?: unknown;
   }
 }
 
-export async function getPyodide(): Promise<any> {
+/**
+ * Runs an async loader while temporarily hiding Monaco Editor's AMD `window.define`.
+ * Prevents Pyodide's internal `error-stack-parser` from attempting AMD `require("stackframe")`
+ * which otherwise triggers 404 MIME errors on Next.js routes.
+ */
+async function withAmdLoaderHidden<T>(task: () => Promise<T>): Promise<T> {
+  const prevDefine = window.define;
+  if (prevDefine) {
+    window.define = undefined;
+  }
+  try {
+    return await task();
+  } finally {
+    if (prevDefine) {
+      window.define = prevDefine;
+    }
+  }
+}
+
+export async function getPyodide(): Promise<PyodideInterface> {
   if (typeof window === "undefined") {
     throw new Error("Pyodide can only run in the browser");
   }
@@ -22,27 +52,15 @@ export async function getPyodide(): Promise<any> {
     return window.pyodideLoadingPromise;
   }
 
-  window.pyodideLoadingPromise = (async () => {
-    // 1. Inject Pyodide script if not loaded
+  window.pyodideLoadingPromise = withAmdLoaderHidden(async () => {
+    // 1. Inject Pyodide loader script if not loaded
     if (!window.loadPyodide) {
       await new Promise<void>((resolve, reject) => {
-        // Temporarily stash Monaco's AMD loader if present so Pyodide attaches to window
-        const prevDefine = (window as any).define;
-        if (prevDefine) {
-          (window as any).define = undefined;
-        }
-
         const script = document.createElement("script");
         script.src = "https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js";
         script.async = true;
-        script.onload = () => {
-          if (prevDefine) (window as any).define = prevDefine;
-          resolve();
-        };
-        script.onerror = () => {
-          if (prevDefine) (window as any).define = prevDefine;
-          reject(new Error("Failed to load Pyodide script from CDN"));
-        };
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error("Failed to load Pyodide script from CDN"));
         document.head.appendChild(script);
       });
     }
@@ -51,13 +69,18 @@ export async function getPyodide(): Promise<any> {
       throw new Error("Pyodide loader unavailable");
     }
 
+    // 2. Initialize Pyodide WASM runtime while AMD define remains hidden
     const pyodide = await window.loadPyodide({
       indexURL: "https://cdn.jsdelivr.net/pyodide/v0.25.1/full/",
     });
 
     window.pyodideInstance = pyodide;
     return pyodide;
-  })();
+  }).catch((err) => {
+    // Reset promise so subsequent attempts can recover cleanly
+    window.pyodideLoadingPromise = undefined;
+    throw err;
+  });
 
   return window.pyodideLoadingPromise;
 }
@@ -96,13 +119,13 @@ output_stderr = sys.stderr.getvalue()
 `;
 
     // 5.0-second execution watchdog timer
-    let timerId: NodeJS.Timeout;
+    let timerId: ReturnType<typeof setTimeout> | undefined;
     const timeoutPromise = new Promise<{ isTimeout: true }>((resolve) => {
       timerId = setTimeout(() => resolve({ isTimeout: true }), timeoutMs);
     });
 
     const executionPromise = pyodide.runPythonAsync(wrapper).then(() => {
-      clearTimeout(timerId);
+      if (timerId !== undefined) clearTimeout(timerId);
       return { isTimeout: false as const };
     });
 
@@ -122,11 +145,12 @@ output_stderr = sys.stderr.getvalue()
     const executionTimeMs = Math.round(performance.now() - startTime);
 
     return { stdout, stderr, executionTimeMs };
-  } catch (err: any) {
+  } catch (err: unknown) {
     const executionTimeMs = Math.round(performance.now() - startTime);
+    const message = err instanceof Error ? err.message : String(err);
     return {
       stdout: "",
-      stderr: err.message || String(err),
+      stderr: message,
       executionTimeMs,
     };
   }

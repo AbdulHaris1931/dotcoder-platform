@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 interface LoadingContextType {
@@ -91,9 +92,12 @@ export function GlobalLoadingOverlay() {
 
         {/* EQLV CODE Logo Emblem */}
         <div className="relative flex items-center justify-center">
-          <img
+          <Image
             src="/logo.png"
             alt="EQLV CODE"
+            width={96}
+            height={96}
+            priority
             className="w-20 h-20 sm:w-24 sm:h-24 object-contain rounded-2xl drop-shadow-[0_0_35px_rgba(157,255,0,0.35)] animate-pulse"
           />
         </div>

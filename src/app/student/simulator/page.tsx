@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Clock, Building2, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Clock } from "lucide-react";
 
 interface CompanySimulator {
   id: string;
@@ -25,9 +25,9 @@ const SIMULATORS: CompanySimulator[] = [
     sections: "3 Sections",
     duration: "90 mins",
     category: "Mixed",
-    logoBg: "bg-red-50",
+    logoBg: "bg-rose-500/10 border-rose-500/25",
     logoText: "zoho",
-    logoColor: "text-red-600 font-extrabold tracking-tight",
+    logoColor: "text-rose-400 font-extrabold tracking-tight",
   },
   {
     id: "tcs-nqt",
@@ -36,9 +36,9 @@ const SIMULATORS: CompanySimulator[] = [
     sections: "4 Sections",
     duration: "120 mins",
     category: "Mixed",
-    logoBg: "bg-red-50",
+    logoBg: "bg-rose-500/10 border-rose-500/25",
     logoText: "tcs",
-    logoColor: "text-red-700 font-bold",
+    logoColor: "text-rose-300 font-bold",
   },
   {
     id: "cognizant-genc",
@@ -47,9 +47,9 @@ const SIMULATORS: CompanySimulator[] = [
     sections: "3 Sections",
     duration: "90 mins",
     category: "Technical",
-    logoBg: "bg-blue-50",
+    logoBg: "bg-sky-500/10 border-sky-500/25",
     logoText: "Cognizant",
-    logoColor: "text-blue-700 font-bold",
+    logoColor: "text-sky-300 font-bold",
   },
   {
     id: "infosys-sp",
@@ -58,9 +58,9 @@ const SIMULATORS: CompanySimulator[] = [
     sections: "3 Sections",
     duration: "120 mins",
     category: "Technical",
-    logoBg: "bg-blue-50",
+    logoBg: "bg-sky-500/10 border-sky-500/25",
     logoText: "Infosys",
-    logoColor: "text-blue-600 font-bold italic",
+    logoColor: "text-sky-400 font-bold italic",
   },
   {
     id: "wipro-elite",
@@ -69,9 +69,9 @@ const SIMULATORS: CompanySimulator[] = [
     sections: "3 Sections",
     duration: "90 mins",
     category: "Aptitude",
-    logoBg: "bg-emerald-50",
+    logoBg: "bg-emerald-500/10 border-emerald-500/25",
     logoText: "wipro",
-    logoColor: "text-emerald-700 font-bold",
+    logoColor: "text-emerald-400 font-bold",
   },
   {
     id: "hcl-techbee",
@@ -80,9 +80,9 @@ const SIMULATORS: CompanySimulator[] = [
     sections: "3 Sections",
     duration: "90 mins",
     category: "Technical",
-    logoBg: "bg-blue-50",
+    logoBg: "bg-cyan-500/10 border-cyan-500/25",
     logoText: "HCL",
-    logoColor: "text-blue-800 font-black tracking-wider",
+    logoColor: "text-cyan-300 font-black tracking-wider",
   },
 ];
 
@@ -95,14 +95,14 @@ export default function SimulatorPage() {
   );
 
   return (
-    <div className="flex-1 p-8 sm:p-10 max-w-7xl mx-auto space-y-8 font-sans">
-      {/* Top Header matching Screen 04 */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="flex-1 p-6 sm:p-10 max-w-7xl mx-auto space-y-8 font-sans text-[#F4F7F5]">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1E2C24] pb-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#F4F7F5]">
             Corporate Recruitment Simulator
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          <p className="text-xs sm:text-sm text-[#99A9A0] mt-1">
             Practice real company test patterns and improve your chances.
           </p>
         </div>
@@ -110,14 +110,14 @@ export default function SimulatorPage() {
         {/* View Campus Drives Shortcut */}
         <Link
           href="/student/drives"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#9DFF00] hover:underline transition-colors"
         >
           <span>View Campus Drives</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
 
-      {/* Filter Pills matching Screen 04 */}
+      {/* Filter Pills */}
       <div className="flex flex-wrap items-center gap-2">
         {(["All", "Aptitude", "Technical", "Mixed"] as const).map((cat) => {
           const isSelected = activeCategory === cat;
@@ -126,10 +126,10 @@ export default function SimulatorPage() {
               key={cat}
               type="button"
               onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all shadow-2xs ${
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 isSelected
-                  ? "bg-[#9DFF00] text-black"
-                  : "bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:text-black"
+                  ? "bg-[#9DFF00] text-[#070B09]"
+                  : "bg-[#0C120F] border border-[#1E2C24] text-[#99A9A0] hover:border-[#2C4034] hover:text-[#F4F7F5]"
               }`}
             >
               {cat === "All" ? "All Companies" : cat}
@@ -138,46 +138,46 @@ export default function SimulatorPage() {
         })}
       </div>
 
-      {/* 6 Grid Cards matching Screen 04 */}
+      {/* 6 Grid Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredSimulators.map((company) => (
           <div
             key={company.id}
-            className="rounded-2xl bg-white border border-slate-200/90 p-6 shadow-xs flex flex-col justify-between space-y-6 hover:shadow-md transition-shadow"
+            className="rounded-2xl bg-[#0C120F] border border-[#1E2C24] hover:border-[#2C4034] p-6 flex flex-col justify-between space-y-6 transition-colors"
           >
             {/* Top Logo & Company Info */}
             <div className="space-y-4">
               {/* Brand Logo Container */}
-              <div className="h-10 flex items-center">
-                <span className={`text-xl ${company.logoColor}`}>
+              <div className={`inline-flex items-center px-3 py-1.5 rounded-xl border ${company.logoBg}`}>
+                <span className={`text-xl font-display ${company.logoColor}`}>
                   {company.logoText}
                 </span>
               </div>
 
               {/* Title & Role */}
               <div>
-                <h3 className="text-base font-bold text-slate-900">
+                <h3 className="font-display text-base font-bold text-[#F4F7F5]">
                   {company.name}
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-[#99A9A0] mt-0.5">
                   {company.role}
                 </p>
               </div>
 
               {/* Meta Pill: 3 Sections • 90 mins */}
-              <div className="inline-flex items-center gap-1.5 text-[11px] font-mono text-slate-500 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-100">
-                <Clock className="w-3 h-3 text-slate-400" />
+              <div className="inline-flex items-center gap-1.5 text-[11px] font-mono text-[#D5E0D9] bg-[#121B16] px-2.5 py-1 rounded-md border border-[#1E2C24] tabular-nums">
+                <Clock className="w-3 h-3 text-[#9DFF00]" />
                 <span>
-                  {company.sections} • {company.duration}
+                  {company.sections} &bull; {company.duration}
                 </span>
               </div>
             </div>
 
-            {/* Bottom Lime Green Start Test CTA button matching Screen 04 */}
+            {/* Bottom Lime Green Start Test CTA button */}
             <button
               type="button"
               onClick={() => router.push(`/student/exam/assessment-1/simulator?company=${company.id}`)}
-              className="w-full py-2.5 px-4 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-2xs active:scale-[0.98]"
+              className="w-full py-2.5 px-4 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-[#070B09] font-extrabold text-xs transition-all flex items-center justify-center gap-2 active:scale-[0.98] cursor-pointer"
             >
               <span>Start Test</span>
               <ArrowRight className="w-3.5 h-3.5" />

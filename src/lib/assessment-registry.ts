@@ -1,6 +1,7 @@
 import { Assessment, Problem } from "@/types";
 import { SEED_PROBLEMS } from "./seed-data";
 import { SEED_MCQS } from "./seed-mcqs";
+import { MNC_CURRICULUM_UNITS, MNC_CODING_PROBLEMS, MNC_MCQS } from "./mnc-curriculum-data";
 
 // Helper to convert MCQQuestion into a Problem
 function createMCQProblem(
@@ -429,9 +430,66 @@ export const ASSESSMENT_COMPREHENSIVE_MOCK: Assessment = {
 };
 
 // ----------------------------------------------------------------------------
+// MNC 300 Interview Preparation Units Dynamic Builder
+// ----------------------------------------------------------------------------
+export function getMncUnitAssessment(unitIdentifier: string): Assessment {
+  const cleanId = (unitIdentifier || "").toLowerCase().trim();
+  
+  const unit =
+    MNC_CURRICULUM_UNITS.find(
+      (u) =>
+        u.id.toLowerCase() === cleanId ||
+        u.assessment_id.toLowerCase() === cleanId ||
+        `unit-${u.unit_number}` === cleanId ||
+        `mnc-unit-${u.unit_number}` === cleanId ||
+        cleanId.endsWith(`-${u.unit_number}`)
+    ) || MNC_CURRICULUM_UNITS[0];
+
+  const unitMCQs = MNC_MCQS.filter((m) => unit.mcq_ids.includes(m.id));
+  const mcqProblems: Problem[] = unitMCQs.map((m) =>
+    createMCQProblem(
+      m.id,
+      `Q${m.number}: ${m.category}`,
+      m.category,
+      m.question,
+      m.options,
+      m.options[m.correct_option] || m.options[0],
+      m.explanation,
+      m.difficulty
+    )
+  );
+
+  const unitCodeProblems = MNC_CODING_PROBLEMS.filter((p) =>
+    unit.coding_problem_ids.slice(0, 2).includes(p.id)
+  );
+  const codingProblems: Problem[] = unitCodeProblems.map((cp) => ({
+    id: cp.id,
+    title: cp.title,
+    slug: cp.slug,
+    difficulty: cp.difficulty,
+    company_tags: cp.company_tags,
+    type: "coding",
+    description_md: `### Problem Description\n${cp.description}\n\n### Constraints\n${cp.constraints}`,
+    starter_code_json: cp.starter_code_json,
+    is_public: true,
+  }));
+
+  return {
+    id: unit.assessment_id,
+    title: `Unit ${unit.unit_number} Proctored Assessment: ${unit.title}`,
+    description: `Official 45-minute timed assessment for ${unit.title}. Covers ${unitMCQs.length} domain MCQs and ${codingProblems.length} representative coding challenges with automated evaluation. Score 75% or higher to unlock Unit ${Math.min(10, unit.unit_number + 1)}.`,
+    duration_minutes: 45,
+    is_proctored: true,
+    problems: [...mcqProblems, ...codingProblems],
+  };
+}
+
+// ----------------------------------------------------------------------------
 // Registry Lookup Engine
 // ----------------------------------------------------------------------------
 export class AssessmentRegistry {
+  private static DYNAMIC_ASSESSMENTS: Record<string, Assessment> = {};
+
   private static readonly ASSESSMENTS: Record<string, Assessment> = {
     "assessment-1": ASSESSMENT_COMPREHENSIVE_MOCK,
     "placement-mock": ASSESSMENT_COMPREHENSIVE_MOCK,
@@ -447,10 +505,112 @@ export class AssessmentRegistry {
     "module-5": ASSESSMENT_MODULE_5,
   };
 
+  /**
+   * Register a new teacher-created or AI-generated assessment locally and sync to Supabase
+   */
+  static registerAssessment(assessment: Assessment): void {
+    const key = (assessment.id || "").toLowerCase().trim();
+    this.ASSESSMENTS[key] = assessment;
+    this.DYNAMIC_ASSESSMENTS[key] = assessment;
+
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("eqlv_dynamic_teacher_assessments");
+        const list: Assessment[] = stored ? JSON.parse(stored) : [];
+        const filtered = list.filter((a) => a.id !== assessment.id);
+        localStorage.setItem(
+          "eqlv_dynamic_teacher_assessments",
+          JSON.stringify([assessment, ...filtered])
+        );
+      } catch (err) {
+        console.warn("Failed to persist dynamic assessment locally:", err);
+      }
+    }
+  }
+
+  /**
+   * Publish an assessment to Supabase via /api/assessments so students on all devices receive it
+   */
+  static async publishAssessmentToCloud(assessment: Assessment): Promise<boolean> {
+    this.registerAssessment(assessment);
+    try {
+      const res = await fetch("/api/assessments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(assessment),
+      });
+      if (!res.ok) return false;
+      const data = await res.json();
+      return Boolean(data.persisted);
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Sync cloud-published assessments from Supabase into the local registry cache
+   */
+  static async syncFromCloud(): Promise<Assessment[]> {
+    try {
+      const res = await fetch("/api/assessments");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.assessments)) {
+          for (const a of data.assessments as Assessment[]) {
+            const key = (a.id || "").toLowerCase().trim();
+            if (key) {
+              this.ASSESSMENTS[key] = a;
+              this.DYNAMIC_ASSESSMENTS[key] = a;
+            }
+          }
+        }
+      }
+    } catch {
+      // Offline or unconfigured: rely on local catalog
+    }
+    return this.getAllAssessments();
+  }
+
+  /**
+   * Retrieve all teacher assessments created dynamically
+   */
+  static getDynamicTeacherAssessments(): Assessment[] {
+    if (typeof window === "undefined") {
+      return Object.values(this.DYNAMIC_ASSESSMENTS);
+    }
+    try {
+      const stored = localStorage.getItem("eqlv_dynamic_teacher_assessments");
+      if (stored) {
+        const list: Assessment[] = JSON.parse(stored);
+        if (Array.isArray(list)) {
+          list.forEach((a) => {
+            const k = a.id.toLowerCase().trim();
+            this.ASSESSMENTS[k] = a;
+            this.DYNAMIC_ASSESSMENTS[k] = a;
+          });
+          return list;
+        }
+      }
+    } catch {}
+    return Object.values(this.DYNAMIC_ASSESSMENTS);
+  }
+
   static getAssessment(id: string): Assessment {
     const key = (id || "").toLowerCase().trim();
     if (this.ASSESSMENTS[key]) {
       return this.ASSESSMENTS[key];
+    }
+
+    // Check dynamic teacher assessments
+    const dynamicList = this.getDynamicTeacherAssessments();
+    const dynamicFound = dynamicList.find((a) => a.id.toLowerCase().trim() === key);
+    if (dynamicFound) {
+      return dynamicFound;
+    }
+
+    // MNC 10-Unit assessments dynamic routing
+    if (key.includes("mnc") || key.startsWith("unit-") || key.includes("unit-")) {
+      return getMncUnitAssessment(key);
     }
 
     if (key.includes("1")) return ASSESSMENT_MODULE_1;
@@ -463,13 +623,18 @@ export class AssessmentRegistry {
   }
 
   static getAllAssessments(): Assessment[] {
+    const mncAssessments = MNC_CURRICULUM_UNITS.map((u) => getMncUnitAssessment(u.id));
+    const dynamicTeacher = this.getDynamicTeacherAssessments();
+
     return [
+      ...dynamicTeacher,
       ASSESSMENT_COMPREHENSIVE_MOCK,
       ASSESSMENT_MODULE_1,
       ASSESSMENT_MODULE_2,
       ASSESSMENT_MODULE_3,
       ASSESSMENT_MODULE_4,
       ASSESSMENT_MODULE_5,
+      ...mncAssessments,
     ];
   }
 }

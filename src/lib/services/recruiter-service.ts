@@ -1,10 +1,30 @@
-import {
-  CampusDrive,
-  CandidateShortlistEntry,
-  PlacementStage,
-  RecruiterCompany,
-} from "@/types/recruiter";
+import { CampusDrive, CandidateShortlistEntry, PlacementStage } from "@/types/recruiter";
 import { createClient } from "@/lib/supabase/client";
+
+interface DbDriveRow extends CampusDrive {
+  company_id?: string;
+  company_name?: string;
+  target_departments?: string[];
+  target_batch_year?: number;
+  min_readiness_score?: number;
+  drive_date?: string;
+  registered_count?: number;
+  shortlisted_count?: number;
+}
+
+interface DbShortlistRow extends CandidateShortlistEntry {
+  student_id?: string;
+  student_name?: string;
+  roll_no?: string;
+  readiness_score?: number;
+  dsa_mastery?: number;
+  primary_language?: string;
+  drive_id?: string;
+  drive_title?: string;
+  interviewer_notes?: string;
+  rating?: number;
+  updated_at?: string;
+}
 
 const LOCAL_STORAGE_SHORTLISTS_KEY = "dotcoder_recruiter_shortlists_cache";
 
@@ -43,40 +63,8 @@ const INITIAL_DEMO_DRIVES: CampusDrive[] = [
   },
 ];
 
-const INITIAL_DEMO_SHORTLISTS: CandidateShortlistEntry[] = [
-  {
-    id: "sl-001",
-    studentId: "00000000-0000-0000-0000-000000000001",
-    studentName: "Karthik S.",
-    rollNo: "23BCA01",
-    department: "BCA",
-    readinessScore: 88,
-    dsaMastery: "Optimal Hash Map & Sliding Window",
-    primaryLanguage: "Python",
-    driveId: "d0000000-0000-0000-0000-000000000001",
-    driveTitle: "Zoho Campus Recruitment Drive 2026",
-    stage: "Technical Interview",
-    recruiterNotes: "Exceptional code readability and linear time complexity optimization.",
-    shortlistedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    accreditationHash: "AVASC-2026-BCA-23BCA01-92-A1K7",
-  },
-  {
-    id: "sl-002",
-    studentId: "00000000-0000-0000-0000-000000000002",
-    studentName: "Priya Dharshini M.",
-    rollNo: "23CS012",
-    department: "B.Sc CS",
-    readinessScore: 92.5,
-    dsaMastery: "Two Pointers & Monotonic Stack",
-    primaryLanguage: "C++",
-    driveId: "d0000000-0000-0000-0000-000000000001",
-    driveTitle: "Zoho Campus Recruitment Drive 2026",
-    stage: "Coding Round",
-    recruiterNotes: "High execution efficiency in compiled C++ benchmarks.",
-    shortlistedAt: new Date(Date.now() - 86400000).toISOString(),
-    accreditationHash: "AVASC-2026-CS-23CS012-88-B2P9",
-  },
-];
+// 100% clean slate by default — zero mock candidate shortlists
+const INITIAL_DEMO_SHORTLISTS: CandidateShortlistEntry[] = [];
 
 export class RecruiterService {
   /**
@@ -92,20 +80,20 @@ export class RecruiterService {
           .order("drive_date", { ascending: true });
 
         if (!error && data && data.length > 0) {
-          return data.map((d: any) => ({
+          return (data as unknown as DbDriveRow[]).map((d) => ({
             id: d.id,
-            companyId: d.company_id,
-            companyName: d.company_name,
+            companyId: d.company_id || d.companyId,
+            companyName: d.company_name || d.companyName,
             title: d.title,
             role: d.role,
             compensation: d.compensation,
-            targetDepartments: d.target_departments || [],
-            targetBatchYear: d.target_batch_year,
-            minReadinessScore: d.min_readiness_score,
+            targetDepartments: d.target_departments || d.targetDepartments || [],
+            targetBatchYear: d.target_batch_year || d.targetBatchYear,
+            minReadinessScore: d.min_readiness_score || d.minReadinessScore,
             status: d.status,
-            driveDate: d.drive_date,
-            registeredCount: d.registered_count,
-            shortlistedCount: d.shortlisted_count,
+            driveDate: d.drive_date || d.driveDate,
+            registeredCount: d.registered_count ?? d.registeredCount,
+            shortlistedCount: d.shortlisted_count ?? d.shortlistedCount,
             description: d.description,
           }));
         }
@@ -136,20 +124,20 @@ export class RecruiterService {
 
         const { data, error } = await query;
         if (!error && data && data.length > 0) {
-          return data.map((s: any) => ({
+          return (data as unknown as DbShortlistRow[]).map((s) => ({
             id: s.id,
-            studentId: s.student_id,
-            studentName: s.student_name,
-            rollNo: s.roll_no,
+            studentId: s.student_id || s.studentId,
+            studentName: s.student_name || s.studentName,
+            rollNo: s.roll_no || s.rollNo,
             department: s.department,
-            readinessScore: s.readiness_score,
-            dsaMastery: s.dsa_mastery,
-            primaryLanguage: s.primary_language,
-            driveId: s.drive_id,
-            driveTitle: s.drive_title,
+            readinessScore: s.readiness_score ?? s.readinessScore,
+            dsaMastery: String(s.dsa_mastery || s.dsaMastery || "Proficient"),
+            primaryLanguage: s.primary_language || s.primaryLanguage,
+            driveId: s.drive_id || s.driveId,
+            driveTitle: s.drive_title || s.driveTitle,
             stage: s.stage,
-            recruiterNotes: s.recruiter_notes,
-            shortlistedAt: s.shortlisted_at,
+            recruiterNotes: s.interviewer_notes || s.recruiterNotes,
+            shortlistedAt: s.updated_at || s.shortlistedAt,
           }));
         }
       }

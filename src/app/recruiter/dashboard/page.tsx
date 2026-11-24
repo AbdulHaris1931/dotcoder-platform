@@ -1,9 +1,11 @@
 "use client";
+import { ObsidianSelect } from "@/components/ui/obsidian-select";
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { DemoStore, subscribeToDemoStore } from "@/lib/demo-store";
+import { subscribeToDemoStore } from "@/lib/demo-store";
+import { DataService } from "@/lib/supabase/db";
 import { UserProfile, Submission } from "@/types";
 import { StudentDrawer } from "@/components/tpo/student-drawer";
 import { downloadFile } from "@/lib/utils";
@@ -16,22 +18,13 @@ import {
 import {
   Briefcase,
   Users,
-  Award,
   Search,
-  Filter,
   Download,
   CheckCircle2,
-  ExternalLink,
   ChevronRight,
   ShieldCheck,
   Star,
   FileText,
-  Building,
-  Sparkles,
-  ArrowUpRight,
-  Lock,
-  Layers,
-  ArrowRight,
 } from "lucide-react";
 
 export default function RecruiterDashboardPage() {
@@ -46,7 +39,7 @@ export default function RecruiterDashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDept, setSelectedDept] = useState("ALL");
   const [minScore, setMinScore] = useState<number>(75);
-  const [consentOnly, setConsentOnly] = useState<boolean>(true);
+  const [consentOnly] = useState<boolean>(true);
   const [activeView, setActiveView] = useState<"discovery" | "pipeline">("discovery");
   const [pipelineStageFilter, setPipelineStageFilter] = useState<string>("ALL");
 
@@ -54,25 +47,32 @@ export default function RecruiterDashboardPage() {
   const [shortlistNotice, setShortlistNotice] = useState<string | null>(null);
 
   useEffect(() => {
-    const user = DemoStore.getCurrentUser();
-    setCurrentUser(user);
+    let isMounted = true;
 
     const refreshData = async () => {
-      const studs = DemoStore.getStudents();
-      const subs = DemoStore.getSubmissions();
+      const [user, studs, subs, d, sl] = await Promise.all([
+        DataService.getCurrentUser(),
+        DataService.getStudents(),
+        DataService.getSubmissions(),
+        RecruiterService.getCampusDrives(),
+        RecruiterService.getShortlists(),
+      ]);
+      if (!isMounted) return;
+      setCurrentUser(user);
       setStudents(studs);
       setSubmissions(subs);
-
-      const d = await RecruiterService.getCampusDrives();
       setDrives(d);
-
-      const sl = await RecruiterService.getShortlists();
       setShortlists(sl);
     };
 
     refreshData();
-    const unsubscribe = subscribeToDemoStore(refreshData);
-    return unsubscribe;
+    const unsubscribe = subscribeToDemoStore(() => {
+      void refreshData();
+    });
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const activeDrive = drives[0] || {
@@ -168,38 +168,42 @@ export default function RecruiterDashboardPage() {
   const placementReadyCount = students.filter((s) => s.readiness_score >= 80).length;
 
   return (
-    <div className="flex-1 min-h-screen bg-[#F4F7F4] text-slate-900 pb-16 font-sans">
+    <div className="flex-1 min-h-screen bg-[#070B09] text-[#F4F7F5] pb-16 font-sans">
       {/* Top Banner / Header */}
-      <div className="bg-white border-b border-slate-200/80 px-6 sm:px-10 py-8">
+      <div className="bg-[#0A0F0C] border-b border-[#1E2C24] px-6 sm:px-10 py-8">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[#9DFF00] text-black border border-[#85e000]">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-wider uppercase bg-[#9DFF00] text-[#070B09]">
                 Corporate Recruiter Talent Gateway
               </span>
-              <span className="text-xs text-slate-400 font-mono">Zoho Corp &bull; Verified Institutional Partner</span>
+              <span className="text-xs text-[#99A9A0] font-mono">
+                Zoho Corp &bull; Verified Institutional Partner
+              </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              Kavitha R.
+            <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#F4F7F5] tracking-tight">
+              {currentUser?.full_name || "Corporate Recruiter"}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            <p className="text-xs sm:text-sm text-[#99A9A0] mt-0.5">
               Technical Hiring Lead &bull; Campus Recruitment at Annai Vailankanni Arts and Science College, Thanjavur
             </p>
           </div>
 
           <div className="flex items-center flex-wrap gap-2.5">
             <button
+              type="button"
               onClick={handleExportShortlist}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-colors shadow-xs"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#1E2C24] bg-[#0C120F] hover:bg-[#121B16] text-xs font-semibold text-[#F4F7F5] transition-colors cursor-pointer"
             >
-              <Download className="w-4 h-4 text-slate-500" />
+              <Download className="w-4 h-4 text-[#99A9A0]" />
               <span>Export Shortlist ({shortlists.length})</span>
             </button>
             <button
-              onClick={() => router.push("/admin/drives")}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0F1412] hover:bg-[#1a2320] text-white text-xs font-semibold transition-all shadow-xs"
+              type="button"
+              onClick={() => router.push("/tpo/drives")}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-[#070B09] text-xs font-bold transition-all cursor-pointer"
             >
-              <Briefcase className="w-4 h-4 text-[#9DFF00]" />
+              <Briefcase className="w-4 h-4 text-[#070B09]" />
               <span>Campus Drives</span>
             </button>
           </div>
@@ -207,180 +211,171 @@ export default function RecruiterDashboardPage() {
       </div>
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-6 sm:px-10 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-6 sm:px-10 py-8 space-y-8">
         {shortlistNotice && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center justify-between shadow-xs"
+            className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-medium flex items-center justify-between"
           >
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
               <span>{shortlistNotice}</span>
             </div>
             <button
+              type="button"
+              aria-label="Dismiss notification"
               onClick={() => setShortlistNotice(null)}
-              className="text-emerald-700 hover:text-emerald-900 font-bold"
+              className="text-emerald-300 hover:text-white font-bold cursor-pointer"
             >
-              ✕
+              Close
             </button>
           </motion.div>
         )}
 
         {/* Live KPI Cards */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-between">
+          <div className="surface-card p-5 rounded-2xl flex items-center justify-between">
             <div className="space-y-1">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[#99A9A0]">
                 Total Evaluated Pool
               </span>
-              <div className="text-2xl font-extrabold text-slate-900 font-mono">
+              <div className="font-display text-2xl font-bold text-[#F4F7F5] tabular-nums">
                 {totalCandidates}
               </div>
-              <span className="text-[11px] text-slate-500 font-medium">AVASC 2026 Batch</span>
+              <span className="text-[11px] text-[#85998D] font-mono">AVASC 2026 Batch</span>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700">
-              <Users className="w-6 h-6" />
+            <div className="w-11 h-11 rounded-xl bg-[#121B16] border border-[#1E2C24] flex items-center justify-center text-[#99A9A0]">
+              <Users className="w-5 h-5" />
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-between">
+          <div className="surface-card p-5 rounded-2xl flex items-center justify-between">
             <div className="space-y-1">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[#99A9A0]">
                 Placement Ready (80%+)
               </span>
-              <div className="text-2xl font-extrabold text-slate-900 font-mono">
+              <div className="font-display text-2xl font-bold text-[#9DFF00] tabular-nums">
                 {placementReadyCount}
               </div>
-              <span className="text-[11px] text-emerald-600 font-medium">Verified by Skill Engine</span>
+              <span className="text-[11px] text-emerald-400 font-medium">Verified by Skill Engine</span>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-              <ShieldCheck className="w-6 h-6" />
+            <div className="w-11 h-11 rounded-xl bg-[#9DFF00]/10 border border-[#9DFF00]/25 flex items-center justify-center text-[#9DFF00]">
+              <ShieldCheck className="w-5 h-5" />
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-between">
+          <div className="surface-card p-5 rounded-2xl flex items-center justify-between">
             <div className="space-y-1">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[#99A9A0]">
                 Pipeline Shortlists
               </span>
-              <div className="text-2xl font-extrabold text-slate-900 font-mono">
+              <div className="font-display text-2xl font-bold text-[#F4F7F5] tabular-nums">
                 {shortlists.length}
               </div>
-              <span className="text-[11px] text-blue-600 font-medium">Active Candidates</span>
+              <span className="text-[11px] text-sky-400 font-medium">Active Candidates</span>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
-              <Star className="w-6 h-6" />
+            <div className="w-11 h-11 rounded-xl bg-sky-500/10 border border-sky-500/25 flex items-center justify-center text-sky-400">
+              <Star className="w-5 h-5" />
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-between">
+          <div className="surface-card p-5 rounded-2xl flex items-center justify-between">
             <div className="space-y-1">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[#99A9A0]">
                 Active Campus Drive
               </span>
-              <div className="text-sm font-extrabold text-slate-900 truncate max-w-[160px]">
+              <div className="text-sm font-bold text-[#F4F7F5] truncate max-w-[160px]">
                 {activeDrive.role}
               </div>
-              <span className="text-[11px] text-emerald-600 font-medium font-mono">{activeDrive.compensation}</span>
+              <span className="text-[11px] text-[#9DFF00] font-mono">{activeDrive.compensation}</span>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
-              <Briefcase className="w-6 h-6" />
+            <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-400">
+              <Briefcase className="w-5 h-5" />
             </div>
           </div>
         </section>
 
-        {/* View Switcher: Talent Discovery vs Hiring Pipeline */}
-        <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+        {/* View Switcher */}
+        <div className="flex items-center justify-between border-b border-[#1E2C24] pb-3.5">
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={() => setActiveView("discovery")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 activeView === "discovery"
-                  ? "bg-slate-900 text-white shadow-xs"
-                  : "bg-white border border-slate-200 text-slate-600 hover:text-black"
+                  ? "bg-[#9DFF00] text-[#070B09]"
+                  : "bg-[#0C120F] border border-[#1E2C24] text-[#99A9A0] hover:text-[#F4F7F5]"
               }`}
             >
               <span>Verified Talent Discovery</span>
             </button>
             <button
+              type="button"
               onClick={() => setActiveView("pipeline")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
                 activeView === "pipeline"
-                  ? "bg-slate-900 text-white shadow-xs"
-                  : "bg-white border border-slate-200 text-slate-600 hover:text-black"
+                  ? "bg-[#9DFF00] text-[#070B09]"
+                  : "bg-[#0C120F] border border-[#1E2C24] text-[#99A9A0] hover:text-[#F4F7F5]"
               }`}
             >
               <span>Hiring Pipeline</span>
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-[#9DFF00] text-black font-bold">
+              <span
+                className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                  activeView === "pipeline" ? "bg-black/15 text-[#070B09]" : "bg-[#9DFF00]/15 text-[#9DFF00]"
+                }`}
+              >
                 {shortlists.length}
               </span>
             </button>
           </div>
 
           {activeView === "discovery" && (
-            <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <div className="hidden sm:flex items-center gap-2 text-xs text-[#99A9A0] font-mono">
+              <span className="w-2 h-2 rounded-full bg-[#9DFF00]" />
               <span>Student Consent: Institutional Opt-In Verified</span>
             </div>
           )}
         </div>
 
-        {/* ------------------------------------------------------------- */}
-        {/* VIEW 1: VERIFIED TALENT DISCOVERY                             */}
-        {/* ------------------------------------------------------------- */}
+        {/* VIEW 1: VERIFIED TALENT DISCOVERY */}
         {activeView === "discovery" && (
           <section className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-base font-bold text-slate-900">Search Placement-Ready Students</h2>
-                <p className="text-xs text-slate-500">
+                <h2 className="font-display text-base font-bold text-[#F4F7F5]">
+                  Search Placement-Ready Students
+                </h2>
+                <p className="text-xs text-[#99A9A0]">
                   Showing consenting students from BCA, B.Sc Computer Science, and MCA cohorts.
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
                 <div className="relative">
-                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
+                  <Search className="w-3.5 h-3.5 text-[#85998D] absolute left-3 top-2.5" />
                   <input
                     type="text"
+                    name="search"
+                    aria-label="Search candidate name or roll no"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search candidate name or roll no..."
-                    className="pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#9DFF00]"
+                    className="pl-8 pr-3 py-1.5 rounded-xl border border-[#1E2C24] bg-[#0C120F] text-xs text-[#F4F7F5] placeholder:text-[#85998D] focus:outline-none focus:border-[#9DFF00]/60"
                   />
                 </div>
 
-                <select
-                  value={selectedDept}
-                  onChange={(e) => setSelectedDept(e.target.value)}
-                  className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#9DFF00]"
-                >
-                  <option value="ALL">All Departments</option>
-                  <option value="BCA">BCA</option>
-                  <option value="B.Sc CS">B.Sc CS</option>
-                  <option value="B.Sc IT">B.Sc IT</option>
-                  <option value="MCA">MCA</option>
-                </select>
+                <ObsidianSelect ariaLabel="Filter candidates by department" value={String(selectedDept)} onChange={(val) => setSelectedDept(val)} options={[{ value: "ALL", label: "All Departments" }, { value: "BCA", label: "BCA" }, { value: "B.Sc CS", label: "B.Sc CS" }, { value: "B.Sc IT", label: "B.Sc IT" }, { value: "MCA", label: "MCA" }]} buttonClassName="px-3 py-1.5 rounded-xl border border-[#1E2C24] bg-[#0C120F] text-xs text-[#F4F7F5] focus:outline-none focus:border-[#9DFF00]/60 font-mono" />
 
-                <select
-                  value={minScore}
-                  onChange={(e) => setMinScore(Number(e.target.value))}
-                  className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#9DFF00]"
-                >
-                  <option value={60}>Min Readiness: 60%+</option>
-                  <option value={75}>Min Readiness: 75%+</option>
-                  <option value={80}>Min Readiness: 80%+ (Top Tier)</option>
-                  <option value={90}>Min Readiness: 90%+ (Elite)</option>
-                </select>
+                <ObsidianSelect ariaLabel="Filter candidates by minimum readiness" value={String(minScore)} onChange={(val) => setMinScore(Number(val))} options={[{ value: String(0), label: "All Readiness Scores" }, { value: String(60), label: "Min Readiness: 60%+" }, { value: String(75), label: "Min Readiness: 75%+" }, { value: String(80), label: "Min Readiness: 80%+ (Top Tier)" }, { value: String(90), label: "Min Readiness: 90%+ (Elite)" }]} buttonClassName="px-3 py-1.5 rounded-xl border border-[#1E2C24] bg-[#0C120F] text-xs text-[#F4F7F5] focus:outline-none focus:border-[#9DFF00]/60 font-mono" />
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
+            <div className="surface-card rounded-2xl overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-[#F8FAF8] border-b border-slate-200/80 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  <thead className="bg-[#0A0F0C] border-b border-[#1E2C24] text-[10px] font-mono font-semibold text-[#85998D] uppercase tracking-wider">
                     <tr>
                       <th className="py-3 px-4">Candidate</th>
                       <th className="py-3 px-4">Roll No</th>
@@ -391,7 +386,7 @@ export default function RecruiterDashboardPage() {
                       <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-[#1E2C24]">
                     {filteredStudents.map((s) => {
                       const shortlisted = isCandidateShortlisted(s.id);
                       const isHighScorer = s.readiness_score >= 80;
@@ -400,11 +395,11 @@ export default function RecruiterDashboardPage() {
                         <tr
                           key={s.id}
                           onClick={() => setSelectedStudentForDrawer(s)}
-                          className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+                          className="hover:bg-[#121B16]/70 transition-colors cursor-pointer group"
                         >
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-2.5">
-                              <div className="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-[#9DFF00] group-hover:text-black text-slate-700 flex items-center justify-center font-bold text-xs font-mono transition-colors">
+                              <div className="w-8 h-8 rounded-lg bg-[#121B16] border border-[#1E2C24] group-hover:bg-[#9DFF00] group-hover:text-[#070B09] text-[#F4F7F5] flex items-center justify-center font-bold text-xs font-mono transition-colors">
                                 {s.full_name
                                   .split(" ")
                                   .map((n) => n[0])
@@ -412,23 +407,23 @@ export default function RecruiterDashboardPage() {
                                   .join("")}
                               </div>
                               <div>
-                                <div className="font-bold text-slate-900 group-hover:text-slate-950 flex items-center gap-1.5">
+                                <div className="font-bold text-[#F4F7F5] flex items-center gap-1.5">
                                   <span>{s.full_name}</span>
                                   {isHighScorer && (
-                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#9DFF00] text-black">
+                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[#9DFF00] text-[#070B09]">
                                       TOP TIER
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[10px] text-slate-400 font-mono">{s.email}</div>
+                                <div className="text-[10px] text-[#99A9A0] font-mono">{s.email}</div>
                               </div>
                             </div>
                           </td>
-                          <td className="py-3 px-4 font-mono text-slate-600">{s.roll_no}</td>
-                          <td className="py-3 px-4 font-medium text-slate-700">{s.department}</td>
+                          <td className="py-3 px-4 font-mono text-[#99A9A0]">{s.roll_no}</td>
+                          <td className="py-3 px-4 font-medium text-[#F4F7F5]">{s.department}</td>
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-2">
-                              <div className="w-16 h-2 rounded-full bg-slate-100 overflow-hidden">
+                              <div className="w-16 h-2 rounded-full bg-[#070B09] overflow-hidden">
                                 <div
                                   className={`h-full rounded-full ${
                                     isHighScorer ? "bg-[#9DFF00]" : "bg-amber-400"
@@ -436,43 +431,47 @@ export default function RecruiterDashboardPage() {
                                   style={{ width: `${s.readiness_score}%` }}
                                 />
                               </div>
-                              <span className="font-mono font-bold text-slate-900">
+                              <span className="font-mono font-bold text-[#F4F7F5] tabular-nums">
                                 {s.readiness_score}%
                               </span>
                             </div>
                           </td>
-                          <td className="py-3 px-4 font-mono font-semibold text-slate-800">
-                            {s.problems_solved || 480}
+                          <td className="py-3 px-4 font-mono font-semibold text-[#F4F7F5] tabular-nums">
+                            {s.problems_solved || 0}
                           </td>
                           <td className="py-3 px-4">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                              <ShieldCheck className="w-3 h-3 text-emerald-400" />
                               <span>Consent Granted</span>
                             </span>
                           </td>
                           <td className="py-3 px-4 text-right">
-                            <div
-                              className="flex items-center justify-end gap-1.5"
-                              onClick={(e) => e.stopPropagation()}
-                            >
+                            <div className="flex items-center justify-end gap-1.5">
                               <button
                                 type="button"
-                                onClick={() => router.push("/student/resume")}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  router.push("/student/resume");
+                                }}
                                 title="View Verified Resume"
-                                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                                aria-label="View verified resume"
+                                className="p-1.5 rounded-lg text-[#99A9A0] hover:text-[#F4F7F5] hover:bg-[#18241D] transition-colors cursor-pointer"
                               >
                                 <FileText className="w-4 h-4" />
                               </button>
                               <button
                                 type="button"
-                                onClick={() => handleToggleShortlist(s)}
-                                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shadow-2xs flex items-center gap-1 ${
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void handleToggleShortlist(s);
+                                }}
+                                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer ${
                                   shortlisted
-                                    ? "bg-slate-900 text-white"
-                                    : "bg-[#9DFF00] hover:bg-[#8CE600] text-black"
+                                    ? "bg-[#18241D] border border-[#2C4034] text-[#F4F7F5]"
+                                    : "bg-[#9DFF00] hover:bg-[#8CE600] text-[#070B09]"
                                 }`}
                               >
-                                <Star className={`w-3 h-3 ${shortlisted ? "fill-current text-amber-400" : ""}`} />
+                                <Star className={`w-3 h-3 ${shortlisted ? "fill-current text-[#9DFF00]" : ""}`} />
                                 <span>{shortlisted ? "Shortlisted" : "Shortlist"}</span>
                               </button>
                             </div>
@@ -487,28 +486,29 @@ export default function RecruiterDashboardPage() {
           </section>
         )}
 
-        {/* ------------------------------------------------------------- */}
-        {/* VIEW 2: CANDIDATE HIRING PIPELINE & STAGE PROGRESSION         */}
-        {/* ------------------------------------------------------------- */}
+        {/* VIEW 2: CANDIDATE HIRING PIPELINE */}
         {activeView === "pipeline" && (
           <section className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-base font-bold text-slate-900">Active Hiring Pipeline Stages</h2>
-                <p className="text-xs text-slate-500">
+                <h2 className="font-display text-base font-bold text-[#F4F7F5]">
+                  Active Hiring Pipeline Stages
+                </h2>
+                <p className="text-xs text-[#99A9A0]">
                   Advance candidates through Screening &bull; Coding Round &bull; Technical Interview &bull; Offered.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {["ALL", "Screening", "Coding Round", "Technical Interview", "Offered"].map((stage) => (
                   <button
+                    type="button"
                     key={stage}
                     onClick={() => setPipelineStageFilter(stage)}
-                    className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all ${
+                    className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                       pipelineStageFilter === stage
-                        ? "bg-slate-900 text-white"
-                        : "bg-white border border-slate-200 text-slate-600 hover:text-black"
+                        ? "bg-[#9DFF00] text-[#070B09]"
+                        : "bg-[#0C120F] border border-[#1E2C24] text-[#99A9A0] hover:text-[#F4F7F5]"
                     }`}
                   >
                     {stage}
@@ -517,59 +517,46 @@ export default function RecruiterDashboardPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
+            <div className="surface-card rounded-2xl overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-[#F8FAF8] border-b border-slate-200/80 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  <thead className="bg-[#0A0F0C] border-b border-[#1E2C24] text-[10px] font-mono font-semibold text-[#85998D] uppercase tracking-wider">
                     <tr>
                       <th className="py-3 px-4">Candidate</th>
-                      <th className="py-3 px-4">Roll No & Dept</th>
+                      <th className="py-3 px-4">Roll No &amp; Dept</th>
                       <th className="py-3 px-4">Readiness</th>
                       <th className="py-3 px-4">Current Stage</th>
                       <th className="py-3 px-4">Stage Progression</th>
                       <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-[#1E2C24]">
                     {filteredPipeline.map((item) => (
-                      <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="py-3 px-4 font-bold text-slate-900">
-                          {item.studentName}
-                        </td>
-                        <td className="py-3 px-4 font-mono text-slate-600">
+                      <tr key={item.id} className="hover:bg-[#121B16]/70 transition-colors">
+                        <td className="py-3 px-4 font-bold text-[#F4F7F5]">{item.studentName}</td>
+                        <td className="py-3 px-4 font-mono text-[#99A9A0]">
                           {item.rollNo} ({item.department})
                         </td>
-                        <td className="py-3 px-4 font-mono font-bold text-slate-900">
+                        <td className="py-3 px-4 font-mono font-bold text-[#F4F7F5] tabular-nums">
                           {item.readinessScore}%
                         </td>
                         <td className="py-3 px-4">
                           <span
-                            className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                            className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
                               item.stage === "Offered"
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-300"
+                                ? "bg-[#9DFF00]/15 text-[#9DFF00] border border-[#9DFF00]/30"
                                 : item.stage === "Technical Interview"
-                                ? "bg-purple-50 text-purple-700 border border-purple-200"
+                                ? "bg-teal-500/15 text-teal-300 border border-teal-500/30"
                                 : item.stage === "Coding Round"
-                                ? "bg-blue-50 text-blue-700 border border-blue-200"
-                                : "bg-slate-100 text-slate-700 border border-slate-200"
+                                ? "bg-sky-500/15 text-sky-300 border border-sky-500/30"
+                                : "bg-[#121B16] text-[#99A9A0] border border-[#1E2C24]"
                             }`}
                           >
                             {item.stage}
                           </span>
                         </td>
                         <td className="py-3 px-4">
-                          <div className="flex items-center gap-1.5">
-                            <select
-                              value={item.stage}
-                              onChange={(e) => handleAdvanceStage(item.id, e.target.value as PlacementStage)}
-                              className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#9DFF00]"
-                            >
-                              <option value="Screening">1. Screening</option>
-                              <option value="Coding Round">2. Coding Round</option>
-                              <option value="Technical Interview">3. Technical Interview</option>
-                              <option value="Offered">4. Offered</option>
-                            </select>
-                          </div>
+                          <ObsidianSelect ariaLabel={`Stage for ${item.studentName}`} value={String(item.stage)} onChange={(val) => handleAdvanceStage(item.id, val as PlacementStage)} options={[{ value: "Screening", label: "1. Screening" }, { value: "Coding Round", label: "2. Coding Round" }, { value: "Technical Interview", label: "3. Technical Interview" }, { value: "Offered", label: "4. Offered" }]} buttonClassName="px-2.5 py-1 rounded-lg border border-[#1E2C24] bg-[#070B09] text-xs font-mono text-[#F4F7F5] focus:outline-none focus:border-[#9DFF00]/60" />
                         </td>
                         <td className="py-3 px-4 text-right">
                           <button
@@ -578,7 +565,7 @@ export default function RecruiterDashboardPage() {
                               const s = students.find((st) => st.id === item.studentId);
                               if (s) setSelectedStudentForDrawer(s);
                             }}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-700 hover:text-black hover:bg-slate-100 transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#99A9A0] hover:text-[#9DFF00] hover:bg-[#18241D] transition-colors cursor-pointer"
                           >
                             <span>Inspect Skills</span>
                             <ChevronRight className="w-3.5 h-3.5" />
@@ -592,7 +579,7 @@ export default function RecruiterDashboardPage() {
             </div>
           </section>
         )}
-      </main>
+      </div>
 
       {/* Slide-Over Drawer for Selected Student Profile */}
       <AnimatePresence>

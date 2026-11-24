@@ -1,0 +1,52 @@
+{
+  "semantic": {
+    "surface": {
+      "page": { "$type": "color", "$value": "#070B09" },
+      "card": { "$type": "color", "$value": "#0C120F" },
+      "raised": { "$type": "color", "$value": "#121B16" },
+      "hover": { "$type": "color", "$value": "#18241D" }
+    },
+    "text": {
+      "primary": { "$type": "color", "$value": "#F4F7F5" },
+      "secondary": { "$type": "color", "$value": "#99A9A0" },
+      "tertiary": { "$type": "color", "$value": "#85998D" },
+      "link": { "$type": "color", "$value": "#9DFF00" },
+      "on-action": { "$type": "color", "$value": "#070B09" }
+    },
+    "action": {
+      "primary": { "$type": "color", "$value": "#9DFF00" },
+      "primary-hover": { "$type": "color", "$value": "#8CE600" }
+    },
+    "border": {
+      "default": { "$type": "color", "$value": "#1E2C24" },
+      "strong": { "$type": "color", "$value": "#5B7365" }
+    },
+    "status": {
+      "success": { "$type": "color", "$value": "#10B981" },
+      "warning": { "$type": "color", "$value": "#F59E0B" },
+      "error": { "$type": "color", "$value": "#F43F5E" },
+      "info": { "$type": "color", "$value": "#38BDF8" }
+    }
+  },
+  "font": {
+    "family": {
+      "display": { "$type": "fontFamily", "$value": "Space Grotesk, sans-serif" },
+      "sans": { "$type": "fontFamily", "$value": "Plus Jakarta Sans, sans-serif" },
+      "mono": { "$type": "fontFamily", "$value": "JetBrains Mono, monospace" }
+    }
+  },
+  "radius": {
+    "sm": { "$type": "dimension", "$value": "6px" },
+    "md": { "$type": "dimension", "$value": "10px" },
+    "lg": { "$type": "dimension", "$value": "14px" },
+    "xl": { "$type": "dimension", "$value": "20px" },
+    "2xl": { "$type": "dimension", "$value": "28px" }
+  },
+  "spacing": {
+    "xs": { "$type": "dimension", "$value": "4px" },
+    "sm": { "$type": "dimension", "$value": "8px" },
+    "md": { "$type": "dimension", "$value": "16px" },
+    "lg": { "$type": "dimension", "$value": "24px" },
+    "xl": { "$type": "dimension", "$value": "32px" }
+  }
+}

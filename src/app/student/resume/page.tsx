@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { DataService } from "@/lib/supabase/db";
 import { UserProfile } from "@/types";
 import {
@@ -11,12 +11,9 @@ import {
   Phone,
   MapPin,
   QrCode,
-  ShieldCheck,
-  Award,
 } from "lucide-react";
 
 export default function StudentResumePage() {
-  const router = useRouter();
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
@@ -31,21 +28,21 @@ export default function StudentResumePage() {
     window.print();
   };
 
-  const name = currentUser?.full_name || "Karthik S.";
+  const name = currentUser?.full_name || "Candidate";
   const department = currentUser?.department || "BCA";
   const college = currentUser?.college_name || "Annai Vailankanni Arts and Science College, Thanjavur";
-  const email = currentUser?.email || "karthik.bca@avc.edu.in";
-  const readiness = currentUser?.readiness_score ? Math.round(currentUser.readiness_score) : 78;
+  const email = currentUser?.email || "candidate@avc.edu.in";
+  const readiness = currentUser?.readiness_score !== undefined ? Math.round(currentUser.readiness_score) : 0;
 
   return (
     <div className="flex-1 p-8 sm:p-10 max-w-7xl mx-auto space-y-8 font-sans">
       {/* Top Header matching Screen 06 */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#F4F7F5]">
             My Placement Resume
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          <p className="text-xs sm:text-sm text-[#99A9A0] mt-1">
             A verified, ATS-friendly resume with your EQLV CODE credentials.
           </p>
         </div>
@@ -54,24 +51,26 @@ export default function StudentResumePage() {
         <button
           type="button"
           onClick={handleDownload}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs transition-all shadow-xs active:scale-[0.98]"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-[#070B09] font-bold text-xs transition-all shadow-xs active:scale-[0.98] cursor-pointer"
         >
-          <Download className="w-4 h-4 text-black" />
+          <Download className="w-4 h-4 text-[#070B09]" />
           <span>Download PDF</span>
         </button>
       </div>
 
-      {/* Main White Resume Document Card matching Screen 06 */}
-      <div className="rounded-3xl bg-white border border-slate-200/90 p-8 sm:p-10 shadow-xs space-y-8 print:p-0 print:border-none print:shadow-none">
+      {/* Main White Resume Document Card (paper-resume preserves printable ATS white sheet) */}
+      <div className="paper-resume rounded-3xl bg-white text-slate-900 border border-slate-200/90 p-8 sm:p-10 shadow-obsidian space-y-8 print:p-0 print:border-none print:shadow-none">
         {/* Top Header Row: Avatar, Student Info, QR Code, Verified Credential Badge */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-8 border-b border-slate-100">
           {/* Left: Avatar & Candidate Info */}
           <div className="flex items-center gap-5">
             {/* Student Avatar Photo */}
             <div className="w-20 h-20 rounded-full overflow-hidden bg-slate-100 border-2 border-slate-200 flex-shrink-0">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80"
                 alt={name}
+                width={80}
+                height={80}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -148,7 +147,7 @@ export default function StudentResumePage() {
                 Education
               </h3>
               <div className="text-sm font-semibold text-slate-800">
-                {department} — {college} <span className="text-xs font-normal text-slate-500 font-mono">(2023 - 2026)</span>
+                {department} - {college} <span className="text-xs font-normal text-slate-500 font-mono">(2023 - 2026)</span>
               </div>
             </div>
 

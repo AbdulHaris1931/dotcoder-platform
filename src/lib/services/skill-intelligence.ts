@@ -5,7 +5,6 @@ import {
   SkillScoreBreakdown,
   AdaptiveRecommendation,
 } from "@/types/skill-intelligence";
-import { CurriculumStore } from "@/lib/curriculum-store";
 import { createClient } from "@/lib/supabase/client";
 
 const SKILL_STORAGE_KEY_PREFIX = "dotcoder_skill_profile_";
@@ -39,6 +38,65 @@ export class SkillIntelligenceService {
     const userSubmissions = submissions.filter((s) => s.user_id === user.id);
     const totalSubmissions = userSubmissions.length;
     const acceptedSubmissions = userSubmissions.filter((s) => s.status === "Accepted").length;
+
+    // Zero-baseline initialization for brand new students with 0 submissions
+    const isBrandNewStudent = totalSubmissions === 0 && (!user.readiness_score || user.readiness_score === 0);
+
+    if (isBrandNewStudent) {
+      const emptyBreakdown: SkillScoreBreakdown = {
+        accuracyScore: 0,
+        accuracyWeight: 0.25,
+        psiScore: 0,
+        psiWeight: 0.25,
+        dsaMasteryScore: 0,
+        dsaWeight: 0.25,
+        efficiencyScore: 0,
+        efficiencyWeight: 0.15,
+        consistencyScore: 0,
+        consistencyWeight: 0.10,
+        placementReadinessScore: 0,
+      };
+
+      const baselineMastery: DSATopicMastery[] = this.CORE_TOPICS.map((item) => ({
+        topic: item.topic,
+        category: item.category,
+        masteryPercentage: 0,
+        problemsSolved: 0,
+        totalProblems: 10,
+        accuracy: 0,
+        status: "Developing" as const,
+      }));
+
+      const starterRecs: AdaptiveRecommendation[] = [
+        {
+          id: `rec-starter-1`,
+          topic: "Arrays & Vectors",
+          reason: "Welcome to EQLV CODE! Start your placement training journey by solving your first fundamental algorithmic challenge.",
+          recommendedProblemSlug: "optimal-two-sum-index-pairs",
+          recommendedProblemTitle: "Starter Challenge: Two Sum Index Pairs",
+          difficulty: "Easy",
+          priority: "High",
+          targetScore: 75,
+          isCompleted: false,
+        },
+      ];
+
+      return {
+        userId: user.id,
+        rollNo: user.roll_no || "",
+        fullName: user.full_name,
+        department: user.department || "BCA",
+        batchYear: user.batch_year || 2026,
+        breakdown: emptyBreakdown,
+        dsaTopicMastery: baselineMastery,
+        weakTopics: [],
+        adaptiveRecommendations: starterRecs,
+        streakDays: 0,
+        totalSubmissions: 0,
+        passedSubmissions: 0,
+        lastUpdated: new Date().toISOString(),
+      };
+    }
 
     // Base calibration factor from student's readiness score
     const targetBase = user.readiness_score > 0 ? user.readiness_score : 78;
@@ -176,9 +234,9 @@ export class SkillIntelligenceService {
       dsaTopicMastery,
       weakTopics,
       adaptiveRecommendations,
-      streakDays: 5,
-      totalSubmissions: Math.max(totalSubmissions, 24),
-      passedSubmissions: Math.max(acceptedSubmissions, 21),
+      streakDays: Math.min(5, totalSubmissions),
+      totalSubmissions: totalSubmissions,
+      passedSubmissions: acceptedSubmissions,
       lastUpdated: new Date().toISOString(),
     };
   }
@@ -219,9 +277,9 @@ export class SkillIntelligenceService {
             dsaTopicMastery: data.dsa_topic_mastery || [],
             weakTopics: data.weak_topics || [],
             adaptiveRecommendations: data.adaptive_recommendations || [],
-            streakDays: 5,
-            totalSubmissions: 28,
-            passedSubmissions: 25,
+            streakDays: data.streak_days ?? (Number(data.total_submissions) > 0 ? 5 : 0),
+            totalSubmissions: Number(data.total_submissions) || 0,
+            passedSubmissions: Number(data.passed_submissions) || 0,
             lastUpdated: data.updated_at || new Date().toISOString(),
           };
         }

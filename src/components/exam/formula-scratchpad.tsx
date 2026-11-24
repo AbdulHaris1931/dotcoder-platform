@@ -53,56 +53,59 @@ export function FormulaScratchpad() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 text-xs font-mono font-bold shadow-luxury transition-all group active:scale-95"
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#0C120F] hover:bg-[#121B16] border border-[#2C4034] hover:border-[#9DFF00]/45 text-[#F4F7F5] text-xs font-mono font-bold shadow-2xl transition-all group active:scale-95 cursor-pointer"
       >
-        <Calculator className="w-4 h-4 text-indigo-600 group-hover:rotate-12 transition-transform" />
-        <span>Formula & Scratchpad</span>
+        <Calculator className="w-4 h-4 text-[#9DFF00] group-hover:rotate-12 transition-transform" />
+        <span>Formula &amp; Scratchpad</span>
       </button>
 
       {/* Slide-Over Drawer */}
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/30 backdrop-blur-xs">
+          <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-xs">
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="w-full max-w-md h-full bg-white border-l border-slate-200/90 shadow-2xl flex flex-col justify-between font-sans text-slate-900"
+              className="w-full max-w-md h-full bg-[#0C120F] border-l border-[#1E2C24] shadow-2xl flex flex-col justify-between font-sans text-[#F4F7F5]"
             >
               {/* Header */}
-              <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <div className="p-4 border-b border-[#1E2C24] flex items-center justify-between bg-[#070B09]">
                 <div className="flex items-center gap-2 font-mono text-xs">
-                  <Calculator className="w-4 h-4 text-indigo-600" />
-                  <span className="font-extrabold text-slate-900 uppercase tracking-wider">Exam Reference Pad</span>
+                  <Calculator className="w-4 h-4 text-[#9DFF00]" />
+                  <span className="font-bold text-[#F4F7F5] uppercase tracking-wider">Exam Reference Pad</span>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setIsOpen(false)}
-                  className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-[#18241D] text-[#99A9A0] hover:text-[#F4F7F5] transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               {/* Tabs */}
-              <div className="grid grid-cols-2 p-2 gap-1 bg-slate-50 border-b border-slate-100 text-xs font-mono">
+              <div className="grid grid-cols-2 p-2 gap-1 bg-[#070B09] border-b border-[#1E2C24] text-xs font-mono">
                 <button
+                  type="button"
                   onClick={() => setActiveTab("formulas")}
-                  className={`py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all ${
+                  className={`py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     activeTab === "formulas"
-                      ? "bg-white text-indigo-700 font-bold shadow-sm"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-[#9DFF00] text-[#070B09] font-bold"
+                      : "text-[#99A9A0] hover:text-[#F4F7F5]"
                   }`}
                 >
                   <BookOpen className="w-3.5 h-3.5" />
                   <span>Formula Sheet</span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => setActiveTab("scratchpad")}
-                  className={`py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all ${
+                  className={`py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     activeTab === "scratchpad"
-                      ? "bg-white text-indigo-700 font-bold shadow-sm"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-[#9DFF00] text-[#070B09] font-bold"
+                      : "text-[#99A9A0] hover:text-[#F4F7F5]"
                   }`}
                 >
                   <Hash className="w-3.5 h-3.5" />
@@ -117,18 +120,18 @@ export function FormulaScratchpad() {
                     {FORMULA_SECTIONS.map((sec) => (
                       <div
                         key={sec.title}
-                        className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5"
+                        className="p-4 rounded-2xl bg-[#121B16] border border-[#1E2C24] space-y-2.5"
                       >
-                        <h4 className="text-xs font-mono font-bold text-indigo-700">
+                        <h4 className="text-xs font-mono font-bold text-[#9DFF00]">
                           {sec.title}
                         </h4>
                         <ul className="space-y-1.5">
                           {sec.items.map((item, i) => (
                             <li
                               key={i}
-                              className="text-[11px] font-mono text-slate-600 flex items-start gap-1.5"
+                              className="text-[11px] font-mono text-[#D5E0D9] flex items-start gap-1.5"
                             >
-                              <span className="text-indigo-500 font-bold">•</span>
+                              <span className="text-[#9DFF00] font-bold">&bull;</span>
                               <span>{item}</span>
                             </li>
                           ))}
@@ -138,11 +141,12 @@ export function FormulaScratchpad() {
                   </div>
                 ) : (
                   <div className="h-full flex flex-col space-y-2">
-                    <div className="flex items-center justify-between text-[11px] font-mono text-slate-500">
+                    <div className="flex items-center justify-between text-[11px] font-mono text-[#99A9A0]">
                       <span>Live Scratch Area (Not Submitted)</span>
                       <button
+                        type="button"
                         onClick={() => setScratchText("")}
-                        className="flex items-center gap-1 text-rose-600 hover:text-rose-700 font-semibold"
+                        className="flex items-center gap-1 text-rose-400 hover:text-rose-300 font-semibold cursor-pointer"
                       >
                         <Trash2 className="w-3 h-3" />
                         <span>Clear</span>
@@ -152,15 +156,15 @@ export function FormulaScratchpad() {
                       value={scratchText}
                       onChange={(e) => setScratchText(e.target.value)}
                       placeholder="Use this space for quick mental arithmetic, formulas, and rough calculations..."
-                      className="w-full flex-1 bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-mono text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white resize-none leading-relaxed transition-colors"
+                      className="w-full flex-1 bg-[#070B09] border border-[#1E2C24] rounded-2xl p-4 text-xs font-mono text-[#F4F7F5] placeholder:text-[#85998D] focus:outline-none focus:border-[#9DFF00] resize-none leading-relaxed transition-colors"
                     />
                   </div>
                 )}
               </div>
 
               {/* Footer */}
-              <div className="p-3 border-t border-slate-100 bg-slate-50 text-[10px] font-mono text-slate-500 text-center font-medium">
-                Anti-cheating active • Internal exam scratchpad
+              <div className="p-3 border-t border-[#1E2C24] bg-[#070B09] text-[10px] font-mono text-[#85998D] text-center font-medium">
+                Anti-cheating active &bull; Internal exam scratchpad
               </div>
             </motion.div>
           </div>

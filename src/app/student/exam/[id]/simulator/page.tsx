@@ -1,37 +1,32 @@
 "use client";
 
 import { useEffect, useState, useRef, Suspense } from "react";
-import { useRouter, useParams, useSearchParams } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
+import { motion } from "framer-motion";
 import { DataService } from "@/lib/supabase/db";
 import { SEED_MCQS } from "@/lib/seed-mcqs";
-import { MCQQuestion, Problem, SupportedLanguage, SimulatorResult, UserProfile } from "@/types";
+import { Problem, SupportedLanguage, SimulatorResult, UserProfile } from "@/types";
 import { MCQRunner } from "@/components/exam/mcq-runner";
 import { FormulaScratchpad } from "@/components/exam/formula-scratchpad";
 import dynamic from "next/dynamic";
 import {
   Clock,
-  ShieldAlert,
   Lock,
   ArrowRight,
   CheckCircle2,
-  AlertTriangle,
   Play,
-  RotateCcw,
-  Sparkles,
   Trophy,
   Award,
-  Layers,
   ChevronRight,
   Code2,
-  FileCheck,
 } from "lucide-react";
 
 // Monaco dynamic load
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
   loading: () => (
-    <div className="h-full bg-slate-900 flex items-center justify-center font-mono text-xs text-slate-400">
+    <div className="h-full bg-[#070B09] flex items-center justify-center font-mono text-xs text-[#99A9A0]">
       Loading Code Canvas...
     </div>
   ),
@@ -86,9 +81,7 @@ const COMPANY_CONFIGS: Record<
 
 function CompanyExamSimulatorContent() {
   const router = useRouter();
-  const params = useParams();
   const searchParams = useSearchParams();
-  const examId = params?.id as string;
   const companyId = searchParams.get("company") || "tcs-nqt";
   const company = COMPANY_CONFIGS[companyId] || COMPANY_CONFIGS["tcs-nqt"];
 
@@ -116,7 +109,7 @@ function CompanyExamSimulatorContent() {
   // Section 3: Coding
   const [activeCodingIndex, setActiveCodingIndex] = useState(0);
   const [codingCodes, setCodingCodes] = useState<Record<string, string>>({});
-  const [codingLang, setCodingLang] = useState<SupportedLanguage>("python");
+  const [codingLang] = useState<SupportedLanguage>("python");
   const [executing, setExecuting] = useState(false);
   const [codeOutput, setCodeOutput] = useState<string | null>(null);
   const [solvedProblemIds, setSolvedProblemIds] = useState<string[]>([]);
@@ -149,13 +142,15 @@ function CompanyExamSimulatorContent() {
     load();
   }, []);
 
+  const handleSectionTimeoutRef = useRef<() => void>(() => {});
+
   // Countdown timer hook
   useEffect(() => {
     if (currentSectionIndex === 4) return;
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          handleSectionTimeout();
+          handleSectionTimeoutRef.current();
           return 0;
         }
         return prev - 1;
@@ -183,6 +178,7 @@ function CompanyExamSimulatorContent() {
       handleFinalSubmit();
     }
   };
+  handleSectionTimeoutRef.current = handleSectionTimeout;
 
   const handleNextSectionManually = () => {
     if (currentSectionIndex === 1) {
@@ -241,7 +237,7 @@ function CompanyExamSimulatorContent() {
       code_score: codeScore,
       total_score: totalScore,
       max_score: maxScore,
-      qualified_profile: profile as any,
+      qualified_profile: profile as SimulatorResult["qualified_profile"],
       completed_at: new Date().toLocaleTimeString(),
     };
 
@@ -259,7 +255,7 @@ function CompanyExamSimulatorContent() {
     setTimeout(() => {
       setExecuting(false);
       setCodeOutput(
-        `✓ Test Case 1: PASSED (Input: "${curProb.test_cases?.[0]?.input || "2 7 11 15"}")\n✓ Test Case 2: PASSED (Input: "${curProb.test_cases?.[1]?.input || "3 2 4"}")\n✓ Execution Time: 84ms\n✓ Memory: 14.2 MB\n\nAll Visible Cases Passed!`
+        `PASS Test Case 1: PASSED (Input: "${curProb.test_cases?.[0]?.input || "2 7 11 15"}")\nPASS Test Case 2: PASSED (Input: "${curProb.test_cases?.[1]?.input || "3 2 4"}")\nPASS Execution Time: 84ms\nPASS Memory: 14.2 MB\n\nAll Visible Cases Passed!`
       );
       if (!solvedProblemIds.includes(curProb.id)) {
         setSolvedProblemIds([...solvedProblemIds, curProb.id]);
@@ -269,7 +265,7 @@ function CompanyExamSimulatorContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0D1117] flex items-center justify-center font-mono text-xs text-slate-400">
+      <div className="min-h-screen bg-[#070B09] flex items-center justify-center font-mono text-xs text-[#99A9A0]">
         <div className="flex items-center gap-3">
           <span className="w-2.5 h-2.5 rounded-full bg-[#9DFF00] animate-pulse" />
           <span>Booting {company.name}...</span>
@@ -281,22 +277,32 @@ function CompanyExamSimulatorContent() {
   const activeCodingProb = codingProblems[activeCodingIndex];
 
   return (
-    <div className="min-h-screen bg-[#0D1117] text-slate-200 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#070B09] text-[#F4F7F5] flex flex-col font-sans">
       {/* 54px Top Command Header */}
-      <header className="h-[52px] border-b border-slate-800/80 bg-[#161B22]/95 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-30 shadow-xs">
+      <header className="h-[52px] border-b border-[#1E2C24] bg-[#0C120F]/95 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-30 shadow-xs">
         {/* Left: Logo & Company Track */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="EQLV CODE" className="w-6 h-6 object-contain rounded flex-shrink-0" />
-            <span className="font-bold text-sm tracking-tight text-white">EQLV CODE</span>
+            <Image
+              src="/logo.png"
+              alt="EQLV CODE"
+              width={24}
+              height={24}
+              priority
+              className="w-6 h-6 object-contain rounded flex-shrink-0"
+            />
+            <span className="inline-flex items-baseline gap-1 text-sm">
+              <span className="font-display font-bold tracking-tight text-[#F4F7F5]">EQLV</span>
+              <span className="font-mono font-bold tracking-wider text-[11px] text-[#9DFF00]">CODE</span>
+            </span>
             <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-[#9DFF00]/15 text-[#9DFF00] border border-[#9DFF00]/30">
               Exam
             </span>
           </div>
 
-          <div className="hidden md:flex items-center gap-2 text-xs text-slate-400 border-l border-slate-800 pl-3">
-            <span className="text-white font-medium">{company.name}</span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bold">
+          <div className="hidden md:flex items-center gap-2 text-xs text-[#99A9A0] border-l border-[#1E2C24] pl-3">
+            <span className="text-[#F4F7F5] font-medium">{company.name}</span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-300 border border-sky-500/25 font-bold">
               {company.badge}
             </span>
           </div>
@@ -307,36 +313,36 @@ function CompanyExamSimulatorContent() {
           <div
             className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
               currentSectionIndex === 1
-                ? "bg-[#9DFF00] text-black font-bold shadow-xs"
+                ? "bg-[#9DFF00] text-[#070B09] font-bold shadow-xs"
                 : section1Locked
-                ? "text-slate-500 line-through bg-slate-900 border border-slate-800"
-                : "text-slate-400 bg-[#0D1117] border border-slate-800"
+                ? "text-[#85998D] line-through bg-[#121B16] border border-[#1E2C24]"
+                : "text-[#99A9A0] bg-[#070B09] border border-[#1E2C24]"
             }`}
           >
-            {section1Locked && <Lock className="w-3 h-3 text-slate-500" />}
+            {section1Locked && <Lock className="w-3 h-3 text-[#85998D]" />}
             <span>Sec 1: Quant</span>
           </div>
-          <ChevronRight className="w-3 h-3 text-slate-600" />
+          <ChevronRight className="w-3 h-3 text-[#85998D]" />
           <div
             className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
               currentSectionIndex === 2
-                ? "bg-[#9DFF00] text-black font-bold shadow-xs"
+                ? "bg-[#9DFF00] text-[#070B09] font-bold shadow-xs"
                 : section2Locked
-                ? "text-slate-500 line-through bg-slate-900 border border-slate-800"
-                : "text-slate-400 bg-[#0D1117] border border-slate-800"
+                ? "text-[#85998D] line-through bg-[#121B16] border border-[#1E2C24]"
+                : "text-[#99A9A0] bg-[#070B09] border border-[#1E2C24]"
             }`}
           >
-            {section2Locked && <Lock className="w-3 h-3 text-slate-500" />}
+            {section2Locked && <Lock className="w-3 h-3 text-[#85998D]" />}
             <span>Sec 2: Logic</span>
           </div>
-          <ChevronRight className="w-3 h-3 text-slate-600" />
+          <ChevronRight className="w-3 h-3 text-[#85998D]" />
           <div
             className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
               currentSectionIndex === 3
-                ? "bg-[#9DFF00] text-black font-bold shadow-xs"
+                ? "bg-[#9DFF00] text-[#070B09] font-bold shadow-xs"
                 : currentSectionIndex === 4
-                ? "text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 font-bold"
-                : "text-slate-400 bg-[#0D1117] border border-slate-800"
+                ? "text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 font-bold"
+                : "text-[#99A9A0] bg-[#070B09] border border-[#1E2C24]"
             }`}
           >
             <span>Sec 3: Coding</span>
@@ -346,7 +352,7 @@ function CompanyExamSimulatorContent() {
         {/* Right: Timer & Finish CTA */}
         <div className="flex items-center gap-3">
           {currentSectionIndex !== 4 && (
-            <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-[#0D1117] border border-slate-800 text-slate-200 font-mono text-xs font-bold">
+            <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-[#070B09] border border-[#1E2C24] text-[#F4F7F5] font-mono text-xs font-bold">
               <Clock className="w-3.5 h-3.5 text-[#9DFF00]" />
               <span className="tabular-nums">{formatTime(timeLeft)}</span>
             </div>
@@ -355,7 +361,7 @@ function CompanyExamSimulatorContent() {
           {currentSectionIndex !== 4 && (
             <button
               onClick={handleNextSectionManually}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs font-mono transition-all shadow-xs active:scale-95"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#9DFF00] hover:bg-[#8CE600] text-[#070B09] font-bold text-xs font-mono transition-all shadow-xs active:scale-95"
             >
               <span>{currentSectionIndex === 3 ? "Submit Exam" : "Finish Section"}</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -429,55 +435,55 @@ function CompanyExamSimulatorContent() {
             <div className="lg:col-span-4 flex flex-col justify-between space-y-4 overflow-y-auto pr-1">
               <div className="space-y-4">
                 {/* Problem Toggle Tabs */}
-                <div className="flex items-center gap-2 p-1.5 rounded-xl bg-[#161B22] border border-slate-800">
+                <div className="flex items-center gap-2 p-1.5 rounded-xl bg-[#0C120F] border border-[#1E2C24]">
                   {codingProblems.map((p, idx) => (
                     <button
                       key={p.id}
                       onClick={() => setActiveCodingIndex(idx)}
                       className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-mono font-bold transition-all flex items-center justify-center gap-1.5 ${
                         activeCodingIndex === idx
-                          ? "bg-[#9DFF00] text-black shadow-xs"
-                          : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                          ? "bg-[#9DFF00] text-[#070B09] shadow-xs"
+                          : "text-[#99A9A0] hover:text-[#F4F7F5] hover:bg-[#18241D]"
                       }`}
                     >
                       <Code2 className="w-3.5 h-3.5" />
                       <span>Challenge {idx + 1}</span>
                       {solvedProblemIds.includes(p.id) && (
-                        <CheckCircle2 className={`w-3.5 h-3.5 ${activeCodingIndex === idx ? "text-black" : "text-[#9DFF00]"}`} />
+                        <CheckCircle2 className={`w-3.5 h-3.5 ${activeCodingIndex === idx ? "text-[#070B09]" : "text-[#9DFF00]"}`} />
                       )}
                     </button>
                   ))}
                 </div>
 
                 {/* Problem Header */}
-                <div className="p-5 rounded-2xl bg-[#161B22] border border-slate-800 space-y-2">
+                <div className="p-5 rounded-2xl bg-[#0C120F] border border-[#1E2C24] space-y-2">
                   <div className="flex items-center justify-between">
                     <span
                       className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-bold ${
                         activeCodingProb.difficulty === "Easy"
-                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
-                          : "bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                          ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/25"
+                          : "bg-amber-500/10 text-amber-300 border border-amber-500/25"
                       }`}
                     >
                       {activeCodingProb.difficulty}
                     </span>
-                    <span className="text-[10px] font-mono text-slate-400 font-medium">
+                    <span className="text-[10px] font-mono text-[#99A9A0] font-medium">
                       {company.name} Hands-On
                     </span>
                   </div>
-                  <h3 className="text-base font-extrabold text-white">{activeCodingProb.title}</h3>
+                  <h3 className="text-base font-display font-bold text-[#F4F7F5]">{activeCodingProb.title}</h3>
                 </div>
 
                 {/* Markdown Description */}
-                <div className="p-5 rounded-2xl bg-[#161B22] border border-slate-800 text-xs text-slate-300 leading-relaxed font-sans space-y-3 whitespace-pre-line">
+                <div className="p-5 rounded-2xl bg-[#0C120F] border border-[#1E2C24] text-xs text-[#D5E0D9] leading-relaxed font-sans space-y-3 whitespace-pre-line">
                   {activeCodingProb.description_md}
                 </div>
               </div>
 
               {/* Execution Telemetry Console */}
               {codeOutput && (
-                <div className="p-4 rounded-xl bg-[#0D1117] border border-slate-800 font-mono text-xs text-slate-300 space-y-1">
-                  <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-2">
+                <div className="p-4 rounded-xl bg-[#070B09] border border-[#1E2C24] font-mono text-xs text-[#D5E0D9] space-y-1">
+                  <div className="text-[10px] uppercase font-bold text-[#99A9A0] flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#9DFF00]" />
                     <span>Execution Telemetry</span>
                   </div>
@@ -489,10 +495,10 @@ function CompanyExamSimulatorContent() {
             </div>
 
             {/* Right 8 Cols: Monaco Code Canvas (Expanded coding area) */}
-            <div className="lg:col-span-8 flex flex-col rounded-2xl border border-slate-800 bg-[#161B22] overflow-hidden">
+            <div className="lg:col-span-8 flex flex-col rounded-2xl border border-[#1E2C24] bg-[#0C120F] overflow-hidden">
               {/* Editor Toolbar */}
-              <div className="h-11 border-b border-slate-800 bg-[#161B22] px-4 flex items-center justify-between">
-                <span className="text-xs font-mono text-slate-300 font-medium flex items-center gap-2">
+              <div className="h-11 border-b border-[#1E2C24] bg-[#0C120F] px-4 flex items-center justify-between">
+                <span className="text-xs font-mono text-[#D5E0D9] font-medium flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#9DFF00] animate-pulse" />
                   <span>main.{codingLang === "python" ? "py" : codingLang}</span>
                 </span>
@@ -501,16 +507,16 @@ function CompanyExamSimulatorContent() {
                   <button
                     onClick={handleRunCode}
                     disabled={executing}
-                    className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#9DFF00] hover:bg-[#8CE600] text-black font-mono text-xs font-bold transition-all shadow-xs disabled:opacity-50 active:scale-95"
+                    className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#9DFF00] hover:bg-[#8CE600] text-[#070B09] font-mono text-xs font-bold transition-all shadow-xs disabled:opacity-50 active:scale-95"
                   >
-                    <Play className="w-3 h-3 fill-black text-black" />
+                    <Play className="w-3 h-3 fill-[#070B09] text-[#070B09]" />
                     <span>{executing ? "Running..." : "Run Test Cases"}</span>
                   </button>
                 </div>
               </div>
 
               {/* Monaco Code Editor */}
-              <div className="flex-1 bg-[#0D1117]">
+              <div className="flex-1 bg-[#070B09]">
                 <MonacoEditor
                   height="100%"
                   language={codingLang}
@@ -545,30 +551,30 @@ function CompanyExamSimulatorContent() {
               <div className="w-16 h-16 rounded-2xl bg-[#9DFF00]/10 border border-[#9DFF00]/30 text-[#9DFF00] mx-auto flex items-center justify-center shadow-lg">
                 <Trophy className="w-8 h-8" />
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-display font-bold text-[#F4F7F5] tracking-tight">
                 {company.name} Complete
               </h2>
-              <p className="text-xs text-slate-400 font-mono">
+              <p className="text-xs text-[#99A9A0] font-mono tabular-nums">
                 Candidate: {finalResult.candidate_name} • Roll: {finalResult.roll_no}
               </p>
             </div>
 
             {/* Profile Qualification Bento Card */}
-            <div className="p-8 rounded-2xl bg-[#161B22] border border-slate-800 shadow-xl space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+            <div className="p-8 rounded-2xl bg-[#0C120F] border border-[#1E2C24] shadow-xl space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1E2C24] pb-5">
                 <div>
-                  <div className="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold">
+                  <div className="text-xs font-mono uppercase tracking-wider text-[#99A9A0] font-bold">
                     Recruiter Profile Qualification
                   </div>
-                  <div className="text-xl font-extrabold text-white mt-1 flex items-center gap-2">
+                  <div className="text-xl font-display font-bold text-[#F4F7F5] mt-1 flex items-center gap-2">
                     <Award className="w-5 h-5 text-[#9DFF00]" />
                     <span>{finalResult.qualified_profile}</span>
                   </div>
                 </div>
 
                 <div className="text-left sm:text-right">
-                  <div className="text-xs font-mono text-slate-400 font-medium">Total Score</div>
-                  <div className="text-3xl font-extrabold font-mono text-[#9DFF00]">
+                  <div className="text-xs font-mono text-[#99A9A0] font-medium">Total Score</div>
+                  <div className="text-3xl font-extrabold font-mono tabular-nums text-[#9DFF00]">
                     {finalResult.total_score} / {finalResult.max_score}
                   </div>
                 </div>
@@ -576,41 +582,41 @@ function CompanyExamSimulatorContent() {
 
               {/* 3 Sectional Breakdown Bars */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-5 rounded-xl bg-[#0D1117] border border-slate-800 space-y-2 font-mono">
-                  <div className="text-slate-400 text-xs font-medium">Section 1: Quantitative</div>
-                  <div className="text-xl font-bold text-white">{finalResult.quant_score} / 5</div>
-                  <div className="text-[11px] text-slate-500">Numerical Ability</div>
+                <div className="p-5 rounded-xl bg-[#070B09] border border-[#1E2C24] space-y-2 font-mono">
+                  <div className="text-[#99A9A0] text-xs font-medium">Section 1: Quantitative</div>
+                  <div className="text-xl font-bold text-[#F4F7F5] tabular-nums">{finalResult.quant_score} / 5</div>
+                  <div className="text-[11px] text-[#85998D]">Numerical Ability</div>
                 </div>
 
-                <div className="p-5 rounded-xl bg-[#0D1117] border border-slate-800 space-y-2 font-mono">
-                  <div className="text-slate-400 text-xs font-medium">Section 2: Logical & CS</div>
-                  <div className="text-xl font-bold text-white">{finalResult.logic_score} / 5</div>
-                  <div className="text-[11px] text-slate-500">Reasoning & Tech</div>
+                <div className="p-5 rounded-xl bg-[#070B09] border border-[#1E2C24] space-y-2 font-mono">
+                  <div className="text-[#99A9A0] text-xs font-medium">Section 2: Logical & CS</div>
+                  <div className="text-xl font-bold text-[#F4F7F5] tabular-nums">{finalResult.logic_score} / 5</div>
+                  <div className="text-[11px] text-[#85998D]">Reasoning & Tech</div>
                 </div>
 
-                <div className="p-5 rounded-xl bg-[#0D1117] border border-slate-800 space-y-2 font-mono">
-                  <div className="text-slate-400 text-xs font-medium">Section 3: Hands-On Code</div>
-                  <div className="text-xl font-bold text-[#9DFF00]">
+                <div className="p-5 rounded-xl bg-[#070B09] border border-[#1E2C24] space-y-2 font-mono">
+                  <div className="text-[#99A9A0] text-xs font-medium">Section 3: Hands-On Code</div>
+                  <div className="text-xl font-bold text-[#9DFF00] tabular-nums">
                     {finalResult.code_score} / 10
                   </div>
-                  <div className="text-[11px] text-slate-500">
+                  <div className="text-[11px] text-[#85998D] tabular-nums">
                     {solvedProblemIds.length} of 2 Problems Solved
                   </div>
                 </div>
               </div>
 
               {/* CTAs */}
-              <div className="flex flex-wrap items-center justify-between gap-4 pt-5 border-t border-slate-800">
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-5 border-t border-[#1E2C24]">
                 <button
                   onClick={() => router.push("/student/dashboard")}
-                  className="px-5 py-2.5 rounded-xl text-xs font-mono font-semibold text-slate-300 hover:text-white bg-[#0D1117] hover:bg-slate-800 border border-slate-800 transition-colors"
+                  className="px-5 py-2.5 rounded-xl text-xs font-mono font-semibold text-[#D5E0D9] hover:text-[#F4F7F5] bg-[#070B09] hover:bg-[#18241D] border border-[#1E2C24] transition-colors"
                 >
                   Return to Student Hub
                 </button>
 
                 <button
                   onClick={() => router.push("/student/drives")}
-                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-black font-bold text-xs font-mono transition-all shadow-md active:scale-95"
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-[#070B09] font-bold text-xs font-mono transition-all shadow-md active:scale-95"
                 >
                   <span>Apply to Campus Drives with Score</span>
                   <ArrowRight className="w-4 h-4" />
@@ -631,7 +637,7 @@ export default function CompanyExamSimulatorPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-mono text-xs text-slate-500">
+        <div className="min-h-screen bg-[#070B09] flex items-center justify-center font-mono text-xs text-[#99A9A0]">
           Loading Recruitment Simulator...
         </div>
       }

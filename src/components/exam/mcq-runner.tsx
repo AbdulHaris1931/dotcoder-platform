@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { MCQQuestion } from "@/types";
 import { CheckCircle2, Bookmark, AlertCircle, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 
@@ -27,9 +26,7 @@ export function MCQRunner({
   onToggleReview,
   onNavigate,
   negativeMarking = true,
-  theme = "dark",
 }: MCQRunnerProps) {
-  const isDark = theme === "dark";
   const currentQ = questions[currentIndex];
   if (!currentQ) return null;
 
@@ -40,44 +37,32 @@ export function MCQRunner({
   const reviewCount = markedForReview.length;
 
   return (
-    <div className={`grid grid-cols-1 lg:grid-cols-4 gap-6 h-full font-sans ${isDark ? "text-slate-200" : "text-slate-900"}`}>
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full font-sans text-[#F4F7F5]">
       {/* Left 3 Columns: Active Question Card */}
       <div className="lg:col-span-3 flex flex-col justify-between space-y-6">
         <div className="space-y-6">
           {/* Question Header & Category */}
-          <div className={`flex flex-wrap items-center justify-between gap-3 border-b pb-4 ${isDark ? "border-slate-800" : "border-slate-200"}`}>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1E2C24] pb-4">
             <div className="flex items-center gap-2">
-              <span className={`text-xs font-mono font-bold px-3 py-1 rounded-full border ${
-                isDark 
-                  ? "bg-[#9DFF00]/10 text-[#9DFF00] border-[#9DFF00]/30" 
-                  : "bg-indigo-50 text-indigo-700 border-indigo-200"
-              }`}>
+              <span className="text-xs font-mono font-bold px-3 py-1 rounded-full border bg-[#9DFF00]/10 text-[#9DFF00] border-[#9DFF00]/30 tabular-nums">
                 Question {currentIndex + 1} of {questions.length}
               </span>
-              <span className={`text-xs font-mono font-medium ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-                {currentQ.category} • {currentQ.sub_topic}
+              <span className="text-xs font-mono font-medium text-[#99A9A0]">
+                {currentQ.category} &bull; {currentQ.sub_topic}
               </span>
             </div>
 
             <div className="flex items-center gap-2 text-xs font-mono">
               {negativeMarking && (
-                <span className={`px-2.5 py-0.5 rounded-full border text-[11px] font-bold ${
-                  isDark
-                    ? "bg-rose-500/10 text-rose-400 border-rose-500/30"
-                    : "bg-rose-50 text-rose-700 border-rose-200"
-                }`}>
+                <span className="px-2.5 py-0.5 rounded-full border text-[11px] font-bold bg-rose-500/10 text-rose-300 border-rose-500/30 tabular-nums">
                   +1.00 / -0.25 Mark
                 </span>
               )}
               <span
                 className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
                   currentQ.difficulty === "Easy"
-                    ? isDark
-                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                      : "bg-emerald-50 text-emerald-700 border-emerald-200"
-                    : isDark
-                      ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                      : "bg-amber-50 text-amber-700 border-amber-200"
+                    ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
+                    : "bg-amber-500/10 text-amber-300 border-amber-500/30"
                 }`}
               >
                 {currentQ.difficulty}
@@ -86,11 +71,7 @@ export function MCQRunner({
           </div>
 
           {/* Question Text */}
-          <div className={`text-sm md:text-base font-semibold leading-relaxed whitespace-pre-line p-6 rounded-2xl border ${
-            isDark
-              ? "bg-[#161B22] border-slate-800 text-slate-100 shadow-md"
-              : "bg-white border-slate-200/90 text-slate-900 shadow-luxury"
-          }`}>
+          <div className="text-sm md:text-base font-semibold leading-relaxed whitespace-pre-line p-6 rounded-2xl border bg-[#0C120F] border-[#1E2C24] text-[#F4F7F5]">
             {currentQ.question_text}
           </div>
 
@@ -107,24 +88,16 @@ export function MCQRunner({
                   onClick={() => onSelectAnswer(currentQ.id, idx)}
                   className={`w-full p-4 rounded-xl border cursor-pointer text-left transition-all flex items-center justify-between ${
                     isSelected
-                      ? isDark
-                        ? "bg-[#9DFF00]/10 border-[#9DFF00] text-white ring-1 ring-[#9DFF00]/40 shadow-sm"
-                        : "bg-indigo-50/90 border-indigo-500 text-indigo-950 font-semibold shadow-sm"
-                      : isDark
-                        ? "bg-[#161B22] border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-[#1C2128]"
-                        : "bg-white border-slate-200/90 text-slate-700 hover:text-slate-900 hover:border-indigo-200 hover:bg-slate-50"
+                      ? "bg-[#9DFF00]/10 border-[#9DFF00] text-[#F4F7F5] ring-1 ring-[#9DFF00]/35"
+                      : "bg-[#0C120F] border-[#1E2C24] text-[#D5E0D9] hover:border-[#2C4034] hover:bg-[#121B16]"
                   }`}
                 >
                   <div className="flex items-center gap-3.5">
                     <span
                       className={`w-8 h-8 rounded-lg font-mono font-bold text-xs flex items-center justify-center transition-colors ${
                         isSelected
-                          ? isDark
-                            ? "bg-[#9DFF00] text-black"
-                            : "bg-indigo-600 text-white shadow-xs"
-                          : isDark
-                            ? "bg-slate-800 text-slate-400"
-                            : "bg-slate-100 text-slate-600 border border-slate-200"
+                          ? "bg-[#9DFF00] text-[#070B09]"
+                          : "bg-[#121B16] text-[#99A9A0] border border-[#1E2C24]"
                       }`}
                     >
                       {optionLetter}
@@ -133,7 +106,7 @@ export function MCQRunner({
                   </div>
 
                   {isSelected && (
-                    <CheckCircle2 className={`w-5 h-5 flex-shrink-0 ${isDark ? "text-[#9DFF00]" : "text-indigo-600"}`} />
+                    <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-[#9DFF00]" />
                   )}
                 </button>
               );
@@ -142,19 +115,15 @@ export function MCQRunner({
         </div>
 
         {/* Bottom Control Bar */}
-        <div className={`flex flex-wrap items-center justify-between gap-3 pt-4 border-t ${isDark ? "border-slate-800" : "border-slate-200"}`}>
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-[#1E2C24]">
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => onToggleReview(currentQ.id)}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-mono transition-colors border ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-mono transition-colors border cursor-pointer ${
                 isMarked
-                  ? isDark
-                    ? "bg-amber-500/20 text-amber-300 border-amber-500/40 font-bold"
-                    : "bg-amber-100 text-amber-800 border-amber-300 font-bold"
-                  : isDark
-                    ? "bg-[#161B22] text-slate-300 hover:text-white border-slate-800 hover:border-slate-700"
-                    : "bg-white text-slate-600 hover:text-slate-900 border-slate-200 hover:bg-slate-50"
+                  ? "bg-amber-500/15 text-amber-300 border-amber-500/35 font-bold"
+                  : "bg-[#0C120F] text-[#D5E0D9] hover:text-[#F4F7F5] border-[#1E2C24] hover:border-[#2C4034]"
               }`}
             >
               <Bookmark className="w-3.5 h-3.5" />
@@ -165,11 +134,7 @@ export function MCQRunner({
               <button
                 type="button"
                 onClick={() => onClearAnswer(currentQ.id)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono transition-colors ${
-                  isDark
-                    ? "text-slate-400 hover:text-rose-400 hover:bg-rose-500/10"
-                    : "text-slate-500 hover:text-rose-600 hover:bg-rose-50"
-                }`}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono transition-colors text-[#99A9A0] hover:text-rose-300 hover:bg-rose-500/10 cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Clear Selection</span>
@@ -182,11 +147,7 @@ export function MCQRunner({
               type="button"
               disabled={currentIndex === 0}
               onClick={() => onNavigate(currentIndex - 1)}
-              className={`flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-mono font-medium disabled:opacity-30 disabled:cursor-not-allowed transition-all border ${
-                isDark
-                  ? "bg-[#161B22] hover:bg-slate-800 text-slate-200 border-slate-800"
-                  : "bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-xs"
-              }`}
+              className="flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-mono font-medium disabled:opacity-30 disabled:cursor-not-allowed transition-all border bg-[#0C120F] hover:bg-[#121B16] text-[#F4F7F5] border-[#1E2C24] cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
               <span>Previous</span>
@@ -196,11 +157,7 @@ export function MCQRunner({
               type="button"
               disabled={currentIndex === questions.length - 1}
               onClick={() => onNavigate(currentIndex + 1)}
-              className={`flex items-center gap-1 px-5 py-2 rounded-xl text-xs font-mono font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-all ${
-                isDark
-                  ? "bg-[#9DFF00] hover:bg-[#8CE600] text-black"
-                  : "btn-luxury-primary text-white shadow-md"
-              }`}
+              className="flex items-center gap-1 px-5 py-2 rounded-xl text-xs font-mono font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-all bg-[#9DFF00] hover:bg-[#8CE600] text-[#070B09] cursor-pointer"
             >
               <span>Next</span>
               <ChevronRight className="w-4 h-4" />
@@ -210,39 +167,33 @@ export function MCQRunner({
       </div>
 
       {/* Right Column: Question Navigation Palette */}
-      <div className={`p-6 rounded-2xl border flex flex-col justify-between space-y-5 ${
-        isDark
-          ? "bg-[#161B22] border-slate-800 shadow-md"
-          : "bg-white border-slate-200/90 shadow-luxury"
-      }`}>
+      <div className="p-6 rounded-2xl border flex flex-col justify-between space-y-5 bg-[#0C120F] border-[#1E2C24]">
         <div className="space-y-4">
-          <div className={`flex items-center justify-between border-b pb-3 ${isDark ? "border-slate-800" : "border-slate-100"}`}>
-            <span className={`text-xs font-mono font-bold uppercase tracking-wider ${isDark ? "text-slate-200" : "text-slate-900"}`}>
+          <div className="flex items-center justify-between border-b border-[#1E2C24] pb-3">
+            <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#F4F7F5]">
               Question Palette
             </span>
-            <span className={`text-xs font-mono font-medium ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+            <span className="text-xs font-mono font-medium text-[#99A9A0] tabular-nums">
               {answeredCount}/{questions.length} Answered
             </span>
           </div>
 
           {/* Legend */}
-          <div className={`grid grid-cols-2 gap-2 text-[10px] font-mono pb-3 border-b ${
-            isDark ? "border-slate-800 text-slate-400" : "border-slate-100 text-slate-500"
-          }`}>
+          <div className="grid grid-cols-2 gap-2 text-[10px] font-mono pb-3 border-b border-[#1E2C24] text-[#99A9A0]">
             <div className="flex items-center gap-1.5 font-medium">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
               <span>Answered ({answeredCount})</span>
             </div>
             <div className="flex items-center gap-1.5 font-medium">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
               <span>Review ({reviewCount})</span>
             </div>
             <div className="flex items-center gap-1.5 font-medium">
-              <span className={`w-2.5 h-2.5 rounded-full ${isDark ? "bg-slate-700" : "bg-slate-200"}`} />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#2C4034]" />
               <span>Unvisited</span>
             </div>
             <div className="flex items-center gap-1.5 font-medium">
-              <span className={`w-2.5 h-2.5 rounded-full ring-2 ${isDark ? "ring-[#9DFF00] bg-[#161B22]" : "ring-indigo-500 bg-white"}`} />
+              <span className="w-2.5 h-2.5 rounded-full ring-2 ring-[#9DFF00] bg-[#0C120F]" />
               <span>Current</span>
             </div>
           </div>
@@ -254,36 +205,25 @@ export function MCQRunner({
               const isMarkedReview = markedForReview.includes(q.id);
               const isCurrent = currentIndex === idx;
 
-              let btnStyle = isDark
-                ? "bg-slate-900 text-slate-400 border border-slate-800"
-                : "bg-slate-50 text-slate-600 border border-slate-200/80";
+              let btnStyle = "bg-[#121B16] text-[#99A9A0] border border-[#1E2C24]";
 
               if (isAnswered && isMarkedReview) {
-                btnStyle = isDark
-                  ? "bg-purple-500/20 text-purple-300 border border-purple-500/40 font-bold"
-                  : "bg-purple-50 text-purple-700 border border-purple-200 font-bold";
+                btnStyle = "bg-teal-500/20 text-teal-300 border border-teal-500/40 font-bold";
               } else if (isAnswered) {
-                btnStyle = isDark
-                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold"
-                  : "bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold";
+                btnStyle = "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold";
               } else if (isMarkedReview) {
-                btnStyle = isDark
-                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold"
-                  : "bg-amber-50 text-amber-700 border border-amber-200 font-bold";
+                btnStyle = "bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold";
               }
 
               return (
                 <button
+                  type="button"
                   key={q.id}
                   onClick={() => onNavigate(idx)}
-                  className={`h-9 rounded-xl font-mono text-xs font-semibold flex items-center justify-center transition-all ${btnStyle} ${
-                    isCurrent 
-                      ? isDark
-                        ? "ring-2 ring-[#9DFF00] font-bold scale-105 bg-[#9DFF00]/20 text-[#9DFF00]"
-                        : "ring-2 ring-indigo-500 font-bold scale-105 bg-indigo-50 text-indigo-700" 
-                      : isDark
-                        ? "hover:bg-slate-800"
-                        : "hover:bg-slate-100"
+                  className={`h-9 rounded-xl font-mono text-xs font-semibold flex items-center justify-center transition-all cursor-pointer tabular-nums ${btnStyle} ${
+                    isCurrent
+                      ? "ring-2 ring-[#9DFF00] font-bold scale-105 bg-[#9DFF00]/20 text-[#9DFF00]"
+                      : "hover:bg-[#18241D]"
                   }`}
                 >
                   {idx + 1}
@@ -294,13 +234,9 @@ export function MCQRunner({
         </div>
 
         {/* Section Info Card */}
-        <div className={`p-4 rounded-xl border text-[11px] font-mono space-y-1 ${
-          isDark
-            ? "bg-[#0D1117] border-slate-800 text-slate-400"
-            : "bg-indigo-50/60 border-indigo-100 text-slate-600"
-        }`}>
-          <div className={`font-bold flex items-center gap-1.5 ${isDark ? "text-slate-200" : "text-indigo-900"}`}>
-            <AlertCircle className={`w-3.5 h-3.5 ${isDark ? "text-[#9DFF00]" : "text-indigo-600"}`} />
+        <div className="p-4 rounded-xl border text-[11px] font-mono space-y-1 bg-[#070B09] border-[#1E2C24] text-[#99A9A0]">
+          <div className="font-bold flex items-center gap-1.5 text-[#F4F7F5]">
+            <AlertCircle className="w-3.5 h-3.5 text-[#9DFF00]" />
             <span>Section Lock Warning</span>
           </div>
           <p className="text-[10px] leading-relaxed">

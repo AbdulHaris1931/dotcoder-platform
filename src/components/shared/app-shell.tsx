@@ -2,9 +2,10 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { DemoStore, subscribeToDemoStore } from "@/lib/demo-store";
+import { subscribeToDemoStore } from "@/lib/demo-store";
 import { DataService } from "@/lib/supabase/db";
-import { createClient } from "@/lib/supabase/client";
+import { canRoleAccessPath, getRoleHomePath, normalizeRole } from "@/lib/auth/rbac-routes";
+import { performSignOut } from "@/lib/auth/sign-out";
 import { UserProfile } from "@/types";
 import { CommandPalette } from "./command-palette";
 import { DotCoderLogo } from "./dotcoder-logo";
@@ -14,13 +15,12 @@ import {
   BookOpen,
   Code2,
   ShieldCheck,
+  ShieldAlert,
   Briefcase,
   FileText,
   TrendingUp,
   Users,
-  BarChart3,
   FileSpreadsheet,
-  Building2,
   Settings,
   Headphones,
   LogOut,
@@ -29,8 +29,8 @@ import {
   X,
   ChevronLeft,
   GraduationCap,
-  Star,
-  UserCheck,
+  Terminal,
+  Layers,
 } from "lucide-react";
 
 interface SidebarContextType {
@@ -55,7 +55,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { setIsPageLoading } = usePageLoading();
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [isCmdKOpen, setIsCmdKOpen] = useState(false);
-  const [isPersonaSwitcherOpen, setIsPersonaSwitcherOpen] = useState(false);
+  const [accessDeniedNotice, setAccessDeniedNotice] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("error") === "access_denied") {
+        setAccessDeniedNotice(true);
+        const timer = setTimeout(() => setAccessDeniedNotice(false), 5000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [pathname]);
+
+  // Client-side RBAC Guard (Single Source of Truth: rbac-routes.ts)
+  useEffect(() => {
+    if (!currentUser) return;
+    const isOwnerAccount =
+      currentUser.email?.toLowerCase() === "mmam92005@gmail.com" ||
+      currentUser.id === "c8d50800-aae2-42b6-84a7-f10241621c5a" ||
+      currentUser.role?.toLowerCase() === "super_admin";
+
+    const resolvedRole = isOwnerAccount ? "super_admin" : normalizeRole(currentUser.role);
+    if (!canRoleAccessPath(resolvedRole, pathname)) {
+      router.replace(`${getRoleHomePath(resolvedRole)}?error=access_denied`);
+    }
+  }, [currentUser, pathname, router]);
 
   useEffect(() => {
     async function fetchUser() {
@@ -70,12 +95,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   const handleSignOut = async () => {
-    const supabase = createClient();
-    if (supabase) {
-      await supabase.auth.signOut();
-    }
-    DemoStore.setCurrentUser(null as any);
-    router.push("/login");
+    await performSignOut((url) => router.push(url));
   };
 
   // Global Cmd+K keyboard shortcut listener
@@ -90,11 +110,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Determine if current route is a dedicated coding workspace or proctored exam
+  // Determine if current route is a dedicated coding workspace, open compiler, or proctored exam
   const isCodingWorkspace =
     pathname.startsWith("/practice") ||
     pathname.startsWith("/student/lab") ||
     pathname.startsWith("/student/exam") ||
+    pathname.startsWith("/student/compiler") ||
+    pathname.startsWith("/playground") ||
     pathname.startsWith("/assessment");
 
   // In coding workspace, the sidebar defaults to collapsed (0px width) so it does NOT disturb the coding workspace.
@@ -127,8 +149,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
-  // Standalone public pages (landing / home page, login & signup) render without the sidebar
-  const isAuthOrLanding = pathname === "/" || pathname === "/login" || pathname === "/signup";
+  // Standalone public pages & private Super Admin enclave render without the standard sidebar
+  const isAuthOrLanding =
+    pathname === "/" ||
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password" ||
+    pathname === "/privacy" ||
+    pathname === "/terms" ||
+    pathname.startsWith("/super-admin");
 
   if (isAuthOrLanding) {
     return (
@@ -140,7 +170,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           isCodingWorkspace: false,
         }}
       >
-        <div className="min-h-screen text-slate-900 flex flex-col font-sans">
+        <div className="min-h-screen flex flex-col font-sans bg-[#070B09] text-[#F4F7F5] overflow-x-hidden w-full max-w-full">
           {children}
           <CommandPalette isOpen={isCmdKOpen} onClose={() => setIsCmdKOpen(false)} />
         </div>
@@ -148,65 +178,47 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const effectiveRole =
-    (pathname.startsWith("/teacher")
-      ? "teacher"
-      : pathname.startsWith("/recruiter")
-      ? "recruiter"
-      : pathname.startsWith("/admin") || pathname.startsWith("/tpo")
-      ? "tpo"
-      : currentUser?.role || "student");
+  const userRole = currentUser?.role?.toLowerCase() || "student";
+  const isOwner =
+    currentUser?.email?.toLowerCase() === "mmam92005@gmail.com" ||
+    currentUser?.id === "c8d50800-aae2-42b6-84a7-f10241621c5a" ||
+    userRole === "super_admin";
 
-  const isTeacher = effectiveRole === "teacher" || pathname.startsWith("/teacher");
-  const isRecruiter = effectiveRole === "recruiter" || pathname.startsWith("/recruiter");
-  const isTPO =
-    effectiveRole === "tpo" ||
-    effectiveRole === "admin" ||
-    effectiveRole === "super_admin" ||
-    pathname.startsWith("/admin") ||
-    pathname.startsWith("/tpo");
-  const isStudent = !isTeacher && !isRecruiter && !isTPO;
+  const isTeacher = userRole === "teacher" || userRole === "mentor" || (isOwner && pathname.startsWith("/teacher"));
+  const isTPO = userRole === "tpo" || userRole === "admin" || (isOwner && (pathname.startsWith("/admin") || pathname.startsWith("/tpo")));
 
   const homeUrl = isTeacher
     ? "/teacher/dashboard"
-    : isRecruiter
-    ? "/recruiter/dashboard"
     : isTPO
-    ? "/admin/dashboard"
+    ? "/tpo/dashboard"
     : "/student/dashboard";
 
   // Determine active item based on current route
   const getActiveItem = () => {
     if (isTeacher) {
+      if (pathname.startsWith("/teacher/assessments")) return "assessments";
       if (pathname.startsWith("/teacher/assignments")) return "assignments";
       if (pathname.startsWith("/teacher/students")) return "students";
+      if (pathname.startsWith("/student/mnc-prep")) return "mnc-prep";
       if (pathname.startsWith("/curriculum")) return "learn";
       if (pathname.startsWith("/admin/problems")) return "problems";
       if (pathname.startsWith("/admin/assessments")) return "assessments";
       return "dashboard";
     }
 
-    if (isRecruiter) {
-      if (pathname.startsWith("/admin/drives")) return "recruitment";
-      if (pathname.startsWith("/student/resume")) return "resume";
-      return "dashboard";
-    }
-
     if (isTPO) {
       if (pathname.startsWith("/tpo/students")) return "students";
-      if (pathname.startsWith("/admin/problems")) return "problems";
-      if (pathname.startsWith("/admin/assessments")) return "assessments";
-      if (pathname.startsWith("/admin/drives")) return "recruitment";
-      if (pathname.includes("analytics")) return "analytics";
-      if (pathname.startsWith("/tpo/dashboard")) return "reports";
-      if (pathname.includes("institution")) return "institution";
-      if (pathname.includes("settings")) return "settings";
+      if (pathname.startsWith("/tpo/teachers")) return "teachers";
+      if (pathname.startsWith("/tpo/drives") || pathname.startsWith("/admin/drives")) return "drives";
+      if (pathname.startsWith("/tpo/dashboard")) return "dashboard";
       return "dashboard";
     }
 
+    if (pathname.startsWith("/student/mnc-prep")) return "mnc-prep";
     if (pathname.startsWith("/curriculum")) return "learn";
+    if (pathname.startsWith("/student/compiler") || pathname.startsWith("/playground")) return "compiler";
     if (pathname.startsWith("/practice") || pathname.startsWith("/student/lab")) return "practice";
-    if (pathname.startsWith("/assessment") || (pathname.startsWith("/student/exam") && !pathname.includes("/simulator"))) return "assessments";
+    if (pathname.startsWith("/student/assessments") || pathname.startsWith("/assessment") || (pathname.startsWith("/student/exam") && !pathname.includes("/simulator"))) return "assessments";
     if (pathname.startsWith("/student/drives") || pathname.includes("/simulator")) return "recruitment";
     if (pathname.startsWith("/student/resume")) return "resume";
     if (pathname.includes("progress")) return "progress";
@@ -223,13 +235,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (isCodingWorkspace) {
       setIsSidebarOpen(false);
     }
-  };
-
-  const handleSwitchPersona = (role: any, redirectPath: string) => {
-    setIsPageLoading(true);
-    DemoStore.switchRole(role);
-    setIsPersonaSwitcherOpen(false);
-    router.push(redirectPath);
   };
 
   const handleProgressClick = () => {
@@ -283,6 +288,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </button>
 
               <button
+                onClick={() => navigateTo("/teacher/assessments")}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeItem === "assessments"
+                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <FileText className={`w-4 h-4 ${activeItem === "assessments" ? "text-black" : "text-slate-400"}`} />
+                <span>Assessments &amp; Tests</span>
+              </button>
+
+              <button
                 onClick={() => navigateTo("/teacher/assignments")}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   activeItem === "assignments"
@@ -319,6 +336,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </button>
 
               <button
+                onClick={() => navigateTo("/student/mnc-prep")}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeItem === "mnc-prep"
+                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Layers className={`w-4 h-4 ${activeItem === "mnc-prep" ? "text-black" : "text-slate-400"}`} />
+                <div className="flex items-center justify-between flex-1">
+                  <span>MNC 300 Units</span>
+                  <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold uppercase ${
+                    activeItem === "mnc-prep" ? "bg-black/15 text-black" : "bg-[#9DFF00]/20 text-[#9DFF00]"
+                  }`}>
+                    10 Units
+                  </span>
+                </div>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => navigateTo("/admin/problems")}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   activeItem === "problems"
@@ -329,64 +366,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Code2 className={`w-4 h-4 ${activeItem === "problems" ? "text-black" : "text-slate-400"}`} />
                 <span>Problem Bank</span>
               </button>
-
-              <button
-                onClick={() => navigateTo("/admin/assessments")}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                  activeItem === "assessments"
-                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <ShieldCheck className={`w-4 h-4 ${activeItem === "assessments" ? "text-black" : "text-slate-400"}`} />
-                <span>Assessments</span>
-              </button>
-            </>
-          ) : isRecruiter ? (
-            // Recruiter Navigation Links
-            <>
-              <button
-                onClick={() => navigateTo("/recruiter/dashboard")}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                  activeItem === "dashboard"
-                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <Users className={`w-4 h-4 ${activeItem === "dashboard" ? "text-black" : "text-slate-400"}`} />
-                <span>Talent Discovery</span>
-              </button>
-
-              <button
-                onClick={() => navigateTo("/admin/drives")}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                  activeItem === "recruitment"
-                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <Briefcase className={`w-4 h-4 ${activeItem === "recruitment" ? "text-black" : "text-slate-400"}`} />
-                <span>Campus Drives</span>
-              </button>
-
-              <button
-                onClick={() => navigateTo("/student/resume")}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                  activeItem === "resume"
-                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <FileText className={`w-4 h-4 ${activeItem === "resume" ? "text-black" : "text-slate-400"}`} />
-                <span>Verified Resumes</span>
-              </button>
             </>
           ) : isTPO ? (
-            // Admin / TPO Navigation Links
+            // Dedicated TPO Navigation Links (Placement & Progress Tracking Only)
             <>
               <button
-                onClick={() => navigateTo("/admin/dashboard")}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                onClick={() => navigateTo("/tpo/dashboard")}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   activeItem === "dashboard"
                     ? "bg-[#9DFF00] text-black shadow-sm font-bold"
                     : "text-slate-400 hover:text-white hover:bg-white/5"
@@ -398,98 +384,38 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
               <button
                 onClick={() => navigateTo("/tpo/students")}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   activeItem === "students"
                     ? "bg-[#9DFF00] text-black shadow-sm font-bold"
                     : "text-slate-400 hover:text-white hover:bg-white/5"
                 }`}
               >
                 <Users className={`w-4 h-4 ${activeItem === "students" ? "text-black" : "text-slate-400"}`} />
-                <span>Students</span>
+                <span>Students Progress</span>
               </button>
 
               <button
-                onClick={() => navigateTo("/admin/problems")}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                  activeItem === "problems"
+                onClick={() => navigateTo("/tpo/teachers")}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  activeItem === "teachers"
                     ? "bg-[#9DFF00] text-black shadow-sm font-bold"
                     : "text-slate-400 hover:text-white hover:bg-white/5"
                 }`}
               >
-                <Code2 className={`w-4 h-4 ${activeItem === "problems" ? "text-black" : "text-slate-400"}`} />
-                <span>Problems</span>
+                <GraduationCap className={`w-4 h-4 ${activeItem === "teachers" ? "text-black" : "text-slate-400"}`} />
+                <span>Faculty &amp; Mentors</span>
               </button>
 
               <button
-                onClick={() => navigateTo("/admin/assessments")}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                  activeItem === "assessments"
+                onClick={() => navigateTo("/tpo/drives")}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  activeItem === "drives"
                     ? "bg-[#9DFF00] text-black shadow-sm font-bold"
                     : "text-slate-400 hover:text-white hover:bg-white/5"
                 }`}
               >
-                <ShieldCheck className={`w-4 h-4 ${activeItem === "assessments" ? "text-black" : "text-slate-400"}`} />
-                <span>Assessments</span>
-              </button>
-
-              <button
-                onClick={() => navigateTo("/admin/drives")}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                  activeItem === "recruitment"
-                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <Briefcase className={`w-4 h-4 ${activeItem === "recruitment" ? "text-black" : "text-slate-400"}`} />
-                <span>Recruitment</span>
-              </button>
-
-              <button
-                onClick={() => navigateTo("/admin/dashboard")}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                  activeItem === "analytics"
-                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <BarChart3 className={`w-4 h-4 ${activeItem === "analytics" ? "text-black" : "text-slate-400"}`} />
-                <span>Analytics</span>
-              </button>
-
-              <button
-                onClick={() => navigateTo("/tpo/dashboard")}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                  activeItem === "reports"
-                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <FileSpreadsheet className={`w-4 h-4 ${activeItem === "reports" ? "text-black" : "text-slate-400"}`} />
-                <span>Reports & Audit</span>
-              </button>
-
-              <button
-                onClick={() => navigateTo("/admin/dashboard#institution")}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                  activeItem === "institution"
-                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <Building2 className={`w-4 h-4 ${activeItem === "institution" ? "text-black" : "text-slate-400"}`} />
-                <span>Institution</span>
-              </button>
-
-              <button
-                onClick={() => navigateTo("/admin/dashboard#settings")}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                  activeItem === "settings"
-                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <Settings className={`w-4 h-4 ${activeItem === "settings" ? "text-black" : "text-slate-400"}`} />
-                <span>Settings</span>
+                <Briefcase className={`w-4 h-4 ${activeItem === "drives" ? "text-black" : "text-slate-400"}`} />
+                <span>Campus Drives</span>
               </button>
             </>
           ) : (
@@ -519,6 +445,46 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <span>Learn</span>
               </button>
 
+              {/* MNC 300 Master Interview Preparation Units */}
+              <button
+                onClick={() => navigateTo("/student/mnc-prep")}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeItem === "mnc-prep"
+                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Layers className={`w-4 h-4 ${activeItem === "mnc-prep" ? "text-black" : "text-slate-400"}`} />
+                <div className="flex items-center justify-between flex-1">
+                  <span>MNC 300 Prep</span>
+                  <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold uppercase ${
+                    activeItem === "mnc-prep" ? "bg-black/15 text-black" : "bg-[#9DFF00]/20 text-[#9DFF00]"
+                  }`}>
+                    10 Units
+                  </span>
+                </div>
+              </button>
+
+              {/* Freeform Open Compiler (Rule-Free Sandbox) */}
+              <button
+                onClick={() => navigateTo("/student/compiler")}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeItem === "compiler"
+                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Terminal className={`w-4 h-4 ${activeItem === "compiler" ? "text-black" : "text-slate-400"}`} />
+                <div className="flex items-center justify-between flex-1">
+                  <span>Open Sandbox</span>
+                  <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold uppercase ${
+                    activeItem === "compiler" ? "bg-black/15 text-black" : "bg-emerald-500/20 text-emerald-400"
+                  }`}>
+                    No Rules
+                  </span>
+                </div>
+              </button>
+
               <button
                 onClick={() => navigateTo("/practice/two-sum")}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
@@ -532,7 +498,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </button>
 
               <button
-                onClick={() => navigateTo("/student/exam/assessment-1")}
+                onClick={() => navigateTo("/student/assessments")}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   activeItem === "assessments"
                     ? "bg-[#9DFF00] text-black shadow-sm font-bold"
@@ -583,10 +549,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
       </div>
 
-      {/* Bottom: Help & Support & User Profile */}
-      <div className="p-4 border-t border-[#1B241F] space-y-3">
+      {/* Bottom: Security, Help & Support & User Profile */}
+      <div className="p-4 border-t border-[#1B241F] space-y-2">
+        {/* Account Security / Change Password */}
+        <button
+          type="button"
+          onClick={() => navigateTo("/settings/security")}
+          className={`w-full flex items-center gap-3 px-3.5 py-2 text-xs font-medium transition-colors rounded-xl ${
+            pathname === "/settings/security"
+              ? "bg-[#9DFF00] text-black font-bold"
+              : "text-slate-400 hover:text-white hover:bg-white/5"
+          }`}
+        >
+          <Settings className={`w-4 h-4 ${pathname === "/settings/security" ? "text-black" : "text-slate-400"}`} />
+          <span>Change Password</span>
+        </button>
+
         {/* Help & Support Button */}
         <button
+          type="button"
           onClick={() => setIsCmdKOpen(true)}
           className="w-full flex items-center gap-3 px-3.5 py-2 text-xs font-medium text-slate-400 hover:text-white transition-colors rounded-xl hover:bg-white/5"
         >
@@ -594,85 +575,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <span>Help & Support</span>
         </button>
 
-        {/* User Profile Card & Persona Switcher */}
+        {/* User Profile Card (Strict Role - No Demo Role Switcher) */}
         {currentUser && (
           <div className="relative">
-            {isPersonaSwitcherOpen && (
-              <div className="absolute bottom-full left-0 right-0 mb-2 p-2 bg-[#161D19] border border-[#222C26] rounded-2xl shadow-2xl space-y-1 z-50 animate-in fade-in slide-in-from-bottom-2">
-                <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                  <span>Switch Role</span>
-                  <span className="font-mono text-[#9DFF00]">AVASC</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleSwitchPersona("student", "/student/dashboard")}
-                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-left transition-colors ${
-                    effectiveRole === "student"
-                      ? "bg-[#9DFF00] text-black font-bold"
-                      : "text-slate-300 hover:bg-white/5"
-                  }`}
-                >
-                  <span className="truncate">Karthik S.</span>
-                  <span className="text-[10px] opacity-75 font-mono">Student</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSwitchPersona("teacher", "/teacher/dashboard")}
-                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-left transition-colors ${
-                    effectiveRole === "teacher"
-                      ? "bg-[#9DFF00] text-black font-bold"
-                      : "text-slate-300 hover:bg-white/5"
-                  }`}
-                >
-                  <span className="truncate">Dr. S. Meenakshi</span>
-                  <span className="text-[10px] opacity-75 font-mono">Teacher</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSwitchPersona("tpo", "/tpo/dashboard")}
-                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-left transition-colors ${
-                    effectiveRole === "tpo"
-                      ? "bg-[#9DFF00] text-black font-bold"
-                      : "text-slate-300 hover:bg-white/5"
-                  }`}
-                >
-                  <span className="truncate">Prof. R. Anandhan</span>
-                  <span className="text-[10px] opacity-75 font-mono">TPO</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSwitchPersona("admin", "/admin/dashboard")}
-                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-left transition-colors ${
-                    effectiveRole === "admin" || effectiveRole === "super_admin"
-                      ? "bg-[#9DFF00] text-black font-bold"
-                      : "text-slate-300 hover:bg-white/5"
-                  }`}
-                >
-                  <span className="truncate">Dr. V. Rajesh</span>
-                  <span className="text-[10px] opacity-75 font-mono">Admin</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSwitchPersona("recruiter", "/recruiter/dashboard")}
-                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-left transition-colors ${
-                    effectiveRole === "recruiter"
-                      ? "bg-[#9DFF00] text-black font-bold"
-                      : "text-slate-300 hover:bg-white/5"
-                  }`}
-                >
-                  <span className="truncate">Kavitha R.</span>
-                  <span className="text-[10px] opacity-75 font-mono">Recruiter</span>
-                </button>
-              </div>
-            )}
-
             <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-[#161D19] border border-[#222C26]">
-              <button
-                type="button"
-                onClick={() => setIsPersonaSwitcherOpen((prev) => !prev)}
-                className="flex items-center gap-2.5 min-w-0 text-left hover:opacity-85 transition-opacity flex-1"
-                title="Click to switch test persona"
-              >
+              <div className="flex items-center gap-2.5 min-w-0 text-left flex-1">
                 <div className="w-7 h-7 rounded-lg bg-[#9DFF00] text-black flex items-center justify-center font-bold text-xs font-mono shrink-0">
                   {currentUser.full_name
                     .split(" ")
@@ -684,18 +591,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <div className="font-semibold text-xs text-white truncate">
                     {currentUser.full_name}
                   </div>
-                  <div className="text-[10px] text-slate-400 font-mono truncate flex items-center gap-1">
-                    <span>{currentUser.role.toUpperCase()}</span>
-                    <span className="text-[#9DFF00] text-[9px]">• switch</span>
+                  <div className="text-[10px] text-slate-400 font-mono truncate flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span className="capitalize">{currentUser.role.toLowerCase()}</span>
                   </div>
                 </div>
-              </button>
+              </div>
               <button
+                type="button"
                 onClick={handleSignOut}
                 title="Sign out"
-                className="text-slate-400 hover:text-red-400 transition-colors p-1 rounded-lg hover:bg-white/5 shrink-0"
+                className="text-slate-400 hover:text-red-400 transition-colors p-1.5 rounded-lg hover:bg-white/5 shrink-0 cursor-pointer"
               >
-                <LogOut className="w-3.5 h-3.5" />
+                <LogOut className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -713,20 +621,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         isCodingWorkspace,
       }}
     >
-      <div className={`min-h-screen ${isCodingWorkspace ? "bg-[#0D1117] text-slate-200" : "bg-[#F4F7F4] text-slate-900"} flex font-sans overflow-x-hidden`}>
+      <div className="min-h-screen bg-[#070B09] text-[#F4F7F5] flex font-sans overflow-x-hidden">
         {/* ========================================================= */}
         {/* 1. CODING WORKSPACE MODE: Overlay Drawer when opened      */}
         {/* ========================================================= */}
         {isCodingWorkspace ? (
           <>
-            {/* Slide-Over Overlay Drawer when isSidebarOpen is true */}
             {isSidebarOpen && (
               <>
-                <div
+                <button
+                  type="button"
+                  aria-label="Close navigation sidebar"
                   onClick={() => setIsSidebarOpen(false)}
-                  className="fixed inset-0 z-40 bg-black/70 backdrop-blur-xs transition-opacity animate-in fade-in"
+                  className="fixed inset-0 z-40 bg-black/75 backdrop-blur-sm transition-opacity animate-in fade-in cursor-default"
                 />
-                <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-[#0F1412] text-white flex flex-col justify-between shadow-2xl border-r border-[#1B241F] transition-transform duration-300 ease-out translate-x-0 animate-in slide-in-from-left">
+                <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-[#0A0F0C] text-[#F4F7F5] flex flex-col justify-between shadow-2xl border-r border-[#1E2C24] transition-transform duration-300 ease-out translate-x-0 animate-in slide-in-from-left">
                   {renderSidebarContent(true)}
                 </aside>
               </>
@@ -737,32 +646,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           /* 2. REGULAR DASHBOARD MODE: In-flow Collapsible Sidebar    */
           /* ========================================================= */
           <>
-            {isSidebarOpen ? (
-              <aside className="w-60 bg-[#0F1412] text-white flex flex-col justify-between z-30 flex-shrink-0 hidden md:flex border-r border-[#1B241F] transition-all duration-300">
+            {isSidebarOpen && (
+              <aside className="w-64 bg-[#0A0F0C] text-[#F4F7F5] hidden md:flex flex-col justify-between z-30 flex-shrink-0 border-r border-[#1E2C24] transition-all duration-300">
                 {renderSidebarContent(false)}
               </aside>
-            ) : (
-              /* Expand Button when sidebar is collapsed on dashboard */
-              <button
-                type="button"
-                onClick={() => setIsSidebarOpen(true)}
-                className="fixed top-3 left-3 z-30 p-2 rounded-xl bg-[#0F1412] hover:bg-[#1A231C] text-[#9DFF00] border border-[#1E293B] shadow-lg transition-all active:scale-95 group hidden md:flex items-center gap-2"
-                title="Expand Navigation Sidebar (⌘B)"
-              >
-                <Sidebar className="w-4 h-4 text-[#9DFF00]" />
-                <span className="text-xs font-bold text-white pr-1">Menu</span>
-              </button>
             )}
 
             {/* Mobile Drawer */}
             <div className="md:hidden">
               {isSidebarOpen && (
                 <>
-                  <div
+                  <button
+                    type="button"
+                    aria-label="Close navigation sidebar"
                     onClick={() => setIsSidebarOpen(false)}
-                    className="fixed inset-0 z-40 bg-black/70 backdrop-blur-xs transition-opacity"
+                    className="fixed inset-0 z-40 bg-black/75 backdrop-blur-sm transition-opacity cursor-default"
                   />
-                  <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-[#0F1412] text-white flex flex-col justify-between shadow-2xl border-r border-[#1B241F]">
+                  <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-[#0A0F0C] text-[#F4F7F5] flex flex-col justify-between shadow-2xl border-r border-[#1E2C24]">
                     {renderSidebarContent(true)}
                   </aside>
                 </>
@@ -772,12 +672,79 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Main Viewport Content Canvas */}
-        <div className={`flex-1 flex flex-col min-w-0 overflow-hidden ${isCodingWorkspace ? "bg-[#0D1117]" : "bg-[#F4F7F4]"}`}>
-          <main className="flex-1 overflow-y-auto">{children}</main>
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#070B09]">
+          {!isCodingWorkspace && (
+            <header className="h-14 sticky top-0 z-20 px-4 sm:px-6 bg-[#0A0F0C]/85 backdrop-blur-xl border-b border-[#1E2C24] flex items-center justify-between gap-4 flex-shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <button
+                  type="button"
+                  onClick={toggleSidebar}
+                  className="p-2 rounded-lg text-[#99A9A0] hover:text-[#F4F7F5] hover:bg-[#121B16] border border-transparent hover:border-[#1E2C24] transition-all cursor-pointer"
+                  aria-label="Toggle navigation sidebar"
+                  title="Toggle Sidebar (⌘B)"
+                >
+                  <Sidebar className="w-4 h-4" />
+                </button>
+                <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-[#85998D] truncate">
+                  <span className="text-[#99A9A0] uppercase tracking-wider font-semibold">
+                    {isTeacher ? "Faculty" : isTPO ? "Placement Cell" : "Student"}
+                  </span>
+                  <span>/</span>
+                  <span className="text-[#F4F7F5] capitalize font-semibold">
+                    {activeItem.replace("-", " ")}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsCmdKOpen(true)}
+                  className="hidden sm:inline-flex items-center gap-3 px-3 py-1.5 rounded-xl bg-[#0C120F] hover:bg-[#121B16] border border-[#1E2C24] hover:border-[#2C4034] text-xs text-[#99A9A0] transition-all cursor-pointer"
+                >
+                  <Search className="w-3.5 h-3.5 text-[#85998D]" />
+                  <span>Quick command...</span>
+                  <kbd className="px-1.5 py-0.5 text-[10px] font-mono font-bold rounded bg-[#121B16] border border-[#2C4034] text-[#9DFF00]">
+                    ⌘K
+                  </kbd>
+                </button>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#0C120F] border border-[#1E2C24] text-[10px] font-mono font-semibold text-[#99A9A0]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#9DFF00] animate-pulse" />
+                  <span>LIVE</span>
+                </div>
+              </div>
+            </header>
+          )}
+          <main id="main-content" className="flex-1 overflow-y-auto obsidian-workspace">{children}</main>
         </div>
 
-        {/* Global Command Palette */}
-        <CommandPalette isOpen={isCmdKOpen} onClose={() => setIsCmdKOpen(false)} />
+        {/* Global Access Restriction Notice */}
+        {accessDeniedNotice && (
+          <div className="fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 bg-[#161B22]/95 border border-rose-500/50 text-white rounded-2xl shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-2">
+            <div className="w-8 h-8 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0">
+              <ShieldAlert className="w-4 h-4 text-rose-400" />
+            </div>
+            <div className="text-xs pr-2">
+              <p className="font-bold text-rose-200">Access Restricted</p>
+              <p className="text-slate-400 text-[11px]">Your account role does not have authorization to access that enclave.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAccessDeniedNotice(false)}
+              className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10"
+              aria-label="Close notification"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* Global Command Palette (Role-Filtered) */}
+        <CommandPalette
+          isOpen={isCmdKOpen}
+          onClose={() => setIsCmdKOpen(false)}
+          userRole={isOwner ? "super_admin" : normalizeRole(currentUser?.role)}
+        />
       </div>
     </SidebarContext.Provider>
   );
