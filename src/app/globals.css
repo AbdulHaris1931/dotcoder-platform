@@ -14,9 +14,14 @@
   --text-primary: #F4F7F5;
   --text-secondary: #A3B4AA;
   --text-muted: #85998D;
-  --font-display: "Space Grotesk", sans-serif;
-  --font-sans: "Plus Jakarta Sans", sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+}
+
+@layer base {
+  :root {
+    --font-display: "Space Grotesk", sans-serif;
+    --font-sans: "Plus Jakarta Sans", sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
