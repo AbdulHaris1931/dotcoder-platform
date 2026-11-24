@@ -20,6 +20,7 @@ import {
   Bell,
   ChevronRight,
   Sparkles,
+  KeyRound,
 } from "lucide-react";
 
 interface NavItem {
@@ -34,6 +35,7 @@ const NAV_ITEMS: NavItem[] = [
   { name: "All Users", href: "/super-admin/users", icon: Users },
   { name: "Add User", href: "/super-admin/users/add", icon: UserPlus },
   { name: "AI Bulk Import", href: "/super-admin/users/import", icon: Sparkles, badge: "AI" },
+  { name: "Password Requests", href: "/super-admin/password-requests", icon: KeyRound, badge: "GATE" },
   { name: "Activity Logs", href: "/super-admin/activity", icon: ShieldCheck },
   { name: "Security & Settings", href: "/super-admin/settings", icon: Settings },
 ];
