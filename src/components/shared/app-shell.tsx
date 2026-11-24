@@ -31,6 +31,7 @@ import {
   GraduationCap,
   Terminal,
   Layers,
+  Database,
 } from "lucide-react";
 
 interface SidebarContextType {
@@ -259,6 +260,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
 
     if (pathname.startsWith("/student/mnc-prep")) return "mnc-prep";
+    if (pathname.startsWith("/student/sql-lab")) return "sql-lab";
     if (pathname.startsWith("/curriculum")) return "learn";
     if (pathname.startsWith("/student/compiler") || pathname.startsWith("/playground")) return "compiler";
     if (pathname.startsWith("/practice") || pathname.startsWith("/student/lab")) return "practice";
@@ -525,6 +527,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     activeItem === "compiler" ? "bg-black/15 text-black" : "bg-emerald-500/20 text-emerald-400"
                   }`}>
                     No Rules
+                  </span>
+                </div>
+              </button>
+
+              {/* In-Browser SQL Lab (WASM) */}
+              <button
+                onClick={() => navigateTo("/student/sql-lab")}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeItem === "sql-lab"
+                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Database className={`w-4 h-4 ${activeItem === "sql-lab" ? "text-black" : "text-slate-400"}`} />
+                <div className="flex items-center justify-between flex-1">
+                  <span>SQL Lab</span>
+                  <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold uppercase ${
+                    activeItem === "sql-lab" ? "bg-black/15 text-black" : "bg-sky-500/20 text-sky-300"
+                  }`}>
+                    WASM
                   </span>
                 </div>
               </button>

@@ -128,6 +128,20 @@ export default function ProctoredExamRoomPage() {
   const [isEditorMaximized, setIsEditorMaximized] = useState<boolean>(false);
   const [lastSavedTime, setLastSavedTime] = useState<string>("just now");
   const [isRestoredFromBackup, setIsRestoredFromBackup] = useState<boolean>(false);
+  const [isOffline, setIsOffline] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setIsOffline(!window.navigator.onLine);
+    const handleOffline = () => setIsOffline(true);
+    const handleOnline = () => setIsOffline(false);
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+    return () => {
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+    };
+  }, []);
 
   // Split pane horizontal resizing: question area width percentage
   const [leftWidthPercent, setLeftWidthPercent] = useState<number>(36);
@@ -1876,6 +1890,17 @@ export default function ProctoredExamRoomPage() {
         )}
       </div>
     </footer>
+
+    {isOffline && (
+      <div
+        role="status"
+        aria-live="polite"
+        className="fixed bottom-16 left-4 z-50 flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-950/95 border border-amber-500/50 text-amber-200 text-xs font-mono shadow-xl"
+      >
+        <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+        <span>Offline Mode: answers are auto-saved locally ({lastSavedTime}) and will sync on reconnect.</span>
+      </div>
+    )}
   </div>
 );
 }

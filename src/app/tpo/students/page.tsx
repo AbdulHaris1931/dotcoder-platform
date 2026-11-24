@@ -17,6 +17,7 @@ import {
   Target,
   GraduationCap,
   X,
+  Download,
 } from "lucide-react";
 
 interface StudentRecord {
@@ -73,6 +74,7 @@ export default function StudentManagementPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("All");
+  const [minReadinessFilter, setMinReadinessFilter] = useState("0");
   const [showAddModal, setShowAddModal] = useState(false);
   const [drawerStudent, setDrawerStudent] = useState<UserProfile | null>(null);
 
@@ -113,15 +115,42 @@ export default function StudentManagementPage() {
   }, []);
 
   const filteredStudents = useMemo(() => {
+    const minScore = Number(minReadinessFilter) || 0;
     return students.filter((s) => {
       const matchesSearch =
         s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.rollNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.department.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesDept = departmentFilter === "All" || s.department === departmentFilter;
-      return matchesSearch && matchesDept;
+      const matchesReadiness = s.readiness >= minScore;
+      return matchesSearch && matchesDept && matchesReadiness;
     });
-  }, [students, searchQuery, departmentFilter]);
+  }, [students, searchQuery, departmentFilter, minReadinessFilter]);
+
+  const handleExportShortlistCsv = () => {
+    const headers = ["Roll No", "Student Name", "Department", "Email", "Progress (%)", "Readiness (%)"];
+    const escapeCell = (val: string | number) => `"${String(val).replace(/"/g, '""')}"`;
+    const rows = filteredStudents.map((s) =>
+      [
+        s.rollNo,
+        s.name,
+        s.department,
+        s.email || `${s.rollNo.toLowerCase()}@avc.edu.in`,
+        s.progress,
+        s.readiness,
+      ]
+        .map(escapeCell)
+        .join(",")
+    );
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `eqlv-placement-shortlist-${departmentFilter.toLowerCase().replace(/\s+/g, "-")}-min${minReadinessFilter}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   const totalPages = Math.max(1, Math.ceil(filteredStudents.length / pageSize));
   const pagedStudents = useMemo(() => {
@@ -253,8 +282,8 @@ export default function StudentManagementPage() {
           />
         </div>
 
-        {/* Dropdowns */}
-        <div className="flex items-center gap-3 text-xs">
+        {/* Dropdowns & 1-Click Recruiter Shortlist Export */}
+        <div className="flex flex-wrap items-center gap-3 text-xs">
           <div className="flex items-center gap-1.5 bg-[#070B09] border border-[#1E2C24] px-3 py-2 rounded-xl text-[#D5E0D9]">
             <span className="text-[#85998D]">Department:</span>
             <ObsidianSelect value={String(departmentFilter)} onChange={(val) => {
@@ -262,6 +291,34 @@ export default function StudentManagementPage() {
                 setCurrentPage(1);
               }} options={[{ value: "All", label: "All" }, { value: "BCA", label: "BCA" }, { value: "B.Sc CS", label: "B.Sc CS" }, { value: "B.Sc IT", label: "B.Sc IT" }, { value: "MCA", label: "MCA" }]} buttonClassName="bg-[#070B09] font-semibold text-[#F4F7F5] focus:outline-none cursor-pointer" />
           </div>
+
+          <div className="flex items-center gap-1.5 bg-[#070B09] border border-[#1E2C24] px-3 py-2 rounded-xl text-[#D5E0D9]">
+            <span className="text-[#85998D]">Min Readiness:</span>
+            <ObsidianSelect
+              value={minReadinessFilter}
+              onChange={(val) => {
+                setMinReadinessFilter(val);
+                setCurrentPage(1);
+              }}
+              options={[
+                { value: "0", label: "All Scores" },
+                { value: "60", label: ">= 60%" },
+                { value: "70", label: ">= 70%" },
+                { value: "80", label: ">= 80%" },
+                { value: "90", label: ">= 90%" },
+              ]}
+              buttonClassName="bg-[#070B09] font-semibold text-[#F4F7F5] focus:outline-none cursor-pointer"
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={handleExportShortlistCsv}
+            className="inline-flex items-center gap-1.5 min-h-[36px] px-3.5 py-2 rounded-xl bg-[#121B16] hover:bg-[#18241D] border border-[#2C4034] hover:border-[#9DFF00]/50 text-xs font-mono font-bold text-[#9DFF00] transition-colors cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Export Shortlist CSV ({filteredStudents.length})</span>
+          </button>
         </div>
       </div>
 

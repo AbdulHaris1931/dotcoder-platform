@@ -90,8 +90,11 @@ export function canRoleAccessPath(role: NormalizedRole, pathname: string): boole
     return role === "teacher" || role === "tpo";
   }
 
-  // MNC 300 Prep is shared with both Students and Faculty mentors
-  if (pathname.startsWith("/student/mnc-prep")) {
+  // MNC 300 Prep and SQL Lab are shared with both Students and Faculty mentors
+  if (
+    pathname.startsWith("/student/mnc-prep") ||
+    pathname.startsWith("/student/sql-lab")
+  ) {
     return role === "student" || role === "teacher";
   }
 

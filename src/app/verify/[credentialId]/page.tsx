@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { AssessmentService } from "@/lib/services/assessment-service";
+import { downloadSkillCertificatePng } from "@/lib/certificate-generator";
 import { AssessmentAttempt } from "@/types/assessment-attempt";
 import {
   ShieldCheck,
@@ -161,10 +162,19 @@ export default function PublicCredentialVerificationPage() {
             </div>
           </div>
 
-          <div className="text-left sm:text-right shrink-0">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
             <button
+              type="button"
+              onClick={() => downloadSkillCertificatePng(attempt)}
+              className="inline-flex items-center gap-1.5 min-h-[32px] px-3.5 py-1.5 rounded-xl bg-[#9DFF00] hover:bg-[#8CE600] text-[#070B09] text-xs font-bold font-mono transition-colors shadow-xs cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Certificate PNG</span>
+            </button>
+            <button
+              type="button"
               onClick={handleDownloadProof}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#1E2C24] bg-[#121B16] hover:bg-[#18241D] text-[#D5E0D9] hover:text-[#F4F7F5] text-xs font-semibold transition-colors shadow-xs"
+              className="inline-flex items-center gap-1.5 min-h-[32px] px-3 py-1.5 rounded-xl border border-[#1E2C24] bg-[#121B16] hover:bg-[#18241D] text-[#D5E0D9] hover:text-[#F4F7F5] text-xs font-semibold transition-colors shadow-xs cursor-pointer"
             >
               <Download className="w-3.5 h-3.5 text-[#9DFF00]" />
               <span>Print Proof</span>

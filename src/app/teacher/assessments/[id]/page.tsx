@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { AssessmentRegistry } from "@/lib/assessment-registry";
 import { AssessmentService } from "@/lib/services/assessment-service";
+import { detectCohortSimilarity } from "@/lib/code-similarity";
 import { Assessment } from "@/types";
 import { AssessmentAttempt } from "@/types/assessment-attempt";
 import { DemoStore } from "@/lib/demo-store";
@@ -146,6 +147,12 @@ export default function AssessmentTelemetryPage() {
       distribution: { mastery, proficient, passing, needsSupport },
     };
   }, [attempts]);
+
+  // Cross-student code similarity / plagiarism audit
+  const similarityPairs = useMemo(
+    () => detectCohortSimilarity(attempts, 55),
+    [attempts]
+  );
 
   // Filtered attempts list
   const filteredAttempts = useMemo(() => {
@@ -378,6 +385,67 @@ export default function AssessmentTelemetryPage() {
               <div className="text-xs text-rose-400/90 font-medium">Recommended for re-test</div>
             </div>
           </div>
+        </div>
+
+        {/* Cross-Student Plagiarism & Code Similarity Audit */}
+        <div className="bg-[#0C120F] p-6 rounded-2xl border border-[#1E2C24] space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <h2 className="text-base font-display font-bold text-[#F4F7F5] tracking-tight">
+                Cross-Student Code Similarity Audit
+              </h2>
+              <p className="text-xs text-[#99A9A0]">
+                Structural AST-token comparison across cohort submissions (catches renamed variables and formatting edits)
+              </p>
+            </div>
+            <span
+              className={`text-xs font-mono font-bold px-3 py-1 rounded-full border self-start sm:self-auto ${
+                similarityPairs.length > 0
+                  ? "bg-amber-500/10 text-amber-300 border-amber-500/30"
+                  : "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
+              }`}
+            >
+              {similarityPairs.length > 0
+                ? `${similarityPairs.length} Pair${similarityPairs.length === 1 ? "" : "s"} Flagged`
+                : "0 Similarity Flags"}
+            </span>
+          </div>
+
+          {similarityPairs.length === 0 ? (
+            <div className="p-4 rounded-xl bg-[#070B09] border border-[#1E2C24] text-xs font-mono text-[#99A9A0] flex items-center gap-2.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>
+                All coding submissions in this cohort passed structural originality verification (&lt; 55% token overlap).
+              </span>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {similarityPairs.slice(0, 6).map((pair, idx) => (
+                <div
+                  key={`${pair.attemptA.id}-${pair.attemptB.id}-${idx}`}
+                  className="p-4 rounded-xl bg-[#070B09] border border-amber-500/30 flex items-center justify-between gap-3"
+                >
+                  <div className="min-w-0 space-y-1">
+                    <div className="text-xs font-bold text-[#F4F7F5] truncate">
+                      {pair.attemptA.studentName} ({pair.attemptA.rollNo}) &amp; {pair.attemptB.studentName} ({pair.attemptB.rollNo})
+                    </div>
+                    <div className="text-[11px] font-mono text-[#99A9A0] truncate">
+                      Matched: {pair.matchedQuestions.join(", ")}
+                    </div>
+                  </div>
+                  <span
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold tabular-nums shrink-0 ${
+                      pair.riskLevel === "high"
+                        ? "bg-rose-500/15 text-rose-300 border border-rose-500/30"
+                        : "bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                    }`}
+                  >
+                    {pair.similarityPercent}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Candidate Attempts Table */}
