@@ -16,12 +16,10 @@
   --text-muted: #85998D;
 }
 
-@layer base {
-  :root {
-    --font-display: "Space Grotesk", sans-serif;
-    --font-sans: "Plus Jakarta Sans", sans-serif;
-    --font-mono: "JetBrains Mono", monospace;
-  }
+:where(:root) {
+  --font-display: "Space Grotesk", sans-serif;
+  --font-sans: "Plus Jakarta Sans", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 }
 
 @media (prefers-reduced-motion: reduce) {
