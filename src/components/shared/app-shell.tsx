@@ -82,6 +82,50 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, [currentUser, pathname, router]);
 
+  // Shared-Lab Inactivity Auto-Sign-Out (30 minutes idle across tabs)
+  useEffect(() => {
+    if (!currentUser || typeof window === "undefined") return;
+
+    const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+    const ACTIVITY_KEY = "eqlv_last_activity_at";
+
+    const markActive = () => {
+      try {
+        window.localStorage.setItem(ACTIVITY_KEY, String(Date.now()));
+      } catch {
+        // Ignore storage quota / private mode errors
+      }
+    };
+
+    markActive();
+    const events: Array<keyof WindowEventMap> = [
+      "mousemove",
+      "mousedown",
+      "keydown",
+      "touchstart",
+      "scroll",
+    ];
+    events.forEach((ev) => window.addEventListener(ev, markActive, { passive: true }));
+
+    const interval = window.setInterval(() => {
+      try {
+        const lastRaw = window.localStorage.getItem(ACTIVITY_KEY);
+        const lastActive = lastRaw ? Number(lastRaw) : Date.now();
+        if (Date.now() - lastActive >= IDLE_TIMEOUT_MS) {
+          window.clearInterval(interval);
+          void performSignOut((url) => router.replace(url));
+        }
+      } catch {
+        // Ignore storage read errors
+      }
+    }, 60 * 1000);
+
+    return () => {
+      events.forEach((ev) => window.removeEventListener(ev, markActive));
+      window.clearInterval(interval);
+    };
+  }, [currentUser, router]);
+
   useEffect(() => {
     async function fetchUser() {
       const user = await DataService.getCurrentUser();

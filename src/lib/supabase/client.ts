@@ -1,4 +1,8 @@
 import { createBrowserClient } from "@supabase/ssr";
+import {
+  parseBrowserCookies,
+  writeBrowserSessionCookie,
+} from "./cookie-options";
 
 export function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -8,7 +12,24 @@ export function createClient() {
     return null;
   }
 
-  return createBrowserClient(supabaseUrl, supabaseAnonKey);
+  return createBrowserClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return parseBrowserCookies();
+      },
+      setAll(
+        cookiesToSet: Array<{
+          name: string;
+          value: string;
+          options?: Record<string, unknown>;
+        }>
+      ) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          writeBrowserSessionCookie(name, value, options);
+        });
+      },
+    },
+  });
 }
 
 export const isSupabaseConfigured = (): boolean => {
