@@ -63,7 +63,7 @@ const INITIAL_DEMO_DRIVES: CampusDrive[] = [
   },
 ];
 
-// 100% clean slate by default — zero mock candidate shortlists
+// 100% clean slate by default - zero mock candidate shortlists
 const INITIAL_DEMO_SHORTLISTS: CandidateShortlistEntry[] = [];
 
 export class RecruiterService {

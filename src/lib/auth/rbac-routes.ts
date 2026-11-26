@@ -107,8 +107,9 @@ export function canRoleAccessPath(role: NormalizedRole, pathname: string): boole
     return role === "student";
   }
 
-  // Shared Learning Labs & Account Security
+  // Shared Learning Labs, Campus Leaderboard & Account Security
   if (
+    pathname.startsWith("/leaderboard") ||
     pathname.startsWith("/curriculum") ||
     pathname.startsWith("/practice") ||
     pathname.startsWith("/playground") ||

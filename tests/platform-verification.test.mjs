@@ -323,4 +323,57 @@ test("RBAC Route Matrix: enforces strict isolation while allowing valid shared r
   assert.equal(canRoleAccessPath("super_admin", "/super-admin/dashboard"), true);
   assert.equal(canRoleAccessPath("super_admin", "/tpo/dashboard"), true);
   assert.equal(canRoleAccessPath("super_admin", "/teacher/dashboard"), true);
+  assert.equal(canRoleAccessPath("student", "/leaderboard"), true);
+  assert.equal(canRoleAccessPath("teacher", "/leaderboard"), true);
+  assert.equal(canRoleAccessPath("tpo", "/leaderboard"), true);
+});
+
+test("Campus Leaderboard: composite XP ranking, department standings, and student Top-25 privacy cap", async () => {
+  const { computeCampusLeaderboard, calculateCompositeScore } = await import(
+    "@/lib/leaderboard-engine"
+  );
+
+  // AAA: Arrange 30 candidates so student privacy cap (Top 25) is exercised
+  const candidates = Array.from({ length: 30 }, (_, idx) => ({
+    id: `stu-${idx + 1}`,
+    fullName: `Candidate ${String(idx + 1).padStart(2, "0")}`,
+    rollNo: `23BCA${String(idx + 1).padStart(2, "0")}`,
+    department: idx % 2 === 0 ? "BCA" : "MCA",
+    batchYear: 2026,
+    readinessScore: Math.max(20, 95 - idx * 2),
+    problemsSolved: Math.max(1, 35 - idx),
+    examAvgScore: Math.max(30, 92 - idx * 2),
+    examsPassed: 2,
+  }));
+
+  // Act (Student viewer ranked #28)
+  const studentView = computeCampusLeaderboard({
+    candidates,
+    viewerId: "stu-28",
+    viewerRole: "student",
+  });
+
+  // Assert Student privacy cap + personal standing preserved
+  assert.equal(studentView.visibleEntries.length, 25);
+  assert.equal(studentView.isPrivacyCapped, true);
+  assert.equal(studentView.canViewFullCohort, false);
+  assert.equal(studentView.visibleEntries[0].rank, 1);
+  assert.equal(
+    studentView.visibleEntries[0].compositeScore,
+    calculateCompositeScore(candidates[0])
+  );
+  assert.ok(studentView.myStanding);
+  assert.equal(studentView.myStanding.entry.rank, 28);
+  assert.ok(studentView.myStanding.pointsToNextRank > 0);
+  assert.equal(studentView.departmentStandings.length, 2);
+
+  // Act & Assert (TPO / Faculty sees full 30-student cohort)
+  const tpoView = computeCampusLeaderboard({
+    candidates,
+    viewerId: "tpo-1",
+    viewerRole: "tpo",
+  });
+  assert.equal(tpoView.visibleEntries.length, 30);
+  assert.equal(tpoView.isPrivacyCapped, false);
+  assert.equal(tpoView.canViewFullCohort, true);
 });

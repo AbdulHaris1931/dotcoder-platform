@@ -32,6 +32,7 @@ import {
   Terminal,
   Layers,
   Database,
+  Trophy,
 } from "lucide-react";
 
 interface SidebarContextType {
@@ -272,6 +273,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // Determine active item based on current route
   const getActiveItem = () => {
+    if (pathname.startsWith("/leaderboard")) return "leaderboard";
+
     if (isTeacher) {
       if (pathname.startsWith("/teacher/assessments")) return "assessments";
       if (pathname.startsWith("/teacher/assignments")) return "assignments";
@@ -341,7 +344,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <button
             type="button"
             onClick={() => setIsSidebarOpen(false)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            aria-label="Collapse navigation sidebar"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors min-w-[28px] min-h-[28px] inline-flex items-center justify-center"
             title="Collapse sidebar (⌘B)"
           >
             {isDrawer ? <X className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -444,6 +448,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Code2 className={`w-4 h-4 ${activeItem === "problems" ? "text-black" : "text-slate-400"}`} />
                 <span>Problem Bank</span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => navigateTo("/leaderboard")}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  activeItem === "leaderboard"
+                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Trophy className={`w-4 h-4 ${activeItem === "leaderboard" ? "text-black" : "text-slate-400"}`} />
+                <span>Leaderboard</span>
+              </button>
             </>
           ) : isTPO ? (
             // Dedicated TPO Navigation Links (Placement & Progress Tracking Only)
@@ -494,6 +511,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               >
                 <Briefcase className={`w-4 h-4 ${activeItem === "drives" ? "text-black" : "text-slate-400"}`} />
                 <span>Campus Drives</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigateTo("/leaderboard")}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  activeItem === "leaderboard"
+                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Trophy className={`w-4 h-4 ${activeItem === "leaderboard" ? "text-black" : "text-slate-400"}`} />
+                <span>Leaderboard</span>
               </button>
             </>
           ) : (
@@ -620,6 +650,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </button>
 
               <button
+                type="button"
+                onClick={() => navigateTo("/leaderboard")}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  activeItem === "leaderboard"
+                    ? "bg-[#9DFF00] text-black shadow-sm font-bold"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Trophy className={`w-4 h-4 ${activeItem === "leaderboard" ? "text-black" : "text-slate-400"}`} />
+                <span>Leaderboard</span>
+              </button>
+
+              <button
                 onClick={() => navigateTo("/student/resume")}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   activeItem === "resume"
@@ -698,8 +741,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <button
                 type="button"
                 onClick={handleSignOut}
+                aria-label="Sign out"
                 title="Sign out"
-                className="text-slate-400 hover:text-red-400 transition-colors p-1.5 rounded-lg hover:bg-white/5 shrink-0 cursor-pointer"
+                className="text-slate-400 hover:text-red-400 transition-colors p-1.5 rounded-lg hover:bg-white/5 shrink-0 cursor-pointer min-w-[28px] min-h-[28px] inline-flex items-center justify-center"
               >
                 <LogOut className="w-4 h-4" />
               </button>

@@ -4,7 +4,7 @@ import { TeacherAssignment, MentorFeedbackRecord, CohortBatch } from "@/types/as
 const ASSIGNMENTS_STORAGE_KEY = "dotcoder_teacher_assignments";
 const FEEDBACK_STORAGE_KEY = "dotcoder_mentor_feedback";
 
-// 100% clean slate by default — zero mock teacher assignments or feedback
+// 100% clean slate by default - zero mock teacher assignments or feedback
 const DEFAULT_ASSIGNMENTS: TeacherAssignment[] = [];
 
 const DEFAULT_FEEDBACK: MentorFeedbackRecord[] = [];

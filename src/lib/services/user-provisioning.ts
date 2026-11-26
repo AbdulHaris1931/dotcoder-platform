@@ -29,7 +29,7 @@ const LAST_NAMES = [
 
 export class UserProvisioningService {
   /**
-   * Get all real provisioned users (100% clean slate by default — zero test users)
+   * Get all real provisioned users (100% clean slate by default - zero test users)
    */
   static getAllUsers(): UserProfile[] {
     if (!isClient) {

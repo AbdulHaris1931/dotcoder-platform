@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
   const auth = await requireApiAuth(req);
   if (auth.errorResponse) return auth.errorResponse;
 
-  const db = createAdminClient() || (await createServerClient());
+  const db = createAdminClient({ silent: true }) || (await createServerClient());
   if (!db) {
     return NextResponse.json({
       success: true,
@@ -134,7 +134,7 @@ export async function PATCH(req: NextRequest) {
   // Always update in-memory mirror for instant zero-crash consistency
   setFallbackGovernance(sanitized);
 
-  const db = createAdminClient() || (await createServerClient());
+  const db = createAdminClient({ silent: true }) || (await createServerClient());
   if (!db) {
     return NextResponse.json({
       success: true,

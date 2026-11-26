@@ -65,6 +65,20 @@ export function CommandPalette({
   const allItems: CommandItem[] = [
     // Quick Actions
     {
+      id: "act-leaderboard",
+      category: "Actions",
+      title: "Campus & Department Leaderboard",
+      subtitle: "Live composite placement rankings across cohorts",
+      icon: Trophy,
+      badge: "Live XP",
+      badgeColor: "bg-[#9DFF00]/15 text-[#9DFF00] border-[#9DFF00]/30",
+      requiredPath: "/leaderboard",
+      action: () => {
+        router.push("/leaderboard");
+        onClose();
+      },
+    },
+    {
       id: "act-drives-student",
       category: "Actions",
       title: "Campus Placement Drives",

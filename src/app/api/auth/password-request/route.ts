@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   const auth = await requireApiAuth(req);
   if (auth.errorResponse) return auth.errorResponse;
 
-  const db = createAdminClient() || (await createServerClient());
+  const db = createAdminClient({ silent: true }) || (await createServerClient());
   if (!db) {
     return NextResponse.json({
       success: true,
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
     reason = "";
   }
 
-  const db = createAdminClient() || (await createServerClient());
+  const db = createAdminClient({ silent: true }) || (await createServerClient());
   let profileName = auth.user.email.split("@")[0] || "Campus User";
   let profileRole = auth.user.role;
   let profileDept = "";
@@ -235,7 +235,7 @@ export async function PATCH(req: NextRequest) {
 
   fallbackCompleteRequest(auth.user.id, requestId);
 
-  const db = createAdminClient() || (await createServerClient());
+  const db = createAdminClient({ silent: true }) || (await createServerClient());
   if (!db) {
     return NextResponse.json({ success: true });
   }

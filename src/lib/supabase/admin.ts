@@ -10,14 +10,17 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
  * NEVER falls back to the public ANON key (which would silently fail under RLS).
  * NEVER import this file in client components ("use client").
  */
-export function createAdminClient() {
+let hasWarnedMissingServiceRole = false;
+
+export function createAdminClient(options?: { silent?: boolean }) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
-    if (supabaseUrl && !serviceRoleKey) {
+    if (supabaseUrl && !serviceRoleKey && !options?.silent && !hasWarnedMissingServiceRole) {
+      hasWarnedMissingServiceRole = true;
       console.warn(
-        "[Supabase Admin] SUPABASE_SERVICE_ROLE_KEY is missing. Privileged server admin operations are unavailable."
+        "[Supabase Admin] SUPABASE_SERVICE_ROLE_KEY is not set in .env.local (using authenticated RLS client where supported)."
       );
     }
     return null;

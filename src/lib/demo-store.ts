@@ -360,7 +360,7 @@ export class DemoStore {
     return AssessmentRegistry.getAssessment("assessment-1");
   }
 
-  // Submissions (100% clean slate by default — zero mock submissions)
+  // Submissions (100% clean slate by default - zero mock submissions)
   static getSubmissions(): Submission[] {
     if (!isClient) return [];
     const seedIds = new Set(ALL_SEED_USERS.map((u) => u.id));

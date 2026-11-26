@@ -34,7 +34,7 @@ interface AssessmentAttemptDbRow {
 
 const LOCAL_STORAGE_ATTEMPTS_KEY = "dotcoder_assessment_attempts_cache";
 
-// 100% clean slate by default — zero mock student exam attempts
+// 100% clean slate by default - zero mock student exam attempts
 const INITIAL_DEMO_ATTEMPTS: AssessmentAttempt[] = [];
 
 export class AssessmentService {

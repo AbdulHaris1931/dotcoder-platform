@@ -125,7 +125,7 @@ export const SEED_TOPICS: CurriculumTopic[] = [
     concept_markdown: `### 3-Minute Concept Guide: Asymptotic Analysis
 
 #### Core Mental Model
-In campus recruitment coding rounds, your code isn't just evaluated on correctness—it is scrutinized on **scaling efficiency**.
+In campus recruitment coding rounds, your code isn't just evaluated on correctness - it is scrutinized on **scaling efficiency**.
 - **Time Complexity** measures how execution steps grow relative to input size $N$.
 - **Space Complexity** measures auxiliary memory allocated beyond the inputs.
 
@@ -665,7 +665,7 @@ A subarray is a contiguous non-empty sequence of elements within an array. Negat
     hints: {
       intuition: "Notice: Sum(i..j) = Prefix[j] - Prefix[i-1]. If Prefix[j] - Prefix[i-1] = k, then Prefix[i-1] = Prefix[j] - k.",
       data_structure: "Maintain a Hash Map storing the frequency of running prefix sums seen so far. Initialize {0: 1} to count subarrays starting from index 0.",
-      edge_case_warning: "Because elements can be negative, the prefix sum is NOT monotonic—sliding window fails! Hash Map is mandatory.",
+      edge_case_warning: "Because elements can be negative, the prefix sum is NOT monotonic - sliding window fails! Hash Map is mandatory.",
     },
     test_cases: [
       {

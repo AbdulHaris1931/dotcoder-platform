@@ -254,6 +254,13 @@ export default function SuperAdminLayout({
                   <span>SQL Lab (WASM)</span>
                   <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/25 text-emerald-300">Lab</span>
                 </Link>
+                <Link
+                  href="/leaderboard"
+                  className="flex items-center justify-between py-1.5 px-2 rounded-lg text-[#99A9A0] hover:text-[#F4F7F5] hover:bg-[#121B16]"
+                >
+                  <span>Campus Leaderboard</span>
+                  <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#9DFF00]/10 border border-[#9DFF00]/25 text-[#9DFF00]">Live</span>
+                </Link>
               </div>
             </div>
 

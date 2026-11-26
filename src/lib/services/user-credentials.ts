@@ -9,7 +9,7 @@ export interface StoredCredential {
   userId: string;
   email: string;
   rollNo?: string;
-  /** Salted digest stored in Local Demo Mode — never raw plaintext */
+  /** Salted digest stored in Local Demo Mode - never raw plaintext */
   passwordDigest: string;
   salt: string;
   isTemp?: boolean;

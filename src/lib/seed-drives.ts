@@ -67,5 +67,5 @@ export const SEED_DRIVES: CampusDrive[] = [
   },
 ];
 
-// 100% clean slate by default — zero mock student drive applications
+// 100% clean slate by default - zero mock student drive applications
 export const SEED_DRIVE_APPLICATIONS: DriveApplication[] = [];
