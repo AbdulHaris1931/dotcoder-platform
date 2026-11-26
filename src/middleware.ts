@@ -16,6 +16,12 @@ import {
   normalizeRole,
 } from "@/lib/auth/rbac-routes";
 
+// Short 60s Edge cache for verified user role/status to cut Supabase Free-Tier DB reads by ~90% at 400+ users
+const profileRoleCache = new Map<
+  string,
+  { role: string | null; status: string; expiresAt: number }
+>();
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
@@ -113,13 +119,28 @@ export async function middleware(request: NextRequest) {
             ? sbUser.app_metadata.role.trim().toLowerCase()
             : null;
 
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role, account_status")
-          .eq("id", sbUser.id)
-          .single();
+        const nowMs = Date.now();
+        let cachedProfile = profileRoleCache.get(sbUser.id);
+        if (!cachedProfile || cachedProfile.expiresAt < nowMs) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role, account_status")
+            .eq("id", sbUser.id)
+            .single();
 
-        const status = String(profile?.account_status || "active").toLowerCase();
+          if (profileRoleCache.size > 1000) {
+            profileRoleCache.clear();
+          }
+          cachedProfile = {
+            role: profile?.role ? String(profile.role) : null,
+            status: String(profile?.account_status || "active").toLowerCase(),
+            expiresAt: nowMs + 60_000,
+          };
+          profileRoleCache.set(sbUser.id, cachedProfile);
+        }
+
+        const profile = { role: cachedProfile.role };
+        const status = cachedProfile.status;
         if (status === "suspended" || status === "archived") {
           // Block suspended/archived accounts from protected portals
           userEmail = null;

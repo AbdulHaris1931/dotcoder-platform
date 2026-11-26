@@ -11,6 +11,12 @@ import {
 
 export const runtime = "nodejs";
 
+// 20-second server cache so 400 concurrent students trigger 1 Supabase read instead of 400
+let leaderboardCandidatesCache: {
+  candidates: RawLeaderboardCandidate[];
+  expiresAt: number;
+} | null = null;
+
 /**
  * GET /api/leaderboard?department=ALL&batch=ALL
  * Returns privacy-safe campus & department rankings.
@@ -58,12 +64,31 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    if (
+      leaderboardCandidatesCache &&
+      leaderboardCandidatesCache.expiresAt > Date.now()
+    ) {
+      const cachedResult = computeCampusLeaderboard({
+        candidates: leaderboardCandidatesCache.candidates,
+        viewerId: auth.user.id,
+        viewerRole,
+        departmentFilter,
+        batchFilter,
+      });
+      return NextResponse.json({
+        success: true,
+        mode: "live_supabase_postgres",
+        ...cachedResult,
+      });
+    }
+
     const { data: profiles, error: profilesErr } = await db
       .from("profiles")
       .select(
         "id, full_name, roll_no, department, batch_year, readiness_score, problems_solved, account_status, role"
       )
-      .eq("role", "student");
+      .eq("role", "student")
+      .limit(1000);
 
     if (profilesErr) {
       return NextResponse.json(
@@ -152,6 +177,11 @@ export async function GET(req: NextRequest) {
         examsPassed: examAgg ? examAgg.passedCount : 0,
       };
     });
+
+    leaderboardCandidatesCache = {
+      candidates,
+      expiresAt: Date.now() + 20_000,
+    };
 
     const result = computeCampusLeaderboard({
       candidates,

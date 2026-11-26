@@ -6,6 +6,7 @@ import { createClient as createServerClient } from "@/lib/supabase/server";
 import { generateSecureTempPassword } from "@/lib/auth/password-utils";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 interface ProvisionUserRequest {
   fullName: string;

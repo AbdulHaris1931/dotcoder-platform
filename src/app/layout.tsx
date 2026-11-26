@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   description:
     "Obsidian-grade coding lab, AI-proctored examinations, and campus placement intelligence platform engineered for universities and hiring teams.",
   icons: {
-    icon: "/logo.png",
+    icon: "/icon-64.png",
     shortcut: "/favicon.ico",
     apple: "/logo.png",
   },

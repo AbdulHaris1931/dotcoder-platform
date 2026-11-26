@@ -42,11 +42,11 @@ export const RATE_LIMIT_PRESETS = {
   AUTH: { limit: 10, windowSeconds: 60 } as RateLimitConfig,
 
   // Campus NAT / College Lab Shared IP Perimeter:
-  // 300 students * 10 req/min = 3,000 req/min allowance for shared college Wi-Fi/NAT IP
-  GLOBAL_CAMPUS_NAT_IP: { limit: 3000, windowSeconds: 60 } as RateLimitConfig,
+  // 500+ students * 12 req/min = 6,000 req/min allowance for shared college Wi-Fi/NAT IP
+  GLOBAL_CAMPUS_NAT_IP: { limit: 6000, windowSeconds: 60 } as RateLimitConfig,
 
   // Backward compatibility alias for global API
-  GLOBAL_API: { limit: 3000, windowSeconds: 60 } as RateLimitConfig,
+  GLOBAL_API: { limit: 6000, windowSeconds: 60 } as RateLimitConfig,
 
   // Authenticated Individual Student API allowance
   PER_STUDENT_API: { limit: 120, windowSeconds: 60 } as RateLimitConfig,

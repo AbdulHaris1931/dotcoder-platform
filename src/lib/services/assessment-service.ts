@@ -40,16 +40,37 @@ const INITIAL_DEMO_ATTEMPTS: AssessmentAttempt[] = [];
 export class AssessmentService {
   /**
    * Submit assessment answers to the server-side grading engine
+   * Includes jittered 3x retry backoff so 400 simultaneous timer-zero submits absorb cleanly on Free Tier.
    */
   static async submitAssessment(
     payload: AssessmentSubmissionPayload
   ): Promise<AssessmentSubmissionResponse> {
     try {
-      const res = await fetch("/api/assessment/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      let res: Response | null = null;
+      const MAX_ATTEMPTS = 3;
+
+      for (let attemptIdx = 0; attemptIdx < MAX_ATTEMPTS; attemptIdx++) {
+        if (attemptIdx > 0) {
+          const backoffMs = attemptIdx * 900 + Math.floor(Math.random() * 1200);
+          await new Promise((r) => setTimeout(r, backoffMs));
+        }
+        try {
+          res = await fetch("/api/assessment/submit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (res.ok || res.status === 400 || res.status === 401 || res.status === 403) {
+            break;
+          }
+        } catch (netErr) {
+          if (attemptIdx === MAX_ATTEMPTS - 1) throw netErr;
+        }
+      }
+
+      if (!res) {
+        throw new Error("Network unavailable after retries.");
+      }
 
       if (res.status === 429) {
         const errorData = await res.json().catch(() => ({}));

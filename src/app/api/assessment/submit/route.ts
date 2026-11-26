@@ -18,6 +18,12 @@ import {
   getRateLimitHeaders,
 } from "@/lib/rate-limiter";
 
+// 60-second server idempotency guard against double-clicks or retry storms at exam end
+const recentSubmissionCache = new Map<
+  string,
+  { response: AssessmentSubmissionResponse; expiresAt: number }
+>();
+
 export async function POST(req: NextRequest) {
   try {
     // 0. Authoritative Server Auth & Per-Verified-User Rate Limit
@@ -65,6 +71,14 @@ export async function POST(req: NextRequest) {
         { success: false, message: "Missing assessmentId" },
         { status: 400 }
       );
+    }
+
+    const idempotencyKey = `${userId}::${assessmentId}`;
+    const existingCached = recentSubmissionCache.get(idempotencyKey);
+    if (existingCached && existingCached.expiresAt > Date.now()) {
+      return NextResponse.json(existingCached.response, {
+        headers: rateLimitHeaders,
+      });
     }
 
     const assessment = AssessmentRegistry.getAssessment(assessmentId);
@@ -255,6 +269,14 @@ export async function POST(req: NextRequest) {
         ? "Assessment successfully graded and certified."
         : "Assessment accredited and buffered locally. Synchronized with campus registry.",
     };
+
+    if (recentSubmissionCache.size > 600) {
+      recentSubmissionCache.clear();
+    }
+    recentSubmissionCache.set(idempotencyKey, {
+      response: responseData,
+      expiresAt: Date.now() + 60_000,
+    });
 
     return NextResponse.json(responseData, {
       headers: rateLimitHeaders,

@@ -7,6 +7,7 @@ import { DataService } from "@/lib/supabase/db";
 import { DemoStore, subscribeToDemoStore } from "@/lib/demo-store";
 import { UserProfile, Problem, Assessment, Submission, CampusDrive } from "@/types";
 import { SkillIntelligenceService } from "@/lib/services/skill-intelligence";
+import { prefetchPyodideRuntime } from "@/lib/pyodide-runner";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import {
   ArrowRight,
@@ -63,6 +64,14 @@ export default function StudentDashboardPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [problems, setProblems] = useState<Problem[]>([]);
   const [, setAssessment] = useState<Assessment | null>(null);
+
+  // Silently warm Pyodide WASM in browser cache during idle dashboard time before exams
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      prefetchPyodideRuntime();
+    }, 3000);
+    return () => window.clearTimeout(timer);
+  }, []);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [drives, setDrives] = useState<CampusDrive[]>([]);
 

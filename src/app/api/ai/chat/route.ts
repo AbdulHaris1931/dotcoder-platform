@@ -5,8 +5,12 @@ import {
   RATE_LIMIT_PRESETS,
   rateLimitExceededResponse,
 } from "@/lib/rate-limiter";
+import { getFallbackGovernance } from "@/lib/governance-store";
 
 export const runtime = "nodejs";
+
+// 5-minute Socratic hint cache so repeated student questions on Free Tier cost 0 extra Gemini quota
+const aiResponseCache = new Map<string, { text: string; expiresAt: number }>();
 
 interface ChatMessagePayload {
   role: "user" | "model";
@@ -78,6 +82,31 @@ export async function POST(req: Request) {
         { error: "Message content is required" },
         { status: 400 }
       );
+    }
+
+    // Enforce Super Admin Global AI Mentor Freeze during campus exams (exempt staff/owner)
+    const gov = getFallbackGovernance();
+    if (gov.ai_mentor_frozen && authUser.role === "student") {
+      return NextResponse.json({
+        text: "### Exam Lockdown Active\n\n**EQ AI Mentor** is temporarily paused by Campus Governance while live assessments are in progress. Focus on your core loop invariants and test cases - you've got this!",
+        isFallback: true,
+        source: "exam-lockdown",
+      });
+    }
+
+    const cacheKey = `${problemTitle.toLowerCase().trim()}::${language.toLowerCase()}::${message
+      .toLowerCase()
+      .trim()
+      .slice(0, 140)}`;
+    if (!activeCode.trim()) {
+      const hit = aiResponseCache.get(cacheKey);
+      if (hit && hit.expiresAt > Date.now()) {
+        return NextResponse.json({
+          text: hit.text,
+          isFallback: false,
+          source: "cached-socratic",
+        });
+      }
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
@@ -174,6 +203,14 @@ ${activeCode.slice(0, 2000)}
     const candidateText =
       data?.candidates?.[0]?.content?.parts?.[0]?.text ||
       "I was unable to formulate a response. Try rephrasing your question or click one of the instant action chips above!";
+
+    if (!activeCode.trim() && data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+      if (aiResponseCache.size > 300) aiResponseCache.clear();
+      aiResponseCache.set(cacheKey, {
+        text: candidateText,
+        expiresAt: Date.now() + 5 * 60 * 1000,
+      });
+    }
 
     return NextResponse.json({
       text: candidateText,

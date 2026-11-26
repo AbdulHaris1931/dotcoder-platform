@@ -1,156 +1,245 @@
-// Client-side Pyodide WebAssembly Runner with 5.0s Execution Watchdog
-// Zero-latency, $0-cost Python execution in the browser with infinite loop protection
+// Client-side Pyodide WebAssembly Runner with Dedicated Web Worker Isolation
+// True 5.0s hardware-level termination (`worker.terminate()`) for infinite `while True:` loops
+// + Dual-CDN failover (jsDelivr -> unpkg) + Idle Background Prefetching for 400-seat labs
 
-export interface PyodideInterface {
-  runPythonAsync: (code: string) => Promise<unknown>;
-  setStdin?: (options: { stdin: () => string }) => void;
-  globals: {
-    get: (key: string) => string | undefined;
-    set: (key: string, value: unknown) => void;
-  };
-  [key: string]: unknown;
+export interface PyodideRunResult {
+  stdout: string;
+  stderr: string;
+  executionTimeMs: number;
+  isTLE?: boolean;
 }
 
-declare global {
-  interface Window {
-    loadPyodide?: (config: { indexURL: string }) => Promise<PyodideInterface>;
-    pyodideInstance?: PyodideInterface;
-    pyodideLoadingPromise?: Promise<PyodideInterface>;
-    define?: unknown;
-  }
+interface WorkerPendingJob {
+  resolve: (res: PyodideRunResult) => void;
+  reject: (err: Error) => void;
+  timerId: ReturnType<typeof setTimeout>;
+  startTime: number;
+  timeoutMs: number;
 }
 
-/**
- * Runs an async loader while temporarily hiding Monaco Editor's AMD `window.define`.
- * Prevents Pyodide's internal `error-stack-parser` from attempting AMD `require("stackframe")`
- * which otherwise triggers 404 MIME errors on Next.js routes.
- */
-async function withAmdLoaderHidden<T>(task: () => Promise<T>): Promise<T> {
-  const prevDefine = window.define;
-  if (prevDefine) {
-    window.define = undefined;
-  }
-  try {
-    return await task();
-  } finally {
-    if (prevDefine) {
-      window.define = prevDefine;
-    }
-  }
+interface WorkerResponsePayload {
+  id: number;
+  ok: boolean;
+  stdout?: string;
+  stderr?: string;
+  error?: string;
 }
 
-export async function getPyodide(): Promise<PyodideInterface> {
-  if (typeof window === "undefined") {
-    throw new Error("Pyodide can only run in the browser");
-  }
+const PYODIDE_CDNS = [
+  "https://cdn.jsdelivr.net/pyodide/v0.25.1/full/",
+  "https://unpkg.com/pyodide@0.25.1/",
+];
 
-  if (window.pyodideInstance) {
-    return window.pyodideInstance;
-  }
+const WORKER_SCRIPT = `
+const CDNS = ${JSON.stringify(PYODIDE_CDNS)};
+let pyodideReadyPromise = null;
 
-  if (window.pyodideLoadingPromise) {
-    return window.pyodideLoadingPromise;
-  }
+async function ensurePyodide() {
+  if (pyodideReadyPromise) return pyodideReadyPromise;
 
-  window.pyodideLoadingPromise = withAmdLoaderHidden(async () => {
-    // 1. Inject Pyodide loader script if not loaded
-    if (!window.loadPyodide) {
-      await new Promise<void>((resolve, reject) => {
-        const script = document.createElement("script");
-        script.src = "https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js";
-        script.async = true;
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error("Failed to load Pyodide script from CDN"));
-        document.head.appendChild(script);
-      });
+  pyodideReadyPromise = (async () => {
+    let lastError = null;
+    for (const base of CDNS) {
+      try {
+        importScripts(base + "pyodide.js");
+        const instance = await self.loadPyodide({ indexURL: base });
+        return instance;
+      } catch (err) {
+        lastError = err;
+      }
     }
-
-    if (!window.loadPyodide) {
-      throw new Error("Pyodide loader unavailable");
-    }
-
-    // 2. Initialize Pyodide WASM runtime while AMD define remains hidden
-    const pyodide = await window.loadPyodide({
-      indexURL: "https://cdn.jsdelivr.net/pyodide/v0.25.1/full/",
-    });
-
-    window.pyodideInstance = pyodide;
-    return pyodide;
-  }).catch((err) => {
-    // Reset promise so subsequent attempts can recover cleanly
-    window.pyodideLoadingPromise = undefined;
+    throw lastError || new Error("Failed to load Pyodide WebAssembly from CDN.");
+  })().catch((err) => {
+    pyodideReadyPromise = null;
     throw err;
   });
 
-  return window.pyodideLoadingPromise;
+  return pyodideReadyPromise;
+}
+
+self.onmessage = async (event) => {
+  const data = event.data || {};
+  if (data.type === "PREFETCH") {
+    try {
+      await ensurePyodide();
+      self.postMessage({ id: data.id, ok: true, stdout: "", stderr: "" });
+    } catch (err) {
+      self.postMessage({ id: data.id, ok: false, error: String(err && err.message ? err.message : err) });
+    }
+    return;
+  }
+
+  if (data.type === "RUN") {
+    try {
+      const pyodide = await ensurePyodide();
+      const wrapper = [
+        "import sys, io",
+        "class StdinIO(io.StringIO):",
+        "    def read(self, *args):",
+        "        return super().read(*args)",
+        "sys.stdin = StdinIO(" + JSON.stringify(data.stdinInput || "") + ")",
+        "sys.stdout = io.StringIO()",
+        "sys.stderr = io.StringIO()",
+        data.sourceCode || "",
+        "output_stdout = sys.stdout.getvalue()",
+        "output_stderr = sys.stderr.getvalue()",
+      ].join("\\n");
+
+      await pyodide.runPythonAsync(wrapper);
+      const stdout = pyodide.globals.get("output_stdout") || "";
+      const stderr = pyodide.globals.get("output_stderr") || "";
+      self.postMessage({ id: data.id, ok: true, stdout, stderr });
+    } catch (err) {
+      self.postMessage({
+        id: data.id,
+        ok: false,
+        error: String(err && err.message ? err.message : err),
+      });
+    }
+  }
+};
+`;
+
+let sharedWorker: Worker | null = null;
+let sharedWorkerBlobUrl: string | null = null;
+let jobSeq = 1;
+const pendingJobs = new Map<number, WorkerPendingJob>();
+
+function terminateSharedWorker(): void {
+  if (sharedWorker) {
+    sharedWorker.terminate();
+    sharedWorker = null;
+  }
+  if (sharedWorkerBlobUrl) {
+    URL.revokeObjectURL(sharedWorkerBlobUrl);
+    sharedWorkerBlobUrl = null;
+  }
+}
+
+function getOrCreatePyodideWorker(): Worker {
+  if (sharedWorker) return sharedWorker;
+
+  const blob = new Blob([WORKER_SCRIPT], { type: "application/javascript" });
+  const url = URL.createObjectURL(blob);
+  const worker = new Worker(url);
+
+  worker.onmessage = (event: MessageEvent<WorkerResponsePayload>) => {
+    const payload = event.data;
+    if (!payload || typeof payload.id !== "number") return;
+    const job = pendingJobs.get(payload.id);
+    if (!job) return;
+
+    clearTimeout(job.timerId);
+    pendingJobs.delete(payload.id);
+    const executionTimeMs = Math.max(1, Math.round(performance.now() - job.startTime));
+
+    if (payload.ok) {
+      job.resolve({
+        stdout: payload.stdout || "",
+        stderr: payload.stderr || "",
+        executionTimeMs,
+      });
+    } else {
+      job.resolve({
+        stdout: "",
+        stderr: payload.error || "Python runtime error.",
+        executionTimeMs,
+      });
+    }
+  };
+
+  worker.onerror = (err) => {
+    const message = err.message || "Pyodide worker crashed.";
+    pendingJobs.forEach((job) => {
+      clearTimeout(job.timerId);
+      job.resolve({
+        stdout: "",
+        stderr: message,
+        executionTimeMs: Math.max(1, Math.round(performance.now() - job.startTime)),
+      });
+    });
+    pendingJobs.clear();
+    terminateSharedWorker();
+  };
+
+  sharedWorker = worker;
+  sharedWorkerBlobUrl = url;
+  return worker;
 }
 
 /**
- * Execute Python code in WebAssembly with a strict 5.0-second execution watchdog timer
- * Prevents browser tab freezing on while True: loops or infinite recursion
+ * Silently warms Pyodide WASM in the background during idle dashboard time
+ * so 400 lab PCs cache the runtime before an exam starts.
+ */
+export function prefetchPyodideRuntime(): void {
+  if (typeof window === "undefined" || typeof Worker === "undefined") return;
+  if (sharedWorker) return;
+
+  try {
+    const worker = getOrCreatePyodideWorker();
+    const id = jobSeq++;
+    worker.postMessage({ id, type: "PREFETCH" });
+  } catch {
+    // Non-fatal if browser restricts Blob workers
+  }
+}
+
+/**
+ * Execute Python code inside an isolated Web Worker with a hard `worker.terminate()`
+ * watchdog so `while True:` infinite loops never freeze low-RAM college lab PCs.
  */
 export async function runPythonCode(
   sourceCode: string,
   stdinInput: string,
   timeoutMs: number = 5000
-): Promise<{ stdout: string; stderr: string; executionTimeMs: number; isTLE?: boolean }> {
+): Promise<PyodideRunResult> {
+  if (typeof window === "undefined") {
+    return {
+      stdout: "",
+      stderr: "Pyodide can only run in the browser.",
+      executionTimeMs: 0,
+    };
+  }
+
   const startTime = performance.now();
 
   try {
-    const pyodide = await getPyodide();
+    const worker = getOrCreatePyodideWorker();
+    const id = jobSeq++;
 
-    // Reset standard streams and inject stdin
-    const wrapper = `
-import sys
-import io
+    return await new Promise<PyodideRunResult>((resolve, reject) => {
+      const timerId = setTimeout(() => {
+        pendingJobs.delete(id);
+        // Hardware-level kill of stuck WASM loop; fresh worker spawns on next run
+        terminateSharedWorker();
+        resolve({
+          stdout: "",
+          stderr: `Time Limit Exceeded (TLE): Execution exceeded ${(timeoutMs / 1000).toFixed(1)} seconds. Infinite loop terminated safely.`,
+          executionTimeMs: timeoutMs,
+          isTLE: true,
+        });
+      }, timeoutMs);
 
-class StdinIO(io.StringIO):
-    def read(self, *args):
-        return super().read(*args)
+      pendingJobs.set(id, {
+        resolve,
+        reject,
+        timerId,
+        startTime,
+        timeoutMs,
+      });
 
-sys.stdin = StdinIO(${JSON.stringify(stdinInput)})
-sys.stdout = io.StringIO()
-sys.stderr = io.StringIO()
-
-${sourceCode}
-
-output_stdout = sys.stdout.getvalue()
-output_stderr = sys.stderr.getvalue()
-`;
-
-    // 5.0-second execution watchdog timer
-    let timerId: ReturnType<typeof setTimeout> | undefined;
-    const timeoutPromise = new Promise<{ isTimeout: true }>((resolve) => {
-      timerId = setTimeout(() => resolve({ isTimeout: true }), timeoutMs);
+      worker.postMessage({
+        id,
+        type: "RUN",
+        sourceCode,
+        stdinInput,
+      });
     });
-
-    const executionPromise = pyodide.runPythonAsync(wrapper).then(() => {
-      if (timerId !== undefined) clearTimeout(timerId);
-      return { isTimeout: false as const };
-    });
-
-    const raceResult = await Promise.race([executionPromise, timeoutPromise]);
-
-    if (raceResult.isTimeout) {
-      return {
-        stdout: "",
-        stderr: `Time Limit Exceeded (TLE): Execution exceeded ${(timeoutMs / 1000).toFixed(1)} seconds. Check for infinite loops or non-terminating recursions.`,
-        executionTimeMs: timeoutMs,
-        isTLE: true,
-      };
-    }
-
-    const stdout = pyodide.globals.get("output_stdout") || "";
-    const stderr = pyodide.globals.get("output_stderr") || "";
-    const executionTimeMs = Math.round(performance.now() - startTime);
-
-    return { stdout, stderr, executionTimeMs };
   } catch (err: unknown) {
-    const executionTimeMs = Math.round(performance.now() - startTime);
-    const message = err instanceof Error ? err.message : String(err);
+    const executionTimeMs = Math.max(1, Math.round(performance.now() - startTime));
     return {
       stdout: "",
-      stderr: message,
+      stderr: err instanceof Error ? err.message : String(err),
       executionTimeMs,
     };
   }

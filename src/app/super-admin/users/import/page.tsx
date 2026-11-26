@@ -200,47 +200,78 @@ export default function SuperAdminBulkImportPage() {
     URL.revokeObjectURL(url);
   };
 
-  // Execute Final Batch Import to Live Supabase Auth + Profiles (with Local Demo fallback)
+  // Execute Final Batch Import in 25-user chunks so 400-500 student imports never hit Vercel Free 504 timeouts
+  const [importProgressLabel, setImportProgressLabel] = useState<string>("");
+
   const handleConfirmImport = async () => {
     if (!aiResult || netNewCount === 0) return;
     setIsProvisioning(true);
     setErrorMsg(null);
+    setImportProgressLabel(`0 / ${aiResult.students.length}`);
 
     try {
-      const apiRes = await fetch("/api/super-admin/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          users: aiResult.students.map((s) => ({
-            fullName: s.full_name,
-            email: s.email,
-            role: "student",
-            department: s.department,
-            rollNo: s.roll_no,
-            batchYear: s.batch_year,
-            collegeName: s.college_name,
-          })),
-        }),
-      });
+      const allMapped = aiResult.students.map((s) => ({
+        fullName: s.full_name,
+        email: s.email,
+        role: "student",
+        department: s.department,
+        rollNo: s.roll_no,
+        batchYear: s.batch_year,
+        collegeName: s.college_name,
+      }));
 
-      const apiData = await apiRes.json().catch(() => ({}));
-      if (apiRes.ok && apiData.success) {
-        if (Array.isArray(apiData.credentials)) {
-          setProvisionedCredentials(apiData.credentials);
-        }
-        // Mirror locally for instant UI continuity
-        SuperAdminService.bulkImportStudents(aiResult.students);
-        setImportSummary({
-          imported: apiData.imported ?? netNewCount,
-          skipped: apiData.skipped ?? duplicateCount,
-          total: apiData.total ?? aiResult.students.length,
+      const CHUNK_SIZE = 25;
+      let totalImported = 0;
+      let totalSkipped = 0;
+      let usedDemoFallback = false;
+      const allCreds: Array<{
+        full_name: string;
+        email: string;
+        roll_no: string;
+        department: string;
+        temp_password: string;
+      }> = [];
+
+      for (let offset = 0; offset < allMapped.length; offset += CHUNK_SIZE) {
+        const slice = allMapped.slice(offset, offset + CHUNK_SIZE);
+        setImportProgressLabel(
+          `${Math.min(offset + slice.length, allMapped.length)} / ${allMapped.length}`
+        );
+
+        const apiRes = await fetch("/api/super-admin/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ users: slice }),
         });
+
+        const apiData = await apiRes.json().catch(() => ({}));
+        if (apiRes.ok && apiData.success) {
+          totalImported += Number(apiData.imported) || 0;
+          totalSkipped += Number(apiData.skipped) || 0;
+          if (Array.isArray(apiData.credentials)) {
+            allCreds.push(...apiData.credentials);
+          }
+          continue;
+        }
+
+        if (apiRes.status === 503 || apiData.mode === "local_demo_fallback") {
+          usedDemoFallback = true;
+          break;
+        }
+
+        setErrorMsg(apiData.error || "Live batch provisioning failed.");
         setIsProvisioning(false);
         return;
       }
 
-      if (apiRes.status !== 503 && apiData.mode !== "local_demo_fallback") {
-        setErrorMsg(apiData.error || "Live batch provisioning failed.");
+      if (!usedDemoFallback) {
+        setProvisionedCredentials(allCreds);
+        SuperAdminService.bulkImportStudents(aiResult.students);
+        setImportSummary({
+          imported: totalImported,
+          skipped: totalSkipped,
+          total: aiResult.students.length,
+        });
         setIsProvisioning(false);
         return;
       }
@@ -257,6 +288,7 @@ export default function SuperAdminBulkImportPage() {
       setErrorMsg("Failed to provision student accounts. Please check your data.");
     } finally {
       setIsProvisioning(false);
+      setImportProgressLabel("");
     }
   };
 
@@ -589,7 +621,9 @@ export default function SuperAdminBulkImportPage() {
                 {isProvisioning ? (
                   <>
                     <span className="w-3.5 h-3.5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-                    <span>Provisioning Accounts...</span>
+                    <span>
+                      Provisioning {importProgressLabel ? `(${importProgressLabel})` : "Accounts..."}
+                    </span>
                   </>
                 ) : (
                   <>

@@ -12,6 +12,11 @@ import {
 
 export const runtime = "nodejs";
 
+let governanceCache: {
+  config: PlatformGovernanceConfig;
+  expiresAt: number;
+} | null = null;
+
 function normalizeGovernanceRow(
   row: Record<string, unknown> | null | undefined
 ): PlatformGovernanceConfig {
@@ -63,6 +68,13 @@ export async function GET(req: NextRequest) {
   const auth = await requireApiAuth(req);
   if (auth.errorResponse) return auth.errorResponse;
 
+  if (governanceCache && governanceCache.expiresAt > Date.now()) {
+    return NextResponse.json({
+      success: true,
+      config: governanceCache.config,
+    });
+  }
+
   const db = createAdminClient({ silent: true }) || (await createServerClient());
   if (!db) {
     return NextResponse.json({
@@ -93,9 +105,18 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    const resolvedConfig = normalizeGovernanceRow(
+      data as Record<string, unknown> | null
+    );
+    setFallbackGovernance(resolvedConfig);
+    governanceCache = {
+      config: resolvedConfig,
+      expiresAt: Date.now() + 30_000,
+    };
+
     return NextResponse.json({
       success: true,
-      config: normalizeGovernanceRow(data as Record<string, unknown> | null),
+      config: resolvedConfig,
     });
   } catch {
     return NextResponse.json({
@@ -131,8 +152,12 @@ export async function PATCH(req: NextRequest) {
     updated_at: new Date().toISOString(),
   } as unknown as Record<string, unknown>);
 
-  // Always update in-memory mirror for instant zero-crash consistency
+  // Always update in-memory mirror and bust/refresh TTL cache immediately
   setFallbackGovernance(sanitized);
+  governanceCache = {
+    config: sanitized,
+    expiresAt: Date.now() + 30_000,
+  };
 
   const db = createAdminClient({ silent: true }) || (await createServerClient());
   if (!db) {
